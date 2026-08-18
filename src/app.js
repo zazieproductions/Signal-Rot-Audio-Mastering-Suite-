@@ -1,4 +1,19 @@
-"use strict";
+/**
+ * SIGNAL ROT // MASTER — application shell.
+ *
+ * Pure DSP, encoding and layout logic lives in the modules imported below and
+ * is covered by the unit tests in tests/. What remains here is the browser
+ * layer: DOM wiring, the live Web Audio graph, canvas visualisation and the
+ * offline render orchestration.
+ */
+
+import { clamp, dbToGain, gainToDb, formatTime as fmtTime } from './dsp/units.js';
+import { measureLUFS } from './dsp/loudness.js';
+import { truePeakLimit, truePeakChannel, truePeakDb } from './dsp/true-peak.js';
+import { transientShape } from './dsp/transient.js';
+import { spectrumFingerprint, matchCurve, MATCH_FREQS } from './dsp/reference-match.js';
+import { encodeWav, encodeAiff } from './export/wav.js';
+import { SPEAKERS as SP, LAYOUTS, getWavOrder } from './immersive/layouts.js';
 
 /* TAB SWITCHING */
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
@@ -11,12 +26,8 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
 /* ====================================================================
    SIGNAL ROT // MASTER  — engine
    ==================================================================== */
-"use strict";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const clamp=(v,a,b)=>v<a?a:v>b?b:v;
-const dbToGain=db=>Math.pow(10,db/20), gainToDb=g=>20*Math.log10(Math.max(1e-9,g));
 function toast(m,ms=1900){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),ms);}
-function fmtTime(s){s=Math.max(0,s||0);const m=Math.floor(s/60);return m+':'+String(Math.floor(s%60)).padStart(2,'0');}
 
 /* ---------- parameter state ---------- */
 const P={
@@ -44,8 +55,7 @@ const P={
   matchStrength:0,  // 0-100 applied strength
   matchGains:[0,0,0,0,0,0,0,0]  // dB at 60,150,400,1k,2.5k,5k,8k,12k (set by analysis)
 };
-const MATCH_FREQS=[60,150,400,1000,2500,5000,8000,12000];
-let refBuffer=null, refName='';
+let refBuffer=null;
 let preset='Flat';
 
 /* ---------- audio context / graph ---------- */
@@ -54,7 +64,7 @@ let nodes={};           // live graph nodes
 let playing=false, startedAt=0, offsetAt=0, srcNode=null;
 let abMode='B';         // 'A' original, 'B' processed
 let matchLoud=false;
-let analysis={orig:null, proc:null}; // {lufs, lra, tp}
+const analysis={orig:null, proc:null}; // {lufs, lra, tp}
 
 /* ---------- native-node M/S chain (no AudioWorklet — works in any sandbox) ----------
    inGain -> mastering EQ (sub/warm/body/harsh/clarity/air/tilt) -> [M/S matrix: width,
@@ -79,7 +89,7 @@ function makeSatCurve(amt){
     // quintic-blended soft-clip: smoother knee than tanh, less HF harmonic spray
     const t=Math.tanh(k*xs);
     const blend=1-(1-amt)*(1-amt);         // accelerating wetness for musical drive curve
-    let y=(1-blend)*x+blend*t;
+    const y=(1-blend)*x+blend*t;
     // de-DC: subtract running mean (eliminates asymmetry-induced offset)
     c[i]=y;
     if(Math.abs(y)>pk)pk=Math.abs(y);
@@ -288,6 +298,7 @@ function setChainParams(N,bypass){
   const cf=bypass?0:(P.binaural?Math.max(P.crossfeed,0.35):P.crossfeed);
   N.cfGLR.gain.value=cf*0.45; N.cfGRL.gain.value=cf*0.45;
   N.outGain.gain.value=bypass?1:postMakeup;
+  N._makeup=bypass?1:postMakeup;   // remembered so the live path can compose with it
 
   /* ===== match EQ ===== */
   const mStr=bypass?0:P.matchStrength/100;
@@ -376,7 +387,11 @@ function applyParamsToGraph(){
   if(P.normalize && !bypass && analysis.proc && isFinite(analysis.proc.lufs)){
     normG=dbToGain(P.targetLUFS-analysis.proc.lufs);
   }
-  nodes.outGain.gain.value=trim*normG;
+  /* setChainParams() parks the saturation make-up gain on outGain. Overwriting
+     it here (as this line used to) silently dropped up to 2 dB of make-up from
+     the preview only, so what you auditioned was quieter than what you
+     exported. Multiply instead of replace. */
+  nodes.outGain.gain.value=nodes._makeup*trim*normG;
 }
 
 /* ============ AUDIO CONTEXT FACTORY (Safari/webkit compat) ============ */
@@ -477,7 +492,7 @@ window.addEventListener('mouseup',e=>{ if(dragStart==null)return; const cv=$('#w
 
 /* ============ METERS / SCOPES ============ */
 const TAU=Math.PI*2;
-let energyMom=[], energyST=[];  // ring of {t, msL, msR}
+const energyMom=[], energyST=[];  // ring of {t, msL, msR}
 function loop(){
   requestAnimationFrame(loop);
   if(!nodes.anaPost)return;
@@ -538,7 +553,6 @@ function drawGonio(){
   }
 }
 
-let mAccum={i:0,energy:0,n:0,blocks:[]};
 function updateMeters(){
   const dK=new Float32Array(nodes.anaK.fftSize); nodes.anaK.getFloatTimeDomainData(dK);
   // mean square of K-weighted post signal (mono sum approximated post-stereo)
@@ -570,21 +584,25 @@ function updateMeters(){
   let rms=0;for(let i=0;i<dL.length;i++)rms+=(dL[i]*dL[i]+dR[i]*dR[i])*0.5; rms=Math.sqrt(rms/dL.length);
   $('#mRMS').textContent=isFinite(gainToDb(rms))?gainToDb(rms).toFixed(0):'—';
 }
-function truePeakBlock(d){
-  let mx=0;
-  for(let i=1;i<d.length-2;i++){
-    const p0=d[i-1],p1=d[i],p2=d[i+1],p3=d[i+2];
-    for(let f=0;f<4;f++){const t=f/4,t2=t*t,t3=t2*t;
-      const v=0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
-      const a=Math.abs(v); if(a>mx)mx=a;}
-  }
-  return mx;
-}
+/* True-peak metering now uses the BS.1770-4 polyphase filter (src/dsp/true-peak.js)
+   instead of the cubic estimator that used to live here, which under-read by
+   over a dB at frequencies where sampling is degenerate. */
+const truePeakBlock = truePeakChannel;
 function setBar(sel,frac){const i=$(sel);if(i)i.style.width=clamp(frac*100,0,100)+'%';}
 
 /* ============ OFFLINE: integrated LUFS + LRA (BS.1770 gated) ============ */
-async function renderOffline(targetSR,withProcessing){
-  const dur=srcBuffer.duration, sr=targetSR||srcBuffer.sampleRate;
+/** Longest span the interactive analyser will render, in seconds. */
+const ANALYSIS_WINDOW_S=90;
+
+/**
+ * Render srcBuffer through the mastering chain offline.
+ * @param {number} targetSR 0 to keep the source rate
+ * @param {boolean} withProcessing
+ * @param {number} [maxSeconds] cap the render length (used by the analyser)
+ */
+async function renderOffline(targetSR,withProcessing,maxSeconds){
+  const sr=targetSR||srcBuffer.sampleRate;
+  const dur=maxSeconds?Math.min(srcBuffer.duration,maxSeconds):srcBuffer.duration;
   const oac=createOfflineAudioContext(2,Math.max(1,Math.ceil(dur*sr)),sr);
   const src=oac.createBufferSource(); src.buffer=srcBuffer;
   if(!withProcessing){ src.connect(oac.destination); src.start(); return await oac.startRendering(); }
@@ -595,48 +613,8 @@ async function renderOffline(targetSR,withProcessing){
   src.start();
   return await oac.startRendering();
 }
-function measureLUFS(buf){
-  // BS.1770 K-weighting via offline biquads then gated integrated + LRA
-  const sr=buf.sampleRate, n=buf.length, ch=Math.min(2,buf.numberOfChannels);
-  // K-weight each channel (2 biquads) — design at sr
-  function kweight(data){
-    const out=new Float32Array(data.length);
-    // stage1 high shelf (~+4dB), stage2 highpass (~38Hz) approximations
-    // shelf
-    let x1=0,x2=0,y1=0,y2=0;
-    const f0=1500,G=4,Q=0.707,A=Math.pow(10,G/40),w0=2*Math.PI*f0/sr,cw=Math.cos(w0),sw=Math.sin(w0),al=sw/(2*Q);
-    let b0=A*((A+1)+(A-1)*cw+2*Math.sqrt(A)*al),b1=-2*A*((A-1)+(A+1)*cw),b2=A*((A+1)+(A-1)*cw-2*Math.sqrt(A)*al);
-    let a0=(A+1)-(A-1)*cw+2*Math.sqrt(A)*al,a1=2*((A-1)-(A+1)*cw),a2=(A+1)-(A-1)*cw-2*Math.sqrt(A)*al;
-    b0/=a0;b1/=a0;b2/=a0;a1/=a0;a2/=a0;
-    for(let i=0;i<data.length;i++){const x=data[i];const y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;x2=x1;x1=x;y2=y1;y1=y;out[i]=y;}
-    // highpass
-    x1=x2=y1=y2=0;const fc=38,Qh=0.5,wc=2*Math.PI*fc/sr,cwc=Math.cos(wc),swc=Math.sin(wc),alc=swc/(2*Qh);
-    let hb0=(1+cwc)/2,hb1=-(1+cwc),hb2=(1+cwc)/2,ha0=1+alc,ha1=-2*cwc,ha2=1-alc;
-    hb0/=ha0;hb1/=ha0;hb2/=ha0;ha1/=ha0;ha2/=ha0;
-    for(let i=0;i<out.length;i++){const x=out[i];const y=hb0*x+hb1*x1+hb2*x2-ha1*y1-ha2*y2;x2=x1;x1=x;y2=y1;y1=y;out[i]=y;}
-    return out;
-  }
-  const kd=[]; for(let c=0;c<ch;c++)kd.push(kweight(buf.getChannelData(c)));
-  // 400ms blocks, 75% overlap
-  const blk=Math.round(0.4*sr), hop=Math.round(blk/4); const loud=[];
-  for(let s=0;s+blk<=n;s+=hop){
-    let z=0; for(let c=0;c<ch;c++){let ms=0;for(let i=0;i<blk;i++){const v=kd[c][s+i];ms+=v*v;}z+=ms/blk;}
-    loud.push(-0.691+10*Math.log10(Math.max(1e-12,z)));
-  }
-  if(!loud.length)return{lufs:-70,lra:0};
-  // absolute gate -70
-  let g1=loud.filter(l=>l>-70);
-  const lin=a=>a.reduce((s,l)=>s+Math.pow(10,l/10),0)/a.length;
-  let ungated=10*Math.log10(Math.max(1e-12,lin(g1)));
-  // relative gate -10 LU
-  const relThr=ungated-10; let g2=g1.filter(l=>l>relThr);
-  const integ=10*Math.log10(Math.max(1e-12,lin(g2)));
-  // LRA: 10th–95th percentile of gated short-term-ish distribution
-  const sorted=[...g2].sort((a,b)=>a-b);
-  const pct=p=>sorted.length?sorted[clamp(Math.floor(p*sorted.length),0,sorted.length-1)]:0;
-  const lra=sorted.length?(pct(0.95)-pct(0.10)):0;
-  return{lufs:integ,lra:Math.max(0,lra)};
-}
+/* Integrated loudness / LRA are provided by src/dsp/loudness.js, which is
+   verified against the EBU Tech 3341 and 3342 compliance signals. */
 
 let analyzeTimer=null, analyzing=false;
 function scheduleAnalyze(immediate){
@@ -646,20 +624,36 @@ function scheduleAnalyze(immediate){
 async function runAnalyze(){
   if(!srcBuffer||analyzing)return; analyzing=true;
   try{
-    // cap analysis length for speed (first 90s)
-    const procBuf=await renderOffline(0,true);
-    const oBuf=srcBuffer;
+    /* Cap the interactive analysis window. This comment used to claim a 90 s
+       cap that was never actually applied, so every parameter tweak re-rendered
+       and re-measured the entire track — on an album-length file that is tens
+       of seconds of blocked main thread per slider move. */
+    const procBuf=await renderOffline(0,true,ANALYSIS_WINDOW_S);
     analysis.proc=measureLUFS(procBuf);
-    analysis.orig=measureLUFS(oBuf);
-    // proc true peak (display)
-    let tp=0; for(let c=0;c<procBuf.numberOfChannels;c++)tp=Math.max(tp,truePeakBlock(procBuf.getChannelData(c).subarray(0,Math.min(procBuf.length,sampleWindowFor(procBuf)))));
-    analysis.proc.tp=tp;
+    analysis.orig=measureLUFS(analysisSourceView());
+    analysis.proc.tp=truePeakDb(procBuf);
     updateAnalysisUI();
     applyParamsToGraph();
   }catch(e){ console.warn(e); }
   analyzing=false;
 }
-function sampleWindowFor(b){return Math.min(b.length, b.sampleRate*30);}
+/**
+ * A view of the source buffer limited to the analysis window, so the A and B
+ * loudness figures are measured over the same span and are comparable.
+ */
+function analysisSourceView(){
+  const maxLen=Math.min(srcBuffer.length, Math.ceil(srcBuffer.sampleRate*ANALYSIS_WINDOW_S));
+  if(maxLen>=srcBuffer.length) return srcBuffer;
+  const views=[];
+  for(let c=0;c<srcBuffer.numberOfChannels;c++) views.push(srcBuffer.getChannelData(c).subarray(0,maxLen));
+  return {
+    sampleRate:srcBuffer.sampleRate,
+    length:maxLen,
+    numberOfChannels:srcBuffer.numberOfChannels,
+    duration:maxLen/srcBuffer.sampleRate,
+    getChannelData:i=>views[i],
+  };
+}
 function updateAnalysisUI(){
   const css=getComputedStyle(document.documentElement);
   const a=abMode==='A'?analysis.orig:analysis.proc;
@@ -668,134 +662,28 @@ function updateAnalysisUI(){
     setBar('#barLUFS',(a.lufs+40)/40); setBar('#barLRA',a.lra/20);
   }
   $('#mLUFSsub').textContent=P.normalize?('target '+P.targetLUFS.toFixed(1)):'no norm';
-  $('#mTPsub').textContent='ceiling '+P.ceiling.toFixed(1)+' dBTP';
+  /* Surface the rendered true peak next to the ceiling, so the headroom
+     situation is visible before committing to an export. */
+  const rtp=analysis.proc&&isFinite(analysis.proc.tp)?analysis.proc.tp:null;
+  $('#mTPsub').textContent=rtp!==null
+    ? 'render '+rtp.toFixed(1)+' · ceiling '+P.ceiling.toFixed(1)+' dBTP'
+    : 'ceiling '+P.ceiling.toFixed(1)+' dBTP';
   $('#mLUFS').style.color=abMode==='A'?css.getPropertyValue('--orig'):css.getPropertyValue('--proc');
 }
 
 /* ============ EXPORT: offline render + look-ahead true-peak limiter + encode ============ */
-function oversample4(ch){ // returns 4x cubic-oversampled Float32Array
-  const n=ch.length, out=new Float32Array(n*4);
-  for(let i=0;i<n;i++){
-    const p0=ch[i-1!==-1?Math.max(0,i-1):0],p1=ch[i],p2=ch[Math.min(n-1,i+1)],p3=ch[Math.min(n-1,i+2)];
-    for(let f=0;f<4;f++){const t=f/4,t2=t*t,t3=t2*t;
-      out[i*4+f]=0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);}
-  }
-  return out;
-}
-function truePeakLimit(buffer,ceilingDb){
-  const ceil=dbToGain(ceilingDb), ch=buffer.numberOfChannels, sr=buffer.sampleRate;
-  const chans=[]; for(let c=0;c<ch;c++)chans.push(buffer.getChannelData(c));
-  /* Studio-grade ballistics:
-     - 2.5ms lookahead (was 1.5ms) — gives reconstruction filter room to breathe
-     - Release split: fast (15ms) for transients, slow (150ms) for sustained
-       This is "program-dependent release" — prevents pumping on sustained content
-     - Soft knee 1dB below ceiling: gain reduction begins gradually, not as a brick wall
-       — this is the single biggest difference between "transparent" and "crunchy" limiting */
-  const look=Math.round(sr*0.0025);
-  const relFast=Math.max(1,Math.round(sr*0.015));
-  const relSlow=Math.max(1,Math.round(sr*0.150));
-  const kneeStart=dbToGain(ceilingDb-1.0);  // soft knee opens 1dB before hard ceiling
-  // detect 4× oversampled inter-sample peaks per sample
-  const n=buffer.length, gain=new Float32Array(n).fill(1);
-  for(let i=0;i<n;i++){
-    let pk=0;
-    for(let c=0;c<ch;c++){
-      const a=chans[c]; const i0=Math.max(0,i-1);
-      const p0=a[i0],p1=a[i],p2=a[Math.min(n-1,i+1)],p3=a[Math.min(n-1,i+2)];
-      for(let f=0;f<4;f++){const t=f/4,t2=t*t,t3=t2*t;
-        const v=Math.abs(0.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3));
-        if(v>pk)pk=v;}
-    }
-    if(pk<=kneeStart){ gain[i]=1; }
-    else if(pk>=ceil){ gain[i]=ceil/pk; }
-    else {
-      // soft knee: gradual reduction in the 1dB window before the ceiling
-      // quadratic blend from unity at kneeStart to (ceil/pk) at ceil
-      const t=(pk-kneeStart)/(ceil-kneeStart);     // 0..1 across the knee
-      const target=ceil/pk;
-      gain[i]=1-(1-target)*t*t*(3-2*t);            // smoothstep blend
-    }
-  }
-  // lookahead anticipation (forward min over the look window)
-  const sm=new Float32Array(n);
-  for(let i=0;i<n;i++){
-    let mn=gain[i]; const end=Math.min(n,i+look+1);
-    for(let k=i+1;k<end;k++)if(gain[k]<mn)mn=gain[k];
-    sm[i]=mn;
-  }
-  /* Program-dependent release: track how long since last attack.
-     Fresh attack → fast release for one-shot transients.
-     Sustained reduction → slow release to avoid pumping. */
-  let g=1, samplesSinceAttack=0;
-  for(let i=0;i<n;i++){
-    const target=sm[i];
-    if(target<g){
-      g=target;                                    // instant attack (anticipated)
-      samplesSinceAttack=0;
-    } else {
-      samplesSinceAttack++;
-      // blend fast→slow release based on how long we've been reducing
-      const blend=Math.min(1,samplesSinceAttack/(sr*0.05));   // 0..1 over 50ms
-      const relSamples=relFast*(1-blend)+relSlow*blend;
-      g += (target-g)/relSamples;
-    }
-    for(let c=0;c<ch;c++)chans[c][i]*=g;
-  }
-}
+/* Look-ahead true-peak limiting lives in src/dsp/true-peak.js. */
 /* ===== REFERENCE MATCH EQ — spectral fingerprint comparison =====
    FFT both tracks (hann-windowed 8192 frames averaged across the file),
    measure energy at 8 log-spaced mastering bands, derive correction curve. */
-function fftRadix2(re,im){
-  const n=re.length;
-  for(let i=1,j=0;i<n;i++){ let bit=n>>1;
-    for(;j&bit;bit>>=1)j^=bit; j^=bit;
-    if(i<j){ let t=re[i];re[i]=re[j];re[j]=t; t=im[i];im[i]=im[j];im[j]=t; } }
-  for(let len=2;len<=n;len<<=1){
-    const ang=-2*Math.PI/len, wr=Math.cos(ang), wi=Math.sin(ang);
-    for(let i=0;i<n;i+=len){
-      let cwr=1, cwi=0;
-      for(let k=0;k<len/2;k++){
-        const ur=re[i+k], ui=im[i+k];
-        const vr=re[i+k+len/2]*cwr-im[i+k+len/2]*cwi;
-        const vi=re[i+k+len/2]*cwi+im[i+k+len/2]*cwr;
-        re[i+k]=ur+vr; im[i+k]=ui+vi;
-        re[i+k+len/2]=ur-vr; im[i+k+len/2]=ui-vi;
-        const nwr=cwr*wr-cwi*wi; cwi=cwr*wi+cwi*wr; cwr=nwr;
-      } } }
-}
-function spectrumFingerprint(buf){
-  const N=8192, sr=buf.sampleRate, n=buf.length, ch=buf.numberOfChannels;
-  const hann=new Float32Array(N); for(let i=0;i<N;i++)hann[i]=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));
-  const mag=new Float64Array(N/2);
-  const frames=Math.min(24,Math.max(4,Math.floor(n/N)));
-  const hop=Math.max(1,Math.floor((n-N)/frames));
-  const re=new Float32Array(N), im=new Float32Array(N);
-  let used=0;
-  for(let f=0;f<frames;f++){
-    const off=f*hop; if(off+N>n)break;
-    for(let i=0;i<N;i++){ let s=0; for(let c=0;c<ch;c++)s+=buf.getChannelData(c)[off+i]; re[i]=(s/ch)*hann[i]; im[i]=0; }
-    fftRadix2(re,im);
-    for(let k=0;k<N/2;k++)mag[k]+=re[k]*re[k]+im[k]*im[k];
-    used++;
-  }
-  if(!used)return null;
-  // measure band energy at each mastering band (±1/2 octave window)
-  return MATCH_FREQS.map(fc=>{
-    const k0=Math.max(1,Math.floor(fc/Math.SQRT2/sr*N)), k1=Math.min(N/2-1,Math.ceil(fc*Math.SQRT2/sr*N));
-    let e=0,cnt=0; for(let k=k0;k<=k1;k++){e+=mag[k];cnt++;}
-    return 10*Math.log10(e/Math.max(1,cnt)/used+1e-12);
-  });
-}
 function computeMatchEQ(){
   if(!srcBuffer){toast('Load your track first');return false;}
   if(!refBuffer){toast('Load a reference track first');return false;}
   const cur=spectrumFingerprint(srcBuffer), ref=spectrumFingerprint(refBuffer);
   if(!cur||!ref){toast('Analysis failed — tracks too short?');return false;}
-  // difference (ref - current), normalized so the average correction is 0 (no net gain)
-  let diff=ref.map((r,i)=>r-cur[i]);
-  const mean=diff.reduce((a,b)=>a+b,0)/diff.length;
-  diff=diff.map(d=>Math.max(-8,Math.min(8,d-mean)));   // clamp ±8dB, remove net tilt bias
-  P.matchGains=diff.map(d=>Math.round(d*10)/10);
+  const curve=matchCurve(cur,ref);
+  if(!curve){toast('Analysis failed');return false;}
+  P.matchGains=curve;
   return true;
 }
 
@@ -803,29 +691,7 @@ function computeMatchEQ(){
    Runs on the rendered buffer at export (needs per-sample control impossible
    with native Web Audio nodes in a sandboxed page). Channel-linked envelope
    prevents stereo image wander. ===== */
-function transientShape(buf,attackPct,sustainPct){
-  if(!attackPct && !sustainPct) return;
-  const sr=buf.sampleRate, ch=buf.numberOfChannels, n=buf.length;
-  const chans=[]; for(let c=0;c<ch;c++)chans.push(buf.getChannelData(c));
-  const aF=Math.exp(-1/(sr*0.001)), aS=Math.exp(-1/(sr*0.050));   // 1ms / 50ms followers
-  const rF=Math.exp(-1/(sr*0.020)), rS=Math.exp(-1/(sr*0.180));   // release constants
-  const atk=attackPct/100, sus=sustainPct/100;
-  let envF=0, envS=0;
-  for(let i=0;i<n;i++){
-    let x=0; for(let c=0;c<ch;c++){const v=Math.abs(chans[c][i]); if(v>x)x=v;}
-    envF = x>envF ? x+(envF-x)*aF : x+(envF-x)*rF;
-    envS = x>envS ? x+(envS-x)*aS : x+(envS-x)*rS;
-    const tr=Math.max(0,envF-envS);                    // transient component
-    const body=envS;                                    // sustain component
-    let g=1;
-    if(envF>1e-6){
-      g += atk*(tr/(envF+1e-6))*0.9;                   // bounded 0..0.9× attack emphasis
-      g += sus*Math.min(1,body*3)*0.4;                 // sustain lift/duck
-    }
-    g=Math.max(0.25,Math.min(2.2,g));
-    for(let c=0;c<ch;c++)chans[c][i]*=g;
-  }
-}
+/* Transient shaping lives in src/dsp/transient.js. */
 
 async function renderMaster(targetSR){
   const sr=targetSR||srcBuffer.sampleRate;
@@ -843,46 +709,17 @@ async function renderMaster(targetSR){
 }
 
 /* ---------- encoders ---------- */
-function writeWAV(buf,bitDepth){ // 16, 24 int or 32 float
-  const ch=buf.numberOfChannels, sr=buf.sampleRate, n=buf.length;
-  const float=bitDepth===32; const bps=bitDepth/8;
-  const dataLen=n*ch*bps, blockAlign=ch*bps;
-  const ab=new ArrayBuffer(44+dataLen), v=new DataView(ab);
-  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
-  ws(0,'RIFF');v.setUint32(4,36+dataLen,true);ws(8,'WAVE');ws(12,'fmt ');
-  v.setUint32(16,16,true);v.setUint16(20,float?3:1,true);v.setUint16(22,ch,true);
-  v.setUint32(24,sr,true);v.setUint32(28,sr*blockAlign,true);v.setUint16(32,blockAlign,true);v.setUint16(34,bitDepth,true);
-  ws(36,'data');v.setUint32(40,dataLen,true);
-  let off=44; const data=[];for(let c=0;c<ch;c++)data.push(buf.getChannelData(c));
-  for(let i=0;i<n;i++)for(let c=0;c<ch;c++){
-    let s=data[c][i];
-    if(float){v.setFloat32(off,s,true);off+=4;}
-    else if(bitDepth===16){ s=clamp(s,-1,1); const iv=Math.round(s<0?s*0x8000:s*0x7FFF);
-      v.setInt16(off,iv,true);off+=2; }
-    else { s=clamp(s,-1,1); const val=s<0?s*0x800000:s*0x7FFFFF; const iv=Math.round(val);
-      v.setUint8(off,iv&0xff);v.setUint8(off+1,(iv>>8)&0xff);v.setUint8(off+2,(iv>>16)&0xff);off+=3; }
-  }
-  return new Blob([ab],{type:'audio/wav'});
+/* Encoders live in src/export/wav.js (RIFF/AIFF chunk layout, dither,
+   symmetric quantisation). These wrappers just add the Blob container. */
+function writeWAV(buf,bitDepth,mask){
+  return new Blob([encodeWav(buf,bitDepth,{dither:ditherMode(),channelMask:mask})],{type:'audio/wav'});
 }
-function writeAIFF(buf){ // 24-bit big-endian PCM
-  const ch=buf.numberOfChannels,sr=buf.sampleRate,n=buf.length,bps=3;
-  const dataLen=n*ch*bps, ssnd=dataLen+8, total=4+(8+18)+(8+ssnd);
-  const ab=new ArrayBuffer(8+total),v=new DataView(ab);let o=0;
-  const ws=(s)=>{for(let i=0;i<s.length;i++)v.setUint8(o++,s.charCodeAt(i));};
-  const u32=(x)=>{v.setUint32(o,x,false);o+=4;}, u16=(x)=>{v.setUint16(o,x,false);o+=2;};
-  ws('FORM');u32(total);ws('AIFF');
-  ws('COMM');u32(18);u16(ch);u32(n);u16(24);
-  // 80-bit IEEE 754 extended for sample rate
-  const ext=f80(sr);for(let i=0;i<10;i++)v.setUint8(o++,ext[i]);
-  ws('SSND');u32(ssnd);u32(0);u32(0);
-  const data=[];for(let c=0;c<ch;c++)data.push(buf.getChannelData(c));
-  for(let i=0;i<n;i++)for(let c=0;c<ch;c++){let s=clamp(data[c][i],-1,1);const iv=Math.round(s<0?s*0x800000:s*0x7FFFFF);
-    v.setUint8(o++, (iv>>16)&0xff);v.setUint8(o++,(iv>>8)&0xff);v.setUint8(o++,iv&0xff);}
-  return new Blob([ab],{type:'audio/aiff'});
+function writeAIFF(buf){
+  return new Blob([encodeAiff(buf,{dither:ditherMode()})],{type:'audio/aiff'});
 }
-function f80(sr){const b=new Uint8Array(10);if(sr<=0)return b;let e=0,m=sr;while(m<0x80000000){m*=2;e++;}
-  const exp=16383+31-e;b[0]=(exp>>8)&0xff;b[1]=exp&0xff;
-  let mant=Math.floor(m);for(let i=0;i<4;i++){b[2+i]=(mant>>>(24-i*8))&0xff;}return b;}
+function writeWAVMultiExt(buf,bitDepth,mask){ return writeWAV(buf,bitDepth,mask); }
+/* Dither is user-selectable; default to TPDF at 16-bit and none above. */
+function ditherMode(){ const el=$('#dither'); return el?el.value:undefined; }
 function encodeMP3(buf){
   if(typeof lamejs==='undefined')throw new Error('MP3 encoder failed to load (offline?)');
   const ch=Math.min(2,buf.numberOfChannels),sr=buf.sampleRate;
@@ -953,7 +790,7 @@ async function doExport(){
 }
 
 /* ============ BATCH ============ */
-let batchFiles=[]; // {file, name, buf, lufs}
+const batchFiles=[]; // {file, name, buf, lufs}
 async function batchAddFiles(list){
   for(const f of list){
     try{ const ab=await f.arrayBuffer(); const buf=await AC.decodeAudioData(ab.slice(0));
@@ -988,11 +825,11 @@ async function batchRun(){
     await new Promise(r=>setTimeout(r,20));
     try{
       const sr=srSel||it.buf.sampleRate;
-      const buf=await renderOffline(sr,true);
-      // normalize all to SAME target
-      const m=measureLUFS(buf);
-      if(isFinite(m.lufs)){const g=dbToGain(P.targetLUFS-m.lufs);for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let j=0;j<d.length;j++)d[j]*=g;}}
-      truePeakLimit(buf,P.ceiling);
+      /* Use the same render path as a single export. The batch path used to
+         inline its own copy that omitted transient shaping, so batching a
+         preset with attack/sustain produced different audio than exporting the
+         same track on its own. */
+      const buf=await renderMaster(sr);
       let blob,ext;
       if(fmt==='wav16'){blob=writeWAV(buf,16);ext='wav';}
       else if(fmt==='wav24'){blob=writeWAV(buf,24);ext='wav';}
@@ -1218,7 +1055,6 @@ $('#refInput').onchange=async e=>{
   try{
     const ab=await f.arrayBuffer();
     refBuffer=await AC.decodeAudioData(ab.slice(0));
-    refName=f.name;
     $('#refName').textContent='Reference: '+f.name+' · '+(refBuffer.duration).toFixed(1)+'s';
     toast('Reference loaded');
   }catch(err){ toast("Couldn't decode reference"); }
@@ -1311,63 +1147,8 @@ window.addEventListener('keydown',e=>{
 const IM={ layout:'off', target:'wavmc', centerExtract:0.5, surrLevel:-3, surrDelay:12,
   heightLevel:-6, heightDecorr:0.5, lfeFreq:120, lfeLevel:-3, frontRear:0.5, binPreview:false };
 
-/* speaker table: az(+ = right, for HRTF), el(deg), ADM BS.2051 label, ADM az(+ = left), WAVE mask bit */
-const SP={
-  L  :{az:-30,el:0,  adm:'M+030',aAz:30,  bit:0x1},
-  R  :{az: 30,el:0,  adm:'M-030',aAz:-30, bit:0x2},
-  C  :{az: 0, el:0,  adm:'M+000',aAz:0,   bit:0x4},
-  LFE:{az: 0, el:-15,adm:'LFE1', aAz:0,   bit:0x8, lfe:true},
-  Ls :{az:-110,el:0, adm:'M+110',aAz:110, bit:0x10},
-  Rs :{az: 110,el:0, adm:'M-110',aAz:-110,bit:0x20},
-  Lss:{az:-90,el:0,  adm:'M+090',aAz:90,  bit:0x200},
-  Rss:{az: 90,el:0,  adm:'M-090',aAz:-90, bit:0x400},
-  Lrs:{az:-150,el:0, adm:'M+135',aAz:135, bit:0x10},
-  Rrs:{az: 150,el:0, adm:'M-135',aAz:-135,bit:0x20},
-  Lw :{az:-60,el:0,  adm:'M+060',aAz:60,  bit:0},
-  Rw :{az: 60,el:0,  adm:'M-060',aAz:-60, bit:0},
-  Ltf:{az:-45,el:45, adm:'U+045',aAz:45,  bit:0x1000},
-  Rtf:{az: 45,el:45, adm:'U-045',aAz:-45, bit:0x2000},
-  Ltr:{az:-135,el:45,adm:'U+135',aAz:135, bit:0x8000},
-  Rtr:{az: 135,el:45,adm:'U-135',aAz:-135,bit:0x10000},
-  Ltm:{az:-90,el:60, adm:'U+090',aAz:90,  bit:0},
-  Rtm:{az: 90,el:60, adm:'U-090',aAz:-90, bit:0},
-  /* ===== SONIC LAB — Anton Bruckner Privatuniversität, Linz. 20.4 periphonic.
-     Venue table uses +azimuth = LEFT (matches ADM). Internal az negated for HRTF panner.
-     Ear ring 1-8 (el 0) · Ground ring 9-12 (el -8) · High ring 13-16 (el 13)
-     · Roof ring 17-20 (el 33-35) · Subwoofers 21-24 (el -8, on the ground) ===== */
-  SL1 :{az:-30,  el:0,  adm:'SL_01',aAz:30,   bit:0},
-  SL2 :{az: 27,  el:0,  adm:'SL_02',aAz:-27,  bit:0},
-  SL3 :{az:-67,  el:0,  adm:'SL_03',aAz:67,   bit:0},
-  SL4 :{az: 61,  el:0,  adm:'SL_04',aAz:-61,  bit:0},
-  SL5 :{az:-112.5,el:0, adm:'SL_05',aAz:112.5,bit:0},
-  SL6 :{az: 115, el:0,  adm:'SL_06',aAz:-115, bit:0},
-  SL7 :{az:-153, el:0,  adm:'SL_07',aAz:153,  bit:0},
-  SL8 :{az: 155, el:0,  adm:'SL_08',aAz:-155, bit:0},
-  SL9 :{az:-43.5,el:-8, adm:'SL_09',aAz:43.5, bit:0},
-  SL10:{az: 40,  el:-8, adm:'SL_10',aAz:-40,  bit:0},
-  SL11:{az:-134, el:-8, adm:'SL_11',aAz:134,  bit:0},
-  SL12:{az: 136, el:-8, adm:'SL_12',aAz:-136, bit:0},
-  SL13:{az:-43.5,el:13, adm:'SL_13',aAz:43.5, bit:0},
-  SL14:{az: 40,  el:13, adm:'SL_14',aAz:-40,  bit:0},
-  SL15:{az:-134, el:13, adm:'SL_15',aAz:134,  bit:0},
-  SL16:{az: 136, el:13, adm:'SL_16',aAz:-136, bit:0},
-  SL17:{az:-44,  el:33, adm:'SL_17',aAz:44,   bit:0},
-  SL18:{az: 41.5,el:35, adm:'SL_18',aAz:-41.5,bit:0},
-  SL19:{az:-131, el:34, adm:'SL_19',aAz:131,  bit:0},
-  SL20:{az: 130, el:35, adm:'SL_20',aAz:-130, bit:0},
-  SL21:{az:-90,  el:-8, adm:'SL_SUB_L',aAz:90,  bit:0, lfe:true},
-  SL22:{az: 90,  el:-8, adm:'SL_SUB_R',aAz:-90, bit:0, lfe:true},
-  SL23:{az: 0,   el:-8, adm:'SL_SUB_F',aAz:0,   bit:0, lfe:true},
-  SL24:{az: 180, el:-8, adm:'SL_SUB_B',aAz:180, bit:0, lfe:true}
-};
-const LAYOUTS={
-  '5.1'  :['L','R','C','LFE','Ls','Rs'],
-  '7.1'  :['L','R','C','LFE','Lss','Rss','Lrs','Rrs'],
-  '7.1.2':['L','R','C','LFE','Lss','Rss','Lrs','Rrs','Ltf','Rtf'],
-  '7.1.4':['L','R','C','LFE','Lss','Rss','Lrs','Rrs','Ltf','Rtf','Ltr','Rtr'],
-  '9.1.6':['L','R','C','LFE','Lss','Rss','Lrs','Rrs','Lw','Rw','Ltf','Rtf','Ltm','Rtm','Ltr','Rtr'],
-  'soniclab':['SL1','SL2','SL3','SL4','SL5','SL6','SL7','SL8','SL9','SL10','SL11','SL12','SL13','SL14','SL15','SL16','SL17','SL18','SL19','SL20','SL21','SL22','SL23','SL24']
-};
+/* Speaker table, layouts and WAVE channel-mask derivation are imported from
+   src/immersive/layouts.js. */
 
 /* build per-speaker mono feed nodes from a 2-ch source node */
 function buildSpeakerFeeds(ctx,src2,layout){
@@ -1462,37 +1243,6 @@ function placePanner(ctx,az,el){ const p=ctx.createPanner(); p.panningModel='HRT
   const a=az*Math.PI/180, e=el*Math.PI/180;
   p.positionX.value=Math.sin(a)*Math.cos(e); p.positionY.value=Math.sin(e); p.positionZ.value=-Math.cos(a)*Math.cos(e);
   return p; }
-function getWavOrder(layout){
-  const keys=LAYOUTS[layout];
-  const allBits=keys.every(k=>SP[k].bit>0 || k==='LFE');
-  if(layout==='9.1.6'||!allBits) return {order:keys.slice(), mask:0};
-  const ord=keys.slice().sort((a,b)=>SP[a].bit-SP[b].bit);
-  const mask=keys.reduce((m,k)=>m|SP[k].bit,0);
-  return {order:ord, mask};
-}
-
-/* ---- multichannel WAVE_FORMAT_EXTENSIBLE writer ---- */
-function writeWAVMultiExt(buf,bitDepth,mask){
-  const ch=buf.numberOfChannels,sr=buf.sampleRate,n=buf.length,float=bitDepth===32,bps=bitDepth/8;
-  const blockAlign=ch*bps,dataLen=n*blockAlign,fmtLen=40;
-  const ab=new ArrayBuffer(12+(8+fmtLen)+(8+dataLen)),v=new DataView(ab);
-  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
-  ws(0,'RIFF'); v.setUint32(4,4+(8+fmtLen)+(8+dataLen),true); ws(8,'WAVE');
-  ws(12,'fmt '); v.setUint32(16,fmtLen,true);
-  v.setUint16(20,0xFFFE,true); v.setUint16(22,ch,true); v.setUint32(24,sr,true);
-  v.setUint32(28,sr*blockAlign,true); v.setUint16(32,blockAlign,true); v.setUint16(34,bitDepth,true);
-  v.setUint16(36,22,true); v.setUint16(38,bitDepth,true); v.setUint32(40,mask>>>0,true);
-  // SubFormat GUID
-  const guid=float?[0x03,0,0,0]:[0x01,0,0,0]; const tail=[0,0,0x10,0,0x80,0,0,0xAA,0,0x38,0x9B,0x71];
-  guid.concat(tail).forEach((b,i)=>v.setUint8(44+i,b));
-  ws(60,'data'); v.setUint32(64,dataLen,true);
-  let off=68; const data=[]; for(let c=0;c<ch;c++)data.push(buf.getChannelData(c));
-  for(let i=0;i<n;i++)for(let c=0;c<ch;c++){ let s=data[c][i];
-    if(float){v.setFloat32(off,s,true);off+=4;}
-    else{ s=clamp(s,-1,1); const iv=Math.round(s<0?s*0x800000:s*0x7FFFFF); v.setUint8(off,iv&255);v.setUint8(off+1,(iv>>8)&255);v.setUint8(off+2,(iv>>16)&255);off+=3; } }
-  return new Blob([ab],{type:'audio/wav'});
-}
-
 /* ---- ADM BWF (ITU-R BS.2076) : bext + fmt + data + chna + axml ---- */
 function buildADMxml(layout,sr,bitDepth){
   const keys=LAYOUTS[layout]; const hx=n=>n.toString(16).toUpperCase().padStart(4,'0');
@@ -1558,7 +1308,7 @@ function writeADMBWF(buf,layout,bitDepth){
   u16(22); u16(bitDepth); u32(0); [0x01,0,0,0,0,0,0x10,0,0x80,0,0,0xAA,0,0x38,0x9B,0x71].forEach(b=>v.setUint8(o++,b));
   // data
   ws('data'); u32(dataLen); { const data=[]; for(let c=0;c<ch;c++)data.push(buf.getChannelData(c));
-    for(let i=0;i<n;i++)for(let c=0;c<ch;c++){ let s=clamp(data[c][i],-1,1); const iv=Math.round(s<0?s*0x800000:s*0x7FFFFF);
+    for(let i=0;i<n;i++)for(let c=0;c<ch;c++){ const s=clamp(data[c][i],-1,1); const iv=Math.round(s<0?s*0x800000:s*0x7FFFFF);
       v.setUint8(o++,iv&255); v.setUint8(o++,(iv>>8)&255); v.setUint8(o++,(iv>>16)&255); } }
   // chna
   ws('chna'); u32(chnaLen); u16(numUIDs); u16(numUIDs);
@@ -1584,7 +1334,8 @@ async function renderImmersive(){
     const master=await renderMaster(srSel);          // stereo, normalized + limited
     prog.querySelector('i').style.width='40%';
     const sr=master.sampleRate, len=master.length;
-    let outBuf, blob, name, bit=parseInt(($('#fmt').value.match(/32/)?'32':'24'));
+    const bit=parseInt($('#fmt').value.match(/32/)?'32':'24',10);
+    let outBuf, blob, name;
     if(IM.target==='binaural'){
       const oac=createOfflineAudioContext(2,len,sr);
       const src=oac.createBufferSource(); src.buffer=master;

@@ -263,10 +263,16 @@
 <option value="96000">96 kHz</option>
 <option value="192000">192 kHz</option>
 </select></div>
+<div class="field"><span class="fl">Dither</span>
+<select id="dither">
+<option value="tpdf">TPDF (recommended for 16-bit)</option>
+<option value="shaped">Noise-shaped TPDF</option>
+<option value="none">None (truncate)</option>
+</select></div>
 </div>
 <button class="btn primary" id="exportBtn" style="margin-top:14px; padding:12px 24px; font-size:14px; font-weight:700">⤓ Render &amp; export master</button>
 <div class="prog" id="exProg"><i></i></div>
-<div class="hint" style="margin-top:10px">All exports include loudness normalization, true-peak limiting (per your ceiling setting), and optional format/rate conversion. FLAC/AAC need post-processing with ffmpeg.</div>
+<div class="hint" style="margin-top:10px">All exports include loudness normalization and true-peak limiting to your ceiling, measured with the ITU-R BS.1770-4 polyphase filter. Dither is applied only when quantizing to fixed point &mdash; 32-bit float exports are never dithered. FLAC/AAC need post-processing with ffmpeg.</div>
 </div>
 <!-- TAB: IMMERSIVE -->
 <div class="tpanel" data-tab="immersive" id="secImmersive" style="padding:20px 16px">
