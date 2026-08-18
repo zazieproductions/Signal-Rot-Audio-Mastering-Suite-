@@ -1179,9 +1179,6 @@ export function boot() {
     engine.applyParams();
   });
 
-  // Section collapse (legacy).
-  $$('.sec>.sh').forEach((h) => h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
-
   // Resize → invalidate waveform cache.
   window.addEventListener('resize', () => {
     wavePeaks = null;
