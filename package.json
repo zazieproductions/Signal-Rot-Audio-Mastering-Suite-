@@ -1,14 +1,32 @@
 {
   "name": "signal-rot-mastering-suite",
+  "version": "6.1.0",
   "private": true,
-  "version": "6.0.0",
   "type": "module",
+  "description": "Signal Rot — a browser-native audiophile mastering, loudness, and immersive audio laboratory built on the Web Audio API.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint src tests",
+    "format": "prettier --write \"src/**/*.{js,css}\" \"tests/**/*.js\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run lint && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@breezystack/lamejs": "^1.2.7"
   },
   "devDependencies": {
-    "vite": "^7.1.2"
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "jsdom": "^30.0.1",
+    "prettier": "^3.9.6",
+    "vite": "^7.1.2",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

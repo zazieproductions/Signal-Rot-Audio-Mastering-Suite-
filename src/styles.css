@@ -175,3 +175,32 @@ input[type=file]{display:none}
   .presets{grid-template-columns:1fr}
   .meters-row{grid-template-columns:1fr 1fr}
 }
+
+/* ===== SIGNAL FLOW VIEW ===== */
+.flowlist{display:flex; flex-direction:column; gap:8px; margin-bottom:14px}
+.flowrow{display:flex; align-items:center; gap:12px; background:var(--panel2); border:1px solid var(--line2); border-radius:8px; padding:9px 12px}
+.flowrow .fidx{font:700 12px var(--mono); color:var(--proc); width:18px; text-align:center; flex:none}
+.flowrow .fbody{flex:1; min-width:0}
+.flowrow .fname{font:600 12px var(--ui); color:var(--text)}
+.flowrow .fdesc{font:500 10px var(--mono); color:var(--faint); margin-top:1px}
+.warnlist{display:flex; flex-direction:column; gap:6px; margin-bottom:12px}
+.warn{font:500 11px var(--mono); color:var(--hot); background:color-mix(in srgb,var(--hot) 8%,transparent); border:1px solid color-mix(in srgb,var(--hot) 35%,transparent); border-radius:6px; padding:6px 10px}
+
+/* ===== MULTIBAND / SOLO / GR ===== */
+.mbgrid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px}
+@media(max-width:700px){.mbgrid{grid-template-columns:1fr}}
+.mbgrid .row{flex-wrap:wrap}
+.solorow{display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap}
+.solobtn{min-height:26px; padding:4px 10px; font-size:11px}
+.solobtn.on{border-color:var(--proc); color:var(--proc)}
+.grmet{font:600 10px var(--mono); color:var(--faint); margin-left:6px}
+
+/* ===== REPORT / DIAGNOSTICS ===== */
+.reportbox{font:500 11px/1.5 var(--mono); color:var(--muted); background:var(--panel2); border:1px solid var(--line2); border-radius:8px; padding:12px; white-space:pre-wrap; margin:8px 0 12px; max-height:280px; overflow:auto}
+
+/* ===== ACCESSIBILITY / FOCUS / MOTION ===== */
+button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible{outline:2px solid var(--proc); outline-offset:2px}
+button:disabled{opacity:.45; cursor:not-allowed}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important; transition-duration:.001ms !important}
+}
