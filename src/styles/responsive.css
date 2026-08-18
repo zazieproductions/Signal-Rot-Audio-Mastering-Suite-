@@ -1,0 +1,112 @@
+/* ============================================================================
+   Responsive behaviour. The mastering-console density is preserved on desktop;
+   on narrow screens the grids collapse rather than shrink, because a 40 px
+   slider is useless.
+   ============================================================================ */
+
+@media (max-width: 980px) {
+  .scopes {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  header {
+    padding: 0 12px;
+    gap: 8px;
+    height: auto;
+    min-height: 52px;
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+    padding-top: 8px;
+  }
+  header .logo {
+    font-size: 12px;
+  }
+  header .badge {
+    display: none;
+  }
+  .main {
+    padding: 12px;
+    gap: 12px;
+  }
+  .transport {
+    padding: 8px 10px;
+  }
+  .tt {
+    max-width: 100%;
+    order: 10;
+    flex-basis: 100%;
+  }
+  .two {
+    grid-template-columns: 1fr;
+  }
+  .tab {
+    padding: 9px 13px;
+    font-size: 10px;
+  }
+  .tpanel {
+    padding: 16px 12px;
+  }
+  .export-grid,
+  .presets {
+    grid-template-columns: 1fr 1fr;
+  }
+  .gr-row {
+    grid-template-columns: 1fr;
+  }
+  .ctl .num {
+    min-width: 68px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 520px) {
+  .export-grid,
+  .presets {
+    grid-template-columns: 1fr;
+  }
+  .meters-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .meter .val {
+    font-size: 18px;
+  }
+  .flow {
+    padding: 10px;
+  }
+  .flow-arrow {
+    display: none;
+  }
+}
+
+/* Touch targets: the WCAG 2.2 target-size minimum is 24×24 CSS px; interactive
+   controls here are 32–34 px, and range thumbs get extra padding on coarse
+   pointers. */
+@media (pointer: coarse) {
+  input[type='range'] {
+    height: 10px;
+    margin: 8px 0;
+  }
+  input[type='range']::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    margin-top: -7px;
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  .tab {
+    padding: 12px 16px;
+  }
+}
+
+@media print {
+  header,
+  .tabs,
+  .transport,
+  .flow {
+    display: none;
+  }
+}
