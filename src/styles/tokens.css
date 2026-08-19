@@ -1,0 +1,90 @@
+/* ============================================================================
+   Design tokens — the Signal Rot palette.
+
+   The identity is fixed and deliberate:
+     --orig  cyan    the ORIGINAL, unprocessed signal
+     --proc  orange  the PROCESSED signal
+   Those two colours mean the same thing in every meter, every scope, every
+   waveform and every button in the application. Do not reuse them for anything
+   else, and do not introduce a third accent.
+   ============================================================================ */
+
+:root {
+  --bg: #0a0c0e;
+  --panel: #0f1318;
+  --panel2: #141a21;
+  --rack: #11161c;
+  --line: #222b34;
+  --line2: #2c3742;
+  --text: #e7eef4;
+  --muted: #8a97a4;
+  --faint: #5d6b78;
+
+  --orig: #36d1c4;
+  --proc: #f5a623;
+  --hot: #ff4d57;
+  --ok: #6ee7a8;
+  --warn: #ffc861;
+  --grid: #1a222a;
+
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 12px 30px -18px rgba(0, 0, 0, 0.8);
+  --r: 7px;
+
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--proc);
+  --motion: 0.12s;
+}
+
+[data-theme='light'] {
+  --bg: #eceae3;
+  --panel: #f7f5ef;
+  --panel2: #fbfaf6;
+  --rack: #f2efe8;
+  --line: #d8d3c7;
+  --line2: #c8c2b4;
+  --text: #1c2127;
+  --muted: #5f6873;
+  --faint: #7a8390;
+
+  --orig: #0a8f86;
+  --proc: #b3690f;
+  --hot: #c4272f;
+  --ok: #14794b;
+  --warn: #96650a;
+  --grid: #ddd8cc;
+
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 14px 30px -20px rgba(0, 0, 0, 0.25);
+}
+
+/* High-contrast preference: strengthen every border and text colour rather than
+   switching palette, so the laboratory look survives. */
+@media (prefers-contrast: more) {
+  :root {
+    --line: #465561;
+    --line2: #5d6f7e;
+    --muted: #b6c2cd;
+    --faint: #8f9daa;
+  }
+  [data-theme='light'] {
+    --line: #9a9384;
+    --line2: #7d7768;
+    --muted: #3b434d;
+    --faint: #4d5660;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion: 0.001s;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,185 @@
+/* ============================================================================
+   Meters, scopes, waveform, speaker map, match curve.
+   ============================================================================ */
+
+.meters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  gap: 10px;
+}
+.meter {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.meter .val {
+  font: 700 22px var(--mono);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.meter .lbl {
+  font: 500 9px var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.meter .sub {
+  font: 500 10px var(--mono);
+  color: var(--faint);
+  margin-top: 1px;
+  min-height: 13px;
+}
+.meter .bar {
+  height: 4px;
+  background: var(--grid);
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.meter .bar i {
+  display: block;
+  height: 100%;
+  background: var(--proc);
+  border-radius: 3px;
+  transition: width 0.15s linear;
+}
+.meter.over .val {
+  color: var(--hot);
+}
+
+/* Per-band gain-reduction meters */
+.gr-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 10px 0 16px;
+}
+.gr {
+  background: var(--panel2);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.gr .t {
+  font: 600 9px var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+.gr .v {
+  font: 700 14px var(--mono);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+.gr .track {
+  height: 5px;
+  background: var(--grid);
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.gr .track i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--hot);
+  border-radius: 3px;
+  transition: width 0.08s linear;
+}
+.gr .set {
+  font: 500 9px var(--mono);
+  color: var(--faint);
+  margin-top: 5px;
+}
+
+.scopes {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 10px;
+}
+.scopes canvas,
+canvas.viz {
+  width: 100%;
+  display: block;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.scopes canvas {
+  height: 190px;
+}
+
+#wave {
+  width: 100%;
+  height: 120px;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+#spkmap {
+  height: 240px;
+}
+#matchViz {
+  height: 130px;
+  margin-top: 8px;
+}
+#crossoverViz {
+  height: 120px;
+  margin-top: 8px;
+}
+#loudnessGraph {
+  height: 120px;
+  margin-top: 8px;
+}
+
+.viz-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font: 500 10px var(--mono);
+  color: var(--faint);
+  margin-top: 6px;
+}
+.viz-legend .k {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.render-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.render-history .rh {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel2);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: 500 11px var(--mono);
+}
+.render-history .rh .when {
+  color: var(--faint);
+}
+.render-history .rh .sum {
+  flex: 1;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.render-history .rh.over .sum {
+  color: var(--hot);
+}

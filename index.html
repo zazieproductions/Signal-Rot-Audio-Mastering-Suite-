@@ -1,338 +1,505 @@
-<!DOCTYPE html>
-<!DOCTYPE html>
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Signal Rot // Master — a browser-native mastering and immersive-audio laboratory built on the Web Audio API."
+    />
+    <meta name="color-scheme" content="dark light" />
+    <title>SIGNAL ROT // MASTER</title>
+    <link rel="stylesheet" href="./src/styles/index.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to controls</a>
+    <div class="app">
+      <header>
+        <span class="logo">SIGNAL ROT // MASTER</span>
+        <span class="badge" id="engineBadge">web dsp</span>
+        <span class="spacer"></span>
+        <button class="btn ghost" id="undoBtn" title="Undo (Ctrl/Cmd+Z)" disabled>↶</button>
+        <button class="btn ghost" id="redoBtn" title="Redo (Ctrl/Cmd+Shift+Z)" disabled>↷</button>
+        <button class="btn ghost" id="paletteBtn" title="Command palette (Ctrl/Cmd+K)">⌘K</button>
+        <button class="btn ghost" id="loadPresetBtn">Load .json</button>
+        <button class="btn ghost" id="savePresetBtn">Save .json</button>
+        <button class="icbtn" id="themeBtn" aria-label="Switch to light theme">◐</button>
+        <button class="btn primary" id="importBtn">＋ Import audio</button>
+        <input
+          id="fileInput"
+          type="file"
+          accept="audio/*,.wav,.mp3,.flac,.aiff,.aif,.m4a,.ogg,.opus"
+        />
+        <input id="presetInput" type="file" accept=".json,application/json" />
+        <a class="dl" id="dlAnchor" aria-hidden="true"></a>
+      </header>
 
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
-<title>SIGNAL ROT // MASTER</title>
-<link href="./src/styles.css" rel="stylesheet"/>
-</head>
-<body>
-<div class="app">
-<!-- HEADER -->
-<header>
-<span class="logo">SIGNAL ROT // MASTER</span>
-<span class="badge">web dsp</span>
-<span class="spacer"></span>
-<button class="btn ghost" id="loadPreset">Load .json</button>
-<button class="btn ghost" id="savePreset">Save .json</button>
-<button class="icbtn" id="theme" title="Toggle theme">◐</button>
-<button class="btn primary" id="importBtn">＋ Import audio</button>
-<input accept="audio/*,.wav,.mp3,.flac,.aiff,.aif,.m4a,.ogg,.opus" id="fileInput" type="file"/>
-<input accept=".json" id="presetInput" type="file"/>
-<a class="dl" id="dlAnchor"></a>
-</header>
-<!-- MAIN CONTENT -->
-<div class="main">
-<!-- TRANSPORT CARD -->
-<div class="card" id="transportCard">
-<div class="transport" id="transportEmpty">
-<div class="empty drop" id="dropzone" style="width:100%">
-<div style="font-size:26px">🜔</div>
-<div style="font-weight:600;color:var(--text)">Drop audio, or click Import</div>
-<div class="hint">WAV · MP3 · FLAC · AIFF · M4A  |  16-bit → 32-bit float · up to 192 kHz<br/>Decoding uses your browser's codecs — formats vary by browser (Chrome decodes the widest set).</div>
-</div>
-</div>
-<div class="transport" id="transportFull" style="display:none">
-<button class="icbtn" id="playBtn" title="Play / pause (space)">▶</button>
-<button class="icbtn" id="stopBtn" title="Stop">■</button>
-<div class="seg" title="Audition original vs processed (X)">
-<button data-k="A" id="abA">Original</button>
-<button class="on" data-k="B" id="abB">Processed</button>
-</div>
-<label class="matchbox"><span class="tog" id="matchTog"></span> Match loudness</label>
-<div class="tt" id="fileName">—</div>
-<div class="time" id="timeLabel" style="margin-left:auto">0:00 / 0:00</div>
-</div>
-</div>
-<!-- WAVEFORM -->
-<div class="card" id="waveCard" style="display:none">
-<div class="hd"><span>Waveform</span><span class="sp"><span class="srlabel" id="srlabel"></span></span></div>
-<canvas id="wave" style="width:100%;height:100px"></canvas>
-</div>
-<!-- METERS -->
-<div class="meters-row" id="metersRow" style="display:none">
-<div class="meter"><div class="val" id="mLUFS">—</div><div class="lbl">Integrated LUFS</div><div class="sub" id="mLUFSsub"></div><div class="bar"><i id="barLUFS"></i></div></div>
-<div class="meter"><div class="val" id="mST">—</div><div class="lbl">Short-term</div><div class="bar"><i id="barST"></i></div></div>
-<div class="meter"><div class="val" id="mMom">—</div><div class="lbl">Momentary</div></div>
-<div class="meter"><div class="val" id="mTP">—</div><div class="lbl">True peak</div><div class="sub" id="mTPsub"></div><div class="bar"><i id="barTP"></i></div></div>
-<div class="meter"><div class="val" id="mLRA">—</div><div class="lbl">LRA</div><div class="bar"><i id="barLRA"></i></div></div>
-<div class="meter"><div class="val" id="mRMS">—</div><div class="lbl">RMS</div></div>
-<div class="meter"><div class="val" id="mCorr">—</div><div class="lbl">Correlation</div><div class="sub" id="mCorrTxt"></div><div class="bar"><i id="barCorr" style="width:50%"></i></div></div>
-</div>
-<!-- ANALYSIS HINT -->
-<div class="hint" id="analyzeHint" style="display:none">Live meters update during playback. <b>Integrated LUFS / LRA</b> are computed by an offline gated (BS.1770) pass after each change — press <button class="btn ghost" id="reanalyze" style="padding:3px 9px">Re-analyze</button> to force it.</div>
-<!-- SCOPES -->
-<div class="scopes" id="scopesRow" style="display:none">
-<div style="position:relative">
-<canvas id="spectrum"></canvas>
-<div id="specLeg" style="position:absolute;top:6px;right:8px;font:500 9px var(--mono);color:var(--faint)"></div>
-</div>
-<canvas id="gonio"></canvas>
-</div>
-<!-- TAB CONTROLS -->
-<div class="card">
-<div class="tabs">
-<div class="tab on" data-tab="presets">Presets</div>
-<div class="tab" data-tab="loudness">Loudness</div>
-<div class="tab" data-tab="dynamics">Dynamics</div>
-<div class="tab" data-tab="tone">Tone</div>
-<div class="tab" data-tab="match">Match</div>
-<div class="tab" data-tab="stereo">Stereo</div>
-<div class="tab" data-tab="spatial">Spatial</div>
-<div class="tab" data-tab="character">Character</div>
-<div class="tab" data-tab="export">Export</div>
-<div class="tab" data-tab="immersive">Immersive</div>
-<div class="tab" data-tab="batch">Batch</div>
-</div>
-<!-- TAB: PRESETS -->
-<div class="tpanel on" data-tab="presets" style="padding:20px 16px">
-<div class="grouplab">✦ Dimension — the new engines</div>
-<div class="presets" id="dimensionPresets"></div>
-<div class="grouplab">Genre / character — one-tap masters</div>
-<div class="presets" id="genrePresets"></div>
-<div class="grouplab">Cinematic / scoring</div>
-<div class="presets" id="cinematicPresets"></div>
-<div class="grouplab">Mood</div>
-<div class="presets" id="moodPresets"></div>
-<div class="grouplab">Color</div>
-<div class="presets" id="colorPresets"></div>
-<div class="grouplab">Spatial</div>
-<div class="presets" id="spatialPresets"></div>
-<button class="btn ghost" id="resetParams" style="margin-top:6px">↺ Reset to flat (transparent)</button>
-</div>
-<!-- TAB: LOUDNESS -->
-<div class="tpanel" data-tab="loudness" style="padding:20px 16px; max-width:600px">
-<div class="togrow"><label>Normalize to target LUFS</label><span class="tog on" data-bind="normalize"></span></div>
-<div class="ctl"><div class="row"><label>Target integrated</label><span class="num" id="vTarget">-14.0 LUFS</span></div>
-<input id="rTarget" max="-6" min="-24" step="0.5" type="range" value="-14"/></div>
-<div class="field"><span class="fl">True-peak ceiling</span>
-<select id="ceiling">
-<option value="-1.0">-1.0 dBTP (safe / lossy-encode headroom)</option>
-<option value="-0.5">-0.5 dBTP</option>
-<option value="-0.3">-0.3 dBTP</option>
-<option value="-0.2">-0.2 dBTP</option>
-<option selected="" value="-0.1">-0.1 dBTP (max loud)</option>
-</select></div>
-<div class="ctl"><div class="row"><label>Limiter drive</label><span class="num" id="vDrive">0.0 dB</span></div>
-<input id="rDrive" max="12" min="0" step="0.1" type="range" value="0"/></div>
-<div class="hint">Preview uses a soft limiter. <b>Export</b> runs a sample-accurate look-ahead true-peak limiter with 4× oversampled inter-sample detection.</div>
-</div>
-<!-- TAB: DYNAMICS — multiband compressor + transient shaper -->
-<div class="tpanel" data-tab="dynamics" style="padding:20px 16px; max-width:600px">
-<div class="grouplab">3-band mastering compressor — LR4 crossovers @ 140 Hz / 3.2 kHz</div>
-<div class="ctl"><div class="row"><label>Low band — glue &amp; weight</label><span class="num" id="vMbLow">0</span></div>
-<input id="rMbLow" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Mid band — density &amp; body</label><span class="num" id="vMbMid">0</span></div>
-<input id="rMbMid" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>High band — polish &amp; control</label><span class="num" id="vMbHigh">0</span></div>
-<input id="rMbHigh" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="two">
-<div class="ctl"><div class="row"><label>Parallel mix</label><span class="num" id="vMbMix">100%</span></div>
-<input id="rMbMix" max="100" min="0" step="1" type="range" value="100"/></div>
-<div class="field"><span class="fl">Ballistics</span>
-<select id="mbSpeed">
-<option value="fast">Fast — transparent grip</option>
-<option selected="" value="med">Medium — musical glue</option>
-<option value="slow">Slow — deep breathing</option>
-</select></div>
-</div>
-<div class="hint">Below 100% mix = New-York-style parallel compression: the crushed signal blended under the untouched one. Compressed density with the transients intact — the audiophile move.</div>
-<div class="grouplab" style="margin-top:20px">Transient shaper — sample-accurate at export</div>
-<div class="ctl"><div class="row"><label>Attack — punch emphasis</label><span class="num" id="vTrA">0</span></div>
-<input id="rTrA" max="100" min="-100" step="1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Sustain — body emphasis</label><span class="num" id="vTrS">0</span></div>
-<input id="rTrS" max="100" min="-100" step="1" type="range" value="0"/></div>
-<div class="hint">Differential-envelope processing with channel-linked detection (no image wander). Applied during export render — the live preview does not include it.</div>
-</div>
-<!-- TAB: MATCH — reference matching EQ -->
-<div class="tpanel" data-tab="match" style="padding:20px 16px; max-width:600px">
-<div class="grouplab">Reference match — fingerprint another master's tonal balance</div>
-<button class="btn ghost" id="refLoad" style="margin-bottom:8px">＋ Load reference track</button>
-<input accept="audio/*,.wav,.mp3,.flac,.aiff,.aif,.m4a,.ogg,.opus" id="refInput" type="file"/>
-<div class="hint" id="refName" style="margin-bottom:12px">No reference loaded.</div>
-<button class="btn primary" id="matchBtn" style="margin-bottom:12px">⌖ Analyze &amp; match spectrum</button>
-<div class="ctl"><div class="row"><label>Match strength</label><span class="num" id="vMatch">0%</span></div>
-<input id="rMatch" max="100" min="0" step="1" type="range" value="0"/></div>
-<canvas id="matchViz" style="width:100%;height:120px;background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-top:8px"></canvas>
-<div class="hint">Both tracks are FFT-fingerprinted (24 hann-windowed frames, 8 log-spaced mastering bands: 60 Hz → 12 kHz), the tonal difference is computed with net-gain bias removed, clamped ±8 dB, and applied as an 8-band correction curve. Strength scales it live.</div>
-</div>
-<!-- TAB: CHARACTER — analog soul -->
-<div class="tpanel" data-tab="character" style="padding:20px 16px; max-width:600px">
-<div class="grouplab">Tape — wow, flutter &amp; head bump</div>
-<div class="ctl"><div class="row"><label>Tape amount</label><span class="num" id="vTape">0%</span></div>
-<input id="rTape" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Hiss bed</label><span class="num" id="vHiss">0%</span></div>
-<input id="rHiss" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="grouplab" style="margin-top:16px">Vinyl — crackle, rumble &amp; roll-off</div>
-<div class="ctl"><div class="row"><label>Vinyl amount</label><span class="num" id="vVinyl">0%</span></div>
-<input id="rVinyl" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="hint">Tape modulates a real delay line with dual LFOs (0.4 Hz wow ±1.2 ms, 6.7 Hz flutter ±0.18 ms) plus a +3.5 dB head-bump resonance at 60 Hz. Vinyl adds sparse crackle impulses, sub-45 Hz rumble, and a progressive top-end roll to 15 kHz. All rendered in the export — not decorative UI noise.</div>
-</div>
-<!-- TAB: TONE -->
-<div class="tpanel" data-tab="tone" style="padding:20px 16px; max-width:600px">
-<div class="ctl"><div class="row"><label>Sub — low shelf 55 Hz</label><span class="num" id="vSub">0.0 dB</span></div>
-<input id="rSub" max="12" min="-12" step="0.1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Warmth — low shelf 170 Hz</label><span class="num" id="vWarm">0.0 dB</span></div>
-<input id="rWarm" max="12" min="-12" step="0.1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Body — peaking 700 Hz</label><span class="num" id="vBody">0.0 dB</span></div>
-<input id="rBody" max="12" min="-12" step="0.1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Harshness — peaking 3 kHz</label><span class="num" id="vHarsh">0.0 dB</span></div>
-<input id="rHarsh" max="12" min="-12" step="0.1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Clarity — presence shelf 5 kHz</label><span class="num" id="vClar">0.0 dB</span></div>
-<input id="rClar" max="12" min="-12" step="0.1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Air — high shelf 12 kHz</label><span class="num" id="vAir">0.0 dB</span></div>
-<input id="rAir" max="12" min="-12" step="0.1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Tilt — spectrum tilt</label><span class="num" id="vTilt">0.0 dB</span></div>
-<input id="rTilt" max="6" min="-6" step="0.1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Saturation — harmonic drive</label><span class="num" id="vSat">0%</span></div>
-<input id="rSat" max="100" min="0" step="1" type="range" value="0"/></div>
-</div>
-<!-- TAB: STEREO -->
-<div class="tpanel" data-tab="stereo" style="padding:20px 16px; max-width:600px">
-<div class="ctl"><div class="row"><label>Width (mono → ultra-wide)</label><span class="num" id="vWidth">100%</span></div>
-<input id="rWidth" max="250" min="0" step="1" type="range" value="100"/></div>
-<div class="ctl"><div class="row"><label>Mid / Side balance</label><span class="num" id="vMS">0</span></div>
-<input id="rMS" max="100" min="-100" step="1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Bass mono below</label><span class="num" id="vBass">off</span></div>
-<input id="rBass" max="400" min="0" step="5" type="range" value="0"/></div>
-<div class="two">
-<div class="ctl"><div class="row"><label>Haas</label><span class="num" id="vHaas">0 ms</span></div>
-<input id="rHaas" max="35" min="0" step="0.5" type="range" value="0"/></div>
-<div class="field"><span class="fl">Haas delay side</span>
-<select id="haasSide"><option value="1">Right</option><option value="-1">Left</option></select></div>
-</div>
-<div class="ctl"><div class="row"><label>Crossfeed (headphone glue)</label><span class="num" id="vCF">0%</span></div>
-<input id="rCF" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="ctl"><div class="row"><label>Phase rotation (side)</label><span class="num" id="vPR">0%</span></div>
-<input id="rPR" max="100" min="0" step="1" type="range" value="0"/></div>
-</div>
-<!-- TAB: SPATIAL -->
-<div class="tpanel" data-tab="spatial" id="secSpatial" style="padding:20px 16px; max-width:600px">
-<div class="grouplab">Multi-dimensional width — per-band stereo field</div>
-<div class="ctl"><div class="row"><label>Low width — &lt;250 Hz (keep narrow for punch)</label><span class="num" id="vWLow">100%</span></div>
-<input id="rWLow" max="200" min="0" step="1" type="range" value="100"/></div>
-<div class="ctl"><div class="row"><label>Mid width — 250 Hz–4 kHz (the anchor)</label><span class="num" id="vWMid">100%</span></div>
-<input id="rWMid" max="200" min="0" step="1" type="range" value="100"/></div>
-<div class="ctl"><div class="row"><label>High width — &gt;4 kHz (air &amp; sparkle)</label><span class="num" id="vWHigh">100%</span></div>
-<input id="rWHigh" max="250" min="0" step="1" type="range" value="100"/></div>
-<div class="hint">Narrow bass + anchored mids + wide highs is the dimensional signature of expensive masters. These operate on the side channel per-band, before the master width control.</div>
-<div class="grouplab" style="margin-top:18px">Depth engine — front-to-back dimension</div>
-<div class="two">
-<div class="ctl"><div class="row"><label>Depth</label><span class="num" id="vDepth">0%</span></div>
-<input id="rDepth" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="field"><span class="fl">Space size</span>
-<select id="depthSize">
-<option value="small">Small — tight room</option>
-<option selected="" value="med">Medium — studio live room</option>
-<option value="large">Large — hall bloom</option>
-</select></div>
-</div>
-<div class="hint">Filtered early reflections (not reverb) — adds the sensation of a physical space behind the mix without washing detail. Two staggered taps, high-rolled to sit behind the direct signal.</div>
-<div class="grouplab" style="margin-top:18px">Binaural</div>
-<div class="togrow"><label>Binaural processing (crossfeed-based HRTF)</label><span class="tog" data-bind="binaural"></span></div>
-<div class="ctl"><div class="row"><label>Spatial spread</label><span class="num" id="vSpread">0%</span></div>
-<input id="rSpread" max="100" min="0" step="1" type="range" value="0"/></div>
-<div class="hint">True HRTF needs measured impulse responses; this uses crossfeed + inter-aural delay + width. The 360° presets push decorrelation to the safe edge of mono compatibility — watch the correlation meter.</div>
-</div>
-<!-- TAB: EXPORT -->
-<div class="tpanel" data-tab="export" id="secExport" style="padding:20px 16px">
-<div class="grouplab">Quick export presets</div>
-<div class="export-grid">
-<button class="expbtn" data-fmt="wav24" data-sr="192000">Hi-Res WAV · 24-bit/192kHz</button>
-<button class="expbtn" data-fmt="wav16" data-sr="44100">CD Quality · 16-bit/44.1kHz</button>
-<button class="expbtn" data-fmt="wav32" data-sr="0">Lossless Master · 32-bit float</button>
-<button class="expbtn" data-fmt="mp3" data-sr="0">MP3 · 320 kbps</button>
-</div>
-<div class="grouplab">Custom format &amp; rate</div>
-<div class="two" style="max-width:500px">
-<div class="field"><span class="fl">Format</span>
-<select id="fmt">
-<option value="wav24">WAV 24-bit PCM</option>
-<option value="wav16">WAV 16-bit PCM (CD)</option>
-<option value="wav32">WAV 32-bit float</option>
-<option value="aif24">AIFF 24-bit PCM</option>
-<option value="mp3">MP3 320 kbps</option>
-</select></div>
-<div class="field"><span class="fl">Sample rate</span>
-<select id="srOut">
-<option selected="" value="0">Preserve original</option>
-<option value="44100">44.1 kHz (CD)</option>
-<option value="48000">48 kHz</option>
-<option value="96000">96 kHz</option>
-<option value="192000">192 kHz</option>
-</select></div>
-<div class="field"><span class="fl">Dither</span>
-<select id="dither">
-<option value="tpdf">TPDF (recommended for 16-bit)</option>
-<option value="shaped">Noise-shaped TPDF</option>
-<option value="none">None (truncate)</option>
-</select></div>
-</div>
-<button class="btn primary" id="exportBtn" style="margin-top:14px; padding:12px 24px; font-size:14px; font-weight:700">⤓ Render &amp; export master</button>
-<div class="prog" id="exProg"><i></i></div>
-<div class="hint" style="margin-top:10px">All exports include loudness normalization and true-peak limiting to your ceiling, measured with the ITU-R BS.1770-4 polyphase filter. Dither is applied only when quantizing to fixed point &mdash; 32-bit float exports are never dithered. FLAC/AAC need post-processing with ffmpeg.</div>
-</div>
-<!-- TAB: IMMERSIVE -->
-<div class="tpanel" data-tab="immersive" id="secImmersive" style="padding:20px 16px">
-<div class="two" style="max-width:500px; margin-bottom:16px">
-<div class="field"><span class="fl">Output layout</span>
-<select id="imLayout">
-<option selected="" value="off">Stereo (off)</option>
-<option value="5.1">5.1 Surround — L R C LFE Ls Rs</option>
-<option value="7.1">7.1 Surround — +Lrs Rrs</option>
-<option value="7.1.2">7.1.2 Atmos — +2 front heights</option>
-<option value="7.1.4">7.1.4 Atmos — +4 heights</option>
-<option value="9.1.6">9.1.6 Atmos — +wides +6 heights</option>
-<option value="soniclab">Sonic Lab 20.4 — ABPU Linz · 24ch periphonic</option>
-</select></div>
-<div class="field"><span class="fl">Delivery format</span>
-<select id="imTarget">
-<option selected="" value="wavmc">Multichannel WAV (channel bed)</option>
-<option value="adm">ADM BWF — Atmos / 360RA / MPEG-H interchange</option>
-<option value="binaural">Binaural downmix (headphones)</option>
-</select></div>
-</div>
-<canvas id="spkmap"></canvas>
-<div class="ctl"><div class="row"><label>Center extraction</label><span class="num" id="vImC">50%</span></div>
-<input id="rImC" max="100" min="0" step="1" type="range" value="50"/></div>
-<div class="ctl"><div class="row"><label>Surround level</label><span class="num" id="vImS">-3.0 dB</span></div>
-<input id="rImS" max="6" min="-24" step="0.5" type="range" value="-3"/></div>
-<div class="ctl"><div class="row"><label>Surround delay</label><span class="num" id="vImSd">12 ms</span></div>
-<input id="rImSd" max="40" min="0" step="1" type="range" value="12"/></div>
-<div class="ctl"><div class="row"><label>Height level</label><span class="num" id="vImH">-6.0 dB</span></div>
-<input id="rImH" max="3" min="-30" step="0.5" type="range" value="-6"/></div>
-<div class="ctl"><div class="row"><label>Height decorrelation</label><span class="num" id="vImHd">50%</span></div>
-<input id="rImHd" max="100" min="0" step="1" type="range" value="50"/></div>
-<div class="two">
-<div class="ctl"><div class="row"><label>LFE x-over</label><span class="num" id="vImLf">120 Hz</span></div>
-<input id="rImLf" max="200" min="40" step="5" type="range" value="120"/></div>
-<div class="ctl"><div class="row"><label>LFE level</label><span class="num" id="vImLl">-3 dB</span></div>
-<input id="rImLl" max="10" min="-24" step="1" type="range" value="-3"/></div>
-</div>
-<div class="ctl"><div class="row"><label>Front ↔ surround balance</label><span class="num" id="vImFr">center</span></div>
-<input id="rImFr" max="100" min="0" step="1" type="range" value="50"/></div>
-<label class="matchbox" style="margin:14px 0"><span class="tog" id="imPrevTog"></span> Preview in binaural (headphones)</label>
-<button class="btn primary" id="imExport" style="padding:12px 24px; font-size:14px">⤓ Render immersive master</button>
-<div class="prog" id="imProg"><i></i></div>
-<div class="hint" id="imNote">Real upmix: center is matrix-derived, surrounds are decorrelated + delayed, height is synthesized from ambient content (stereo carries no true height). <b>ADM BWF</b> writes a BS.2076-compliant bed that imports into the Dolby Atmos Renderer, Sony 360RA suite, and MPEG-H authoring.</div>
-</div>
-<!-- TAB: BATCH -->
-<div class="tpanel" data-tab="batch" id="secBatch" style="padding:20px 16px">
-<button class="btn ghost" id="batchAdd" style="margin-bottom:12px">＋ Add files to queue</button>
-<input accept="audio/*,.wav,.mp3,.flac,.aiff,.aif,.m4a,.ogg,.opus" id="batchInput" multiple="" type="file"/>
-<div id="batchList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
-<button class="btn primary" disabled="" id="batchRun">⤓ Process &amp; export queue</button>
-<div class="prog" id="batchProg"><i></i></div>
-<div class="hint" style="margin-top:10px">Each file is rendered, normalized, and limited to the same target LUFS/ceiling, then downloaded sequentially.</div>
-</div>
-</div>
-</div><!-- /main -->
-</div><!-- /app -->
-<div id="toast"></div>
-<script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+      <main class="main" id="main">
+        <!-- ── TRANSPORT ─────────────────────────────────────────────────────────── -->
+        <section class="card" aria-label="Transport">
+          <div class="transport" id="transportEmpty">
+            <button class="empty drop" id="dropzone" type="button">
+              <span style="font-size: 26px" aria-hidden="true">🜔</span>
+              <span style="font-weight: 600; color: var(--text)"
+                >Drop audio, or click to import</span
+              >
+              <span class="hint">
+                WAV · MP3 · FLAC · AIFF · M4A &nbsp;|&nbsp; 16-bit → 32-bit float · up to 192 kHz<br />
+                Decoding uses your browser's own codecs, so the supported set varies. Nothing is
+                uploaded — all processing happens in this tab.
+              </span>
+            </button>
+          </div>
+          <div class="transport" id="transportFull" hidden>
+            <button class="icbtn" id="playBtn" aria-label="Play" aria-pressed="false">▶</button>
+            <button class="icbtn" id="stopBtn" aria-label="Stop">■</button>
+            <div class="seg" role="group" aria-label="Audition original or processed">
+              <button id="abA" data-ab="A" aria-pressed="false">Original</button>
+              <button id="abB" data-ab="B" aria-pressed="true">Processed</button>
+            </div>
+            <div class="field" style="margin: 0; min-width: 150px">
+              <label class="sr-only" for="auditionSelect">Monitor path</label>
+              <select id="auditionSelect" title="Monitoring path">
+                <option value="stereo">Monitor: stereo</option>
+                <option value="mono">Monitor: mono sum</option>
+                <option value="side">Monitor: side only</option>
+                <option value="left">Monitor: left only</option>
+                <option value="right">Monitor: right only</option>
+              </select>
+            </div>
+            <button
+              class="btn ghost"
+              id="matchLoudBtn"
+              aria-pressed="false"
+              title="Level-match the A/B comparison"
+            >
+              Match loudness
+            </button>
+            <div class="tt" id="fileName">—</div>
+            <div class="time" id="timeLabel">0:00 / 0:00</div>
+          </div>
+        </section>
 
+        <!-- ── SIGNAL FLOW ───────────────────────────────────────────────────────── -->
+        <section class="card" aria-label="Signal flow">
+          <div class="hd">
+            <span>Signal flow</span>
+            <span class="sp"
+              ><span class="hint" style="margin: 0">click a stage to bypass it</span></span
+            >
+          </div>
+          <div class="flow" id="signalFlow"></div>
+          <div class="flow-legend">
+            <span class="k" style="background: var(--proc)"></span> live + export &nbsp;·&nbsp;
+            <span class="k" style="background: var(--orig)"></span> export only — the live monitor
+            does not include these stages
+          </div>
+        </section>
 
-<script src="./src/app.js" type="module"></script></body>
+        <!-- ── WAVEFORM ──────────────────────────────────────────────────────────── -->
+        <section class="card" id="waveCard" hidden aria-label="Waveform">
+          <div class="hd">
+            <span>Waveform</span>
+            <span class="sp">
+              <span class="hint" style="margin: 0">drag to set a loop region · click to seek</span>
+              <button class="btn ghost" id="clearLoopBtn" style="padding: 3px 9px">
+                Clear loop
+              </button>
+            </span>
+          </div>
+          <canvas id="wave" aria-label="Waveform overview"></canvas>
+        </section>
+
+        <!-- ── METERS ────────────────────────────────────────────────────────────── -->
+        <section class="meters-row" id="metersRow" hidden aria-label="Meters">
+          <div class="meter">
+            <div class="val" id="mLUFS">—</div>
+            <div class="lbl">Integrated LUFS</div>
+            <div class="sub" id="mLUFSsub"></div>
+            <div class="bar"><i id="barLUFS"></i></div>
+          </div>
+          <div class="meter">
+            <div class="val" id="mST">—</div>
+            <div class="lbl">Short-term</div>
+            <div class="sub">3 s window</div>
+            <div class="bar"><i id="barST"></i></div>
+          </div>
+          <div class="meter">
+            <div class="val" id="mMom">—</div>
+            <div class="lbl">Momentary</div>
+            <div class="sub">400 ms window</div>
+          </div>
+          <div class="meter" id="tpMeter">
+            <div class="val" id="mTP">—</div>
+            <div class="lbl">True peak (est.)</div>
+            <div class="sub" id="mTPsub"></div>
+            <div class="bar"><i id="barTP"></i></div>
+          </div>
+          <div class="meter">
+            <div class="val" id="mLRA">—</div>
+            <div class="lbl">Loudness range</div>
+            <div class="sub">EBU Tech 3342</div>
+            <div class="bar"><i id="barLRA"></i></div>
+          </div>
+          <div class="meter">
+            <div class="val" id="mRMS">—</div>
+            <div class="lbl">RMS</div>
+            <div class="sub">sine-referenced</div>
+          </div>
+          <div class="meter">
+            <div class="val" id="mCorr">—</div>
+            <div class="lbl">Correlation</div>
+            <div class="sub" id="mCorrTxt"></div>
+            <div class="bar"><i id="barCorr" style="width: 50%"></i></div>
+          </div>
+        </section>
+
+        <div class="hint" id="analyzeHint" hidden>
+          The meters above the fold are live and frame-rate driven; the true-peak reading is an
+          estimate. <b>Integrated LUFS</b> and <b>loudness range</b> come from a gated offline pass
+          that re-runs after each change.
+          <button class="btn ghost" id="reanalyzeBtn" style="padding: 3px 9px">Re-analyse</button>
+        </div>
+        <div id="phaseNotice" hidden></div>
+
+        <!-- ── SCOPES ────────────────────────────────────────────────────────────── -->
+        <section class="scopes" id="scopesRow" hidden aria-label="Scopes">
+          <canvas id="spectrum" aria-label="Spectrum analyser"></canvas>
+          <canvas id="gonio" aria-label="Goniometer and correlation history"></canvas>
+        </section>
+
+        <!-- ── TABS ──────────────────────────────────────────────────────────────── -->
+        <section class="card">
+          <div class="tabs" role="tablist" aria-label="Processing sections">
+            <button class="tab" data-tab="presets" aria-selected="true">Presets</button>
+            <button class="tab" data-tab="loudness" aria-selected="false">Loudness</button>
+            <button class="tab" data-tab="dynamics" aria-selected="false">Dynamics</button>
+            <button class="tab" data-tab="tone" aria-selected="false">Tone</button>
+            <button class="tab" data-tab="match" aria-selected="false">Match</button>
+            <button class="tab" data-tab="stereo" aria-selected="false">Stereo</button>
+            <button class="tab" data-tab="spatial" aria-selected="false">Spatial</button>
+            <button class="tab" data-tab="character" aria-selected="false">Character</button>
+            <button class="tab" data-tab="export" aria-selected="false">Export</button>
+            <button class="tab" data-tab="immersive" aria-selected="false">Immersive</button>
+            <button class="tab" data-tab="batch" aria-selected="false">Batch</button>
+            <button class="tab" data-tab="about" aria-selected="false">About</button>
+          </div>
+
+          <!-- PRESETS -->
+          <div class="tpanel on" data-tab="presets">
+            <div id="presetGroups"></div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px">
+              <button class="btn ghost" id="resetParamsBtn">↺ Reset to flat (transparent)</button>
+              <button class="btn ghost" id="comparePresetBtn" aria-pressed="false">
+                ⇄ Hold to compare previous preset
+              </button>
+            </div>
+            <div id="presetAudit" hidden></div>
+          </div>
+
+          <!-- LOUDNESS -->
+          <div class="tpanel" data-tab="loudness" style="max-width: 640px">
+            <div class="grouplab">Loudness normalisation and peak ceiling</div>
+            <div data-controls="loudness"></div>
+            <canvas
+              id="loudnessGraph"
+              class="viz"
+              aria-label="Short-term loudness history"
+            ></canvas>
+            <div class="viz-legend">
+              <span><span class="k" style="background: var(--proc)"></span>short-term (3 s)</span>
+              <span><span class="k" style="background: var(--orig)"></span>target</span>
+            </div>
+            <div class="hint">
+              The live monitor uses a <code>DynamicsCompressorNode</code> as a safety limiter, which
+              is not a true-peak limiter. The export runs a look-ahead, band-limited true-peak
+              limiter and then <b>verifies the result</b>: the render report states the peak that
+              was actually achieved and whether the ceiling held.
+            </div>
+          </div>
+
+          <!-- DYNAMICS -->
+          <div class="tpanel" data-tab="dynamics" style="max-width: 640px">
+            <div class="grouplab">
+              Three-band compressor — serial Linkwitz-Riley 4th-order crossovers at 140 Hz / 3.2 kHz
+            </div>
+            <div class="gr-row" id="grMeters">
+              <div class="gr" data-band="low">
+                <div class="t"><span>Low</span><span class="set"></span></div>
+                <div class="v">0.0 dB</div>
+                <div class="track"><i></i></div>
+                <div class="set"></div>
+              </div>
+              <div class="gr" data-band="mid">
+                <div class="t"><span>Mid</span><span class="set"></span></div>
+                <div class="v">0.0 dB</div>
+                <div class="track"><i></i></div>
+                <div class="set"></div>
+              </div>
+              <div class="gr" data-band="high">
+                <div class="t"><span>High</span><span class="set"></span></div>
+                <div class="v">0.0 dB</div>
+                <div class="track"><i></i></div>
+                <div class="set"></div>
+              </div>
+            </div>
+            <div data-controls="dynamics" data-exclude="transAttack,transSustain"></div>
+            <div class="grouplab">Crossover reconstruction diagnostic</div>
+            <canvas
+              id="crossoverViz"
+              class="viz"
+              aria-label="Crossover reconstruction response"
+            ></canvas>
+            <div class="viz-legend">
+              <span><span class="k" style="background: var(--proc)"></span>this engine</span>
+              <span><span class="k" style="background: var(--hot)"></span>pre-7.0 topology</span>
+              <label style="display: flex; gap: 6px; align-items: center">
+                <input type="checkbox" id="showLegacyXover" style="width: auto" /> show the old
+                topology
+              </label>
+            </div>
+            <div class="hint">
+              A correct crossover network sums flat at <em>every</em> parallel-mix position. The
+              pre-7.0 build mixed the all-pass band sum against an unfiltered dry path, producing
+              two ~30 dB notches at the crossover frequencies. Drag the parallel mix and watch.
+            </div>
+            <div class="grouplab">Transient shaper</div>
+            <div data-control="transAttack"></div>
+            <div data-control="transSustain"></div>
+            <div class="hint">
+              Differential-envelope processing with a channel-linked detector, so the stereo image
+              does not move. Both terms are ratios of the fast and slow envelopes, so the controls
+              behave identically on a quiet mix and a loud one.
+            </div>
+          </div>
+
+          <!-- TONE -->
+          <div class="tpanel" data-tab="tone" style="max-width: 640px">
+            <div class="grouplab">Tonal EQ — labels are generated from the filter definitions</div>
+            <div data-controls="tone"></div>
+          </div>
+
+          <!-- MATCH -->
+          <div class="tpanel" data-tab="match" style="max-width: 640px">
+            <div class="grouplab">Reference matching — a broad tonal-balance assistant</div>
+            <div class="notice info">
+              This compares long-term average spectra and derives eight gentle EQ moves. It
+              <b>cannot reproduce another master</b>: arrangement, performance, dynamics, imaging
+              and saturation are not transferable with EQ. Treat the curve as a second opinion.
+            </div>
+            <button class="btn ghost" id="refLoadBtn">＋ Load reference track</button>
+            <input
+              id="refInput"
+              type="file"
+              accept="audio/*,.wav,.mp3,.flac,.aiff,.aif,.m4a,.ogg,.opus"
+            />
+            <div class="hint" id="refName">No reference loaded.</div>
+            <div data-controls="match"></div>
+            <button class="btn primary" id="matchBtn" style="margin-bottom: 12px">
+              ⌖ Analyse &amp; match spectrum
+            </button>
+            <canvas id="matchViz" class="viz" aria-label="Reference match curve"></canvas>
+            <div class="viz-legend">
+              <span><span class="k" style="background: var(--proc)"></span>correction applied</span>
+              <span><span class="k" style="background: var(--orig)"></span>reference shape</span>
+              <span><span class="k" style="background: var(--faint)"></span>your shape</span>
+            </div>
+            <div id="matchNotice" hidden></div>
+          </div>
+
+          <!-- STEREO -->
+          <div class="tpanel" data-tab="stereo" style="max-width: 640px">
+            <div data-controls="stereo"></div>
+            <div class="hint">
+              Use the monitor selector in the transport bar to audition the mono sum or the side
+              channel. Any setting that endangers mono compatibility raises a warning under the
+              meters — Signal Rot will let you build a broken master, it just will not let you do it
+              by accident.
+            </div>
+          </div>
+
+          <!-- SPATIAL -->
+          <div class="tpanel" data-tab="spatial" style="max-width: 640px">
+            <div class="grouplab">Per-band stereo field — operates on the side channel only</div>
+            <div data-controls="spatial"></div>
+          </div>
+
+          <!-- CHARACTER -->
+          <div class="tpanel" data-tab="character" style="max-width: 640px">
+            <div class="grouplab">Analogue character</div>
+            <div data-controls="character" data-exclude="textureSeed"></div>
+            <div class="grouplab">Texture seed</div>
+            <div data-control="textureSeed"></div>
+            <button class="btn ghost" id="randomiseSeedBtn">⟳ Randomise texture seed</button>
+            <div class="notice info" style="margin-top: 12px">
+              <b>What these engines are.</b> Wow and flutter are two sine LFOs modulating a delay
+              line; head bump is a peaking filter at 60 Hz; the HF roll-off is a low-pass; hiss,
+              crackle and rumble are seeded noise generators. This is stylised degradation, not a
+              tape-machine model — there is no hysteresis, no bias, no gap loss. <br /><br />
+              <b>Determinism.</b> Every noise bed is seeded, so the same project and the same seed
+              always render the same file.
+            </div>
+          </div>
+
+          <!-- EXPORT -->
+          <div class="tpanel" data-tab="export">
+            <div class="grouplab">Quick export</div>
+            <div class="export-grid">
+              <button class="expbtn" data-fmt="wav24" data-sr="0">24-bit WAV · source rate</button>
+              <button class="expbtn" data-fmt="wav16" data-sr="44100">
+                CD quality · 16-bit / 44.1 kHz
+              </button>
+              <button class="expbtn" data-fmt="wav32" data-sr="0">32-bit float master</button>
+              <button class="expbtn" data-fmt="mp3" data-sr="0">MP3 · 320 kbit/s</button>
+            </div>
+            <div class="grouplab">Format &amp; sample rate</div>
+            <div class="two" style="max-width: 520px">
+              <div class="field">
+                <label class="fl" for="fmtSelect">Format</label>
+                <select id="fmtSelect">
+                  <option value="wav24">WAV 24-bit PCM</option>
+                  <option value="wav16">WAV 16-bit PCM (CD)</option>
+                  <option value="wav32">WAV 32-bit float</option>
+                  <option value="aif24">AIFF 24-bit PCM</option>
+                  <option value="aif16">AIFF 16-bit PCM</option>
+                  <option value="mp3">MP3 320 kbit/s</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="fl" for="srSelect">Sample rate</label>
+                <select id="srSelect">
+                  <option value="0">Preserve source rate</option>
+                </select>
+              </div>
+            </div>
+            <div data-controls="export"></div>
+            <button class="btn primary" id="exportBtn" style="padding: 12px 24px; font-size: 14px">
+              ⤓ Render &amp; export master
+            </button>
+            <div class="prog" id="exportProg"><i></i></div>
+            <div class="progtext" id="exportProgText"></div>
+            <div id="exportNotice" hidden></div>
+            <div class="grouplab">Render history</div>
+            <div class="render-history" id="renderHistory">
+              <div class="hint">No renders yet in this session.</div>
+            </div>
+            <div class="hint">
+              Every export produces a JSON render report containing the source, the parameters, the
+              analysis before and after, the normalisation gain, the maximum gain reduction, the
+              achieved true peak and whether the ceiling was respected. FLAC and AAC are not
+              produced here — encode the 32-bit float master with ffmpeg.
+            </div>
+          </div>
+
+          <!-- IMMERSIVE -->
+          <div class="tpanel" data-tab="immersive">
+            <div class="notice info">
+              <b>Read this before delivering.</b> These exports are <b>channel beds</b> synthesised
+              from your stereo master. Stereo contains no height information, so the height channels
+              carry decorrelated ambience, not recovered content. The ADM BWF is a
+              <code>DirectSpeakers</code> bed — it is not object-based authoring and it is not a
+              certified Dolby Atmos master. The binaural fold-down is fixed, not head-tracked.
+            </div>
+            <div class="two" style="max-width: 520px">
+              <div class="field">
+                <label class="fl" for="imLayout">Output layout</label>
+                <select id="imLayout">
+                  <option value="off">Stereo (immersive off)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="fl" for="imTarget">Delivery format</label>
+                <select id="imTarget">
+                  <option value="wavmc">Multichannel WAV (channel bed)</option>
+                  <option value="adm">ADM BWF (BS.2076 interchange)</option>
+                  <option value="binaural">Binaural fold-down (headphones)</option>
+                </select>
+              </div>
+            </div>
+            <canvas id="spkmap" class="viz" aria-label="Speaker layout map"></canvas>
+            <div id="imControls"></div>
+            <div class="togrow">
+              <label for="imPrevBtn">Monitor in binaural (headphones)</label>
+              <button
+                class="tog"
+                id="imPrevBtn"
+                type="button"
+                role="switch"
+                aria-checked="false"
+              ></button>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <button class="btn primary" id="imExportBtn" style="padding: 12px 24px">
+                ⤓ Render immersive master
+              </button>
+              <button class="btn ghost" id="imMapTxtBtn">⤓ Channel map (.txt)</button>
+              <button class="btn ghost" id="imMapJsonBtn">⤓ Channel map (.json)</button>
+              <button class="btn ghost" id="imIdentBtn">⤓ Channel identification file</button>
+            </div>
+            <div class="prog" id="imProg"><i></i></div>
+            <div class="progtext" id="imProgText"></div>
+            <div id="imNotice" hidden></div>
+          </div>
+
+          <!-- BATCH -->
+          <div class="tpanel" data-tab="batch">
+            <button class="btn ghost" id="batchAddBtn">＋ Add files to queue</button>
+            <input
+              id="batchInput"
+              type="file"
+              multiple
+              accept="audio/*,.wav,.mp3,.flac,.aiff,.aif,.m4a,.ogg,.opus"
+            />
+            <div
+              id="batchList"
+              style="display: flex; flex-direction: column; gap: 6px; margin: 12px 0"
+            ></div>
+            <button class="btn primary" id="batchRunBtn" disabled>
+              ⤓ Process &amp; export queue
+            </button>
+            <div class="prog" id="batchProg"><i></i></div>
+            <div class="progtext" id="batchProgText"></div>
+            <div class="hint">
+              Each file is rendered with the current settings, normalised to the same target and
+              limited to the same ceiling, then downloaded. Loudness analysis runs in a Web Worker
+              so the interface stays responsive.
+            </div>
+          </div>
+
+          <!-- ABOUT -->
+          <div class="tpanel" data-tab="about">
+            <div class="grouplab">Engine</div>
+            <div class="hint" id="aboutEngine"></div>
+            <div class="grouplab">Live preview vs export</div>
+            <div id="divergenceList"></div>
+            <div class="grouplab">This browser</div>
+            <div id="capabilityList"></div>
+            <div class="grouplab">Honest limitations</div>
+            <div class="hint">
+              Signal Rot is an experimental mastering laboratory, not a certified measurement tool.
+              The loudness meter follows BS.1770-4 and EBU Tech 3341/3342 and reproduces the
+              standard's tabulated K-weighting coefficients exactly, but it has not been validated
+              against the EBU compliance material and makes no compliance claim. The true-peak meter
+              is a windowed-sinc polyphase interpolator, not the tabulated BS.1770 Annex 2 filter.
+              Immersive exports are synthesised channel beds. Full detail is in
+              <code>docs/LIMITATIONS.md</code>.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="palette-box">
+        <label class="sr-only" for="paletteInput">Search commands</label>
+        <input id="paletteInput" type="text" placeholder="Type a command or preset name…" />
+        <div class="palette-list" id="paletteList" role="listbox"></div>
+      </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="live-region" class="sr-only" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
 </html>

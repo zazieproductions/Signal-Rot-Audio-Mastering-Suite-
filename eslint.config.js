@@ -1,37 +1,62 @@
 import js from '@eslint/js';
 import globals from 'globals';
 
+/**
+ * ESLint flat configuration.
+ *
+ * The rules that matter here are the ones that catch the classes of bug this codebase has
+ * actually had: unused variables that indicate a half-finished refactor, `eqeqeq` (the
+ * audited code used `!=null` idioms in forty places), and `no-implicit-globals`.
+ *
+ * `no-console` is a warning, not an error: an audio engine legitimately needs to report
+ * decode failures and worker fallbacks to the console.
+ */
 export default [
-  { ignores: ['dist/**', 'coverage/**', 'node_modules/**'] },
+  {
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'node_modules/**',
+      'playwright-report/**',
+      'test-results/**',
+    ],
+  },
   js.configs.recommended,
   {
     files: ['src/**/*.js'],
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 2023,
       sourceType: 'module',
-      globals: {
-        ...globals.browser,
-        // Loaded from a CDN <script> tag for MP3 export.
-        lamejs: 'readonly',
-      },
+      globals: { ...globals.browser, ...globals.worker },
     },
     rules: {
-      'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_', caughtErrors: 'none' }],
-      // Optional Web Audio operations are routinely wrapped in a bare
-      // try/catch; an empty catch is intentional there.
-      'no-empty': ['error', { allowEmptyCatch: true }],
-      'no-undef': 'error',
-      eqeqeq: ['warn', 'smart'],
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
+      'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
       'no-var': 'error',
-      'prefer-const': 'warn',
+      'prefer-const': 'error',
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-implicit-coercion': ['warn', { boolean: false }],
+      'no-throw-literal': 'error',
+      'prefer-template': 'warn',
+      'object-shorthand': 'warn',
+      'no-else-return': 'warn',
+      curly: ['error', 'multi-line'],
     },
   },
   {
-    files: ['tests/**/*.js', '*.config.js'],
+    files: ['tests/**/*.js', 'e2e/**/*.js'],
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 2023,
       sourceType: 'module',
       globals: { ...globals.node, ...globals.browser },
     },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['*.config.js', 'vite.config.js', 'vitest.config.js', 'playwright.config.js'],
+    languageOptions: { ecmaVersion: 2023, sourceType: 'module', globals: globals.node },
   },
 ];

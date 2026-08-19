@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 Signal Rot Mastering Suite contributors
+Copyright (c) 2026 Signal Rot // Master contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,15 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+The Sonic Lab 20.4 loudspeaker layout in `src/audio/immersive/sonic-lab.js`
+describes a real installation at the Anton Bruckner Privatuniversität, Linz.
+It is included as technical data. There is no claim of affiliation with, or
+endorsement by, the university.
+
+This software is not affiliated with, endorsed by, or certified by Dolby
+Laboratories, Sony, Fraunhofer IIS, the ITU, or the EBU. References to their
+standards describe what this software attempts to implement, and the accuracy
+of those attempts is documented in `docs/LIMITATIONS.md`.

@@ -1,9 +1,12 @@
 node_modules/
 dist/
 coverage/
-.vite/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+*.local
 .DS_Store
-*.log
-npm-debug.log*
 .env
 .env.*
+!.env.example
