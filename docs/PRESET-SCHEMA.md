@@ -181,17 +181,17 @@ reports. A preset cannot claim to be safe while tripping a danger warning.
 
 `tests/app/presets-catalog.test.js` fails the build if any preset:
 
-| Rule                                                            | Rationale                                                  |
-| --------------------------------------------------------------- | ---------------------------------------------------------- |
-| uses a ceiling hotter than −1.0 dBTP                            | a lossy decoder can overshoot its encoder input by ~1 dB   |
-| widens past 130 % with no bass-mono anchor                      | low-frequency content wanders and cancels                  |
-| stacks more than 6 dB across `sub` + `warm`                     | the two shelves overlap and add at 50 Hz                   |
-| combines a target above −10 LUFS with more than 25 % saturation | the limiter cannot cope and the aliasing becomes the sound |
-| declares a risk level below what the phase analysis reports     | dishonest labelling                                        |
-| promises processing in its description that it does not perform | dishonest labelling                                        |
-| disables normalisation without explaining why                   | surprising behaviour                                       |
-| sets a value outside its schema range                           | would be silently clamped                                  |
-| sets a key that is not in the schema                            | typo                                                       |
+| Rule                                                            | Rationale                                                |
+| --------------------------------------------------------------- | -------------------------------------------------------- |
+| uses a ceiling hotter than −1.0 dBTP                            | a lossy decoder can overshoot its encoder input by ~1 dB |
+| widens past 130 % with no bass-mono anchor                      | low-frequency content wanders and cancels                |
+| stacks more than 6 dB across `sub` + `warm`                     | the two shelves overlap and add at 50 Hz                 |
+| combines a target above −10 LUFS with more than 25 % saturation | the limiter cannot cope with that much drive             |
+| declares a risk level below what the phase analysis reports     | dishonest labelling                                      |
+| promises processing in its description that it does not perform | dishonest labelling                                      |
+| disables normalisation without explaining why                   | surprising behaviour                                     |
+| sets a value outside its schema range                           | would be silently clamped                                |
+| sets a key that is not in the schema                            | typo                                                     |
 
 Four presets shipped at −0.5 dBTP before this rule existed. Two promised processing they did
 not perform (`Synthwave` promised "punchy sub" with no dynamics at all; `Melancholic Sunset`

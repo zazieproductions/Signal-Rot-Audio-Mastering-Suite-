@@ -86,7 +86,7 @@ flowchart TD
   A[Input buffer] --> B[Oversampled peak envelope<br/>linked across detection channels]
   B --> C[Required gain per sample<br/>soft knee 1 dB below ceiling]
   C --> D[Sliding minimum over the look-ahead window<br/>O n monotone deque]
-  D --> E[Hann smoothing, same width]
+  D --> E[Cascaded Hann smoothing, 2× full width]
   E --> F[Clamp: smoothed ≤ required]
   F --> G[Program-dependent release<br/>15 ms → 180 ms]
   G --> H[Apply gain to every channel]
@@ -126,8 +126,12 @@ if (target < g) {
 A step in the gain signal is a multiplication by a step function: broadband splatter on
 every transient. "Look-ahead" told it _when_ to duck but not _how_ to get there.
 
-Here the sliding minimum is convolved with a **Hann window of the same length**. Because
-the minimum was taken over a window at least as wide as the smoothing kernel, the smoothed
+Here the sliding minimum is convolved with a **cascade of two full-width Hann windows**
+(the minimum window is widened to 2× the look-ahead to match the cascade's support). The
+cascaded kernel is near-Gaussian: its spectral sidelobes sit around −62 dB where a single
+Hann's sit at −31 dB, and on a transient notch the peak gain slope falls by 25 % and the
+peak curvature by 46 % — less modulation-distortion splatter for the same depth. Because
+the minimum is taken over a window at least as wide as the smoothing kernel, the smoothed
 curve is provably ≤ the required gain at every sample: the reduction is anticipated,
 continuous and sufficient. This is the classic "smoothed minimum" construction.
 

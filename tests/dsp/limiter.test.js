@@ -52,6 +52,49 @@ describe('hannSmooth', () => {
       maxDelta = Math.max(maxDelta, Math.abs(out[i] - out[i - 1]));
     expect(maxDelta).toBeLessThan(0.05);
   });
+
+  it('cascading two Hann passes lowers peak slope and curvature over a single pass', () => {
+    // The limiter smooths the sliding minimum with two cascaded full-width Hann kernels.
+    // The cascade must be strictly gentler than the single-Hann construction it replaced:
+    // lower peak first difference and clearly lower peak second difference, while still
+    // reaching the full depth of the notch.
+    const n = 6000;
+    const look = 120;
+    const req = new Float32Array(n).fill(1);
+    for (let i = 3000; i < 3060; i++) req[i] = 0.5;
+
+    const stats = (a) => {
+      let d1 = 0;
+      let d2 = 0;
+      let min = 1;
+      for (let i = 2; i < a.length; i++) {
+        d1 = Math.max(d1, Math.abs(a[i] - a[i - 1]));
+        d2 = Math.max(d2, Math.abs(a[i] - 2 * a[i - 1] + a[i - 2]));
+        if (a[i] < min) min = a[i];
+      }
+      return { d1, d2, min };
+    };
+
+    const single = stats(hannSmooth(slidingMinimum(req, look), look));
+    const cascade = stats(hannSmooth(hannSmooth(slidingMinimum(req, 2 * look), look), look));
+
+    expect(cascade.d1).toBeLessThan(single.d1);
+    expect(cascade.d2).toBeLessThan(single.d2 * 0.7);
+    expect(cascade.min).toBeCloseTo(0.5, 6); // full depth still reached
+  });
+
+  it('the cascaded smoothing never exceeds the widened sliding minimum’s source', () => {
+    // Guarantee behind the construction: kernel support (2·look) ≤ minimum window.
+    const look = 64;
+    const req = Float32Array.from(
+      whiteNoise({ seconds: 0.05, channels: 1, amplitude: 1 }).channels[0],
+      (v) => 0.5 + 0.5 * Math.abs(v),
+    );
+    const smoothed = hannSmooth(hannSmooth(slidingMinimum(req, 2 * look), look), look);
+    for (let i = 0; i < req.length; i++) {
+      expect(smoothed[i]).toBeLessThanOrEqual(req[i] + 1e-6);
+    }
+  });
 });
 
 describe('gain computation', () => {

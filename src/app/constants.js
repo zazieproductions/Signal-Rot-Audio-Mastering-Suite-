@@ -7,7 +7,7 @@
  */
 
 export const ENGINE_NAME = 'SIGNAL ROT // MASTER';
-export const ENGINE_VERSION = '7.0.0';
+export const ENGINE_VERSION = '7.1.0';
 export const PRESET_SCHEMA_VERSION = 3;
 
 /** Reference-match analysis bands (Hz), log-spaced across the mastering range. */

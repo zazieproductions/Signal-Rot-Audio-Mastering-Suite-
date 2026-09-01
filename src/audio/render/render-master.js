@@ -3,11 +3,14 @@
  *
  * ── Order of operations ──────────────────────────────────────────────────────────────
  *   1. `OfflineAudioContext` render of the full mastering chain (the *same*
- *      `buildMasteringChain` the live monitor uses — one constructor, one truth).
- *   2. Transient shaping (per-sample, offline only).
- *   3. Normalisation + true-peak limiting, iterated to convergence.
- *   4. Dither, if the output is fixed-point.
- *   5. Verification and report.
+ *      `buildMasteringChain` the live monitor uses — one constructor, one truth), with
+ *      the saturation stage bypassed in the graph.
+ *   2. High-quality saturation (oversampled, alias-suppressed, offline only — the same
+ *      transfer function the live WaveShaper approximates; see `saturate-hq.js`).
+ *   3. Transient shaping (per-sample, offline only).
+ *   4. Normalisation + true-peak limiting, iterated to convergence.
+ *   5. Dither, if the output is fixed-point.
+ *   6. Verification and report.
  *
  * ── Channel count ────────────────────────────────────────────────────────────────────
  * The audited renderer hard-coded two channels, so a mono source came back as dual mono
@@ -30,6 +33,8 @@ import { monoCompatibility } from '../analysis/correlation.js';
 import { shapeTransients } from './transient-shaper.js';
 import { normalizeAndLimit } from './normalize.js';
 import { applyDither } from './dither.js';
+import { applySaturationHQ } from './saturate-hq.js';
+import { clamp } from '../dsp/math.js';
 import { buildRenderReport } from './report.js';
 
 /**
@@ -135,11 +140,19 @@ export async function renderMaster(opts) {
   };
 
   onProgress('rendering chain', 0.12);
+  // Saturation is the final colour stage of the chain, so it can be lifted out of the
+  // graph and applied to the rendered buffer as a pure, oversampled, alias-suppressed
+  // pass (`saturate-hq.js`) — the composition is identical, the aliasing is not. The
+  // graph's WaveShaper stage is bypassed for exports; the live preview still uses it.
+  const satAmount = moduleBypass?.saturation ? 0 : clamp(parameters.sat ?? 0, 0, 100) / 100;
   const renderedBuffer = await renderChain(source, parameters, {
     sampleRate,
-    moduleBypass,
+    moduleBypass: { ...moduleBypass, saturation: true },
   });
   const data = fromAudioBuffer(renderedBuffer);
+
+  onProgress('saturating (oversampled)', 0.36);
+  const saturation = applySaturationHQ(data, satAmount);
 
   onProgress('transient shaping', 0.42);
   const transient = shapeTransients(data, {
@@ -175,6 +188,7 @@ export async function renderMaster(opts) {
     loudnessResult,
     transient,
     dither,
+    saturation,
     source: {
       name: opts.sourceName ?? '',
       sampleRate: source.sampleRate,

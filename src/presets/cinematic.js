@@ -55,7 +55,7 @@ export const CINEMATIC_PRESETS = [
       mbMix: 100,
     },
     audit:
-      '18 % saturation at −11 LUFS is the densest tonal setting here; aliasing is audible on ' +
+      '18 % saturation at −11 LUFS is the densest tonal setting here; preview aliasing is audible on ' +
       'very bright synth leads (see docs/LIMITATIONS.md). Low-band compression added during ' +
       'review: the description promises a punchy sub and the audited preset had no dynamics ' +
       'processing at all.',

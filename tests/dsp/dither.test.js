@@ -101,6 +101,72 @@ describe('createDitherer', () => {
     const shaped = energyBelow(errorFor('shaped'), 4000);
     expect(shaped).toBeLessThan(flat);
   });
+
+  it('selects the F-weighted 9th-order shaper at 44.1/48 kHz and 2nd-order elsewhere', () => {
+    const lsb = lsbFor(16);
+    expect(createDitherer('shaped', lsb, 1, 44100).shaper).toBe('f-weighted-9');
+    expect(createDitherer('shaped', lsb, 1, 48000).shaper).toBe('f-weighted-9');
+    expect(createDitherer('shaped', lsb, 1, 96000).shaper).toBe('second-order');
+    expect(createDitherer('shaped', lsb, 1, 192000).shaper).toBe('second-order');
+  });
+
+  it('F-weighted shaping cuts error energy in the ear’s 2–6 kHz trough versus 2nd-order', () => {
+    // Same construction as above: quantisation-error band energy on a 220 Hz tone at
+    // 44.1 kHz, comparing the F-weighted shaper against a forced 2nd-order fallback
+    // (obtained by lying about the rate) and flat TPDF.
+    const sr = 44100;
+    const n = 65536;
+    const lsb = lsbFor(16);
+    const errorFor = (mode, rate) => {
+      const d = createDitherer(mode, lsb, 5, rate);
+      const err = new Float64Array(n);
+      for (let i = 0; i < n; i++) {
+        const x = 0.3 * Math.sin((2 * Math.PI * 220 * i) / sr);
+        const dithered = d.process(x);
+        err[i] = quantise(dithered, lsb) - x;
+      }
+      return err;
+    };
+    const bandEnergy = (err, f0, f1) => {
+      let sum = 0;
+      for (let f = f0; f < f1; f += 400) {
+        let re = 0;
+        let im = 0;
+        for (let i = 0; i < n; i++) {
+          const w = (2 * Math.PI * f * i) / sr;
+          re += err[i] * Math.cos(w);
+          im -= err[i] * Math.sin(w);
+        }
+        sum += re * re + im * im;
+      }
+      return sum;
+    };
+
+    const trough = (err) => bandEnergy(err, 2000, 6000);
+    const tpdf = errorFor('tpdf', sr);
+    const fWeighted = errorFor('shaped', sr);
+    const secondOrder = errorFor('shaped', 96000); // forces the fallback filter
+
+    // Measured behaviour: ≈ −18 dB versus flat TPDF and ≈ −9 dB versus the old 2nd-order
+    // shaper in the maximum-sensitivity band. Assert half of each margin.
+    expect(trough(fWeighted)).toBeLessThan(trough(tpdf) / 8);
+    expect(trough(fWeighted)).toBeLessThan(trough(secondOrder) / 2.8);
+    // The displaced energy must land above 15 kHz, where hearing threshold soars.
+    expect(bandEnergy(fWeighted, 15000, 20000)).toBeGreaterThan(bandEnergy(tpdf, 15000, 20000));
+  });
+
+  it('F-weighted shaping stays bounded — no error-feedback runaway', () => {
+    const lsb = lsbFor(16);
+    const d = createDitherer('shaped', lsb, 9, 44100);
+    let maxErr = 0;
+    for (let i = 0; i < 200000; i++) {
+      const x = 0.95 * Math.sin((2 * Math.PI * 997 * i) / 44100);
+      const out = d.process(x);
+      maxErr = Math.max(maxErr, Math.abs(out - x));
+    }
+    // The shaped error excursion is a bounded multiple of the LSB, nowhere near audio scale.
+    expect(maxErr).toBeLessThan(20 * lsb);
+  });
 });
 
 describe('applyDither', () => {

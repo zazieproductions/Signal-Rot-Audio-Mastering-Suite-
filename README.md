@@ -121,7 +121,7 @@ Full detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 | **Export**    | WAV 16 / 24 / 32-bit float              |      —       |   ✓    | `WAVE_FORMAT_EXTENSIBLE` above 2 channels                            |
 |               | AIFF 16 / 24-bit                        |      —       |   ✓    | Big-endian, 80-bit extended sample rate                              |
 |               | MP3 320 kbit/s                          |      —       |   ✓    | Bundled `lamejs`, code-split, works offline                          |
-|               | Dither: none / TPDF / 2nd-order shaped  |      —       |   ✓    | Never applied to 32-bit float                                        |
+|               | Dither: none / TPDF / F-weighted shaped |      —       |   ✓    | Lipshitz F-weighted 9th-order at 44.1/48 kHz; never on 32-bit float  |
 |               | JSON render report                      |      —       |   ✓    | Verified, not predicted                                              |
 |               | Batch queue                             |      —       |   ✓    | Off-thread loudness analysis                                         |
 | **Workflow**  | Undo / redo, autosaved session          |      ✓       |   —    | 60 steps                                                             |
@@ -415,9 +415,11 @@ likely to matter:
 1. **Loudness targets have a hard ceiling.** A transparent limiter cannot make pink noise
    reach −9 LUFS at a −1 dBTP ceiling; it saturates around −9.8 LUFS. Signal Rot detects
    the plateau and says so rather than silently missing the target.
-2. **Waveshaper aliasing.** `WaveShaperNode`'s 4× oversampling is not specified by quality
-   and a tanh curve generates harmonics without limit. High saturation aliases audibly on
-   bright material.
+2. **Waveshaper aliasing — live preview only.** Exports run saturation through a
+   deterministic 4×-oversampled offline engine (measured alias suppression > 100 dB), but
+   the live preview still uses `WaveShaperNode`, whose oversampling quality is
+   implementation-defined. High saturation can alias audibly _while monitoring_; the
+   exported file is clean.
 3. **`DynamicsCompressorNode` is implementation-defined.** The multiband will not sound
    bit-identical across browsers.
 4. **RIFF is 32-bit.** Files above 4 GB are refused rather than written with a wrapped size
@@ -433,8 +435,9 @@ likely to matter:
 
 - [ ] Validate the loudness meter against the EBU Tech 3341 compliance set and publish the
       results (pass or fail)
-- [ ] Oversampled saturation with a proper anti-imaging filter, replacing the
-      `WaveShaperNode` mitigation
+- [x] ~~Oversampled saturation with a proper anti-imaging filter, replacing the
+      `WaveShaperNode` mitigation~~ — done in 7.1.0 for exports (`saturate-hq.js`); a
+      preview `AudioWorklet` path would close the remaining live/export gap
 - [ ] `AudioWorklet` path for the transient shaper, so preview and export converge further
 - [ ] RF64 / BW64 writer for files above 4 GB
 - [ ] Streaming render for long files, to lift the in-memory ceiling

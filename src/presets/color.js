@@ -134,6 +134,6 @@ export const COLOR_PRESETS = [
     audit:
       'Ceiling raised −0.5 → −1.0 dBTP. Saturation pushed to 32 %, the highest in the ' +
       'catalogue, and the character engines brought in so the name means something. ' +
-      'Waveshaper aliasing is clearly audible here and is part of the aesthetic.',
+      'Waveshaper aliasing colours the live preview here; the export runs the clean oversampled engine.',
   }),
 ];

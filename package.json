@@ -1,7 +1,7 @@
 {
   "name": "signal-rot-mastering-suite",
   "private": true,
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "Signal Rot // Master — a browser-native mastering and immersive-audio laboratory built on the Web Audio API.",
   "type": "module",
   "license": "MIT",

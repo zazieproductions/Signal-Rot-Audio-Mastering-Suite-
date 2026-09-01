@@ -30,7 +30,7 @@ NORMALIZATION   delivery — iterated to the loudness target
   ↓
 LIMITER         delivery — look-ahead true-peak, then verified
   ↓
-DITHER          delivery — TPDF or 2nd-order shaped, integer output only
+DITHER          delivery — TPDF or F-weighted shaped (9th order at 44.1/48 kHz), integer output only
   ↓
 EXPORT
 ```
@@ -267,7 +267,15 @@ colouration rather than a cancellation.
 
 ### Saturation
 
-A `WaveShaperNode` with a generated 4096-point transfer curve:
+Two implementations of one transfer function.
+
+**Live preview:** a `WaveShaperNode` with a generated 4096-point transfer curve.
+**Offline render:** the same curve evaluated _analytically_ at 4× the sample rate
+(`render/saturate-hq.js`) — a 257-tap Kaiser-windowed (β = 9) polyphase resampler wraps
+the non-linearity, so harmonics up to 4× Nyquist are generated correctly and removed
+before they can fold back. Zero net delay, deterministic, bit-identical across browsers.
+
+The curve, in both paths:
 
 - Drive scales 1 … 2.2, not 1 … 4 — gentle enough to stay in the "density" region.
 - Asymmetry is `x + a·(x² − x⁴)`, whose integral over [−1, 1] is approximately zero, so
@@ -278,13 +286,14 @@ A `WaveShaperNode` with a generated 4096-point transfer curve:
 
 **Gain staging:** up to −3.1 dB into the shaper at full drive, with +1.9 dB of make-up
 after — the analogue trick that produces density rather than crunch. A 5 Hz DC-blocking
-high-pass sits in front, and a low-pass tightens from 22 kHz to 17.5 kHz as drive rises.
+high-pass sits in front in both paths.
 
-**Aliasing.** `oversample = '4x'` is set, but the Web Audio specification does not define
-the quality of that oversampling and implementations differ. A tanh-family curve generates
-harmonics without limit, so 4× is not enough at high drive. The pre-gain and the post
-low-pass reduce audible aliasing; they do not eliminate it. Audible on bright synthetic
-material above roughly 20 % saturation.
+**Aliasing.** In the live preview, `oversample = '4x'` is set but the Web Audio
+specification does not define its quality; the pre-gain and a post low-pass (22 kHz
+tightening to 17.5 kHz with drive) reduce audible aliasing without eliminating it. The
+offline engine needs neither: measured on a 15 kHz sine at 44.1 kHz at full drive, the
+folded third harmonic sits at −126.6 dB (versus −18.8 dB for base-rate waveshaping), so
+the mitigation low-pass is not applied and exports keep their top octave.
 
 ### Transient shaper
 
@@ -366,7 +375,8 @@ to all of them. Per-channel detection would move the image on every snare hit.
 
 | Stage                    | Oversampled?                          | Notes                                                         |
 | ------------------------ | ------------------------------------- | ------------------------------------------------------------- |
-| Saturation               | 4× (`WaveShaperNode`)                 | Quality is implementation-defined. Mitigated, not solved.     |
+| Saturation (export)      | 4× (`saturate-hq.js`, defined filter) | 257-tap Kaiser polyphase; alias fold-back ≤ −100 dB measured  |
+| Saturation (preview)     | 4× (`WaveShaperNode`)                 | Quality is implementation-defined. Mitigated, not solved.     |
 | True-peak detection      | 4× below 88.2 kHz, 2× below 176.4 kHz | 12-tap-per-phase Kaiser-windowed sinc                         |
 | Limiter gain application | **base rate**                         | Correct: a gain signal with content above Nyquist would alias |
 | Multiband, EQ, stereo    | base rate                             | Linear, no oversampling needed                                |

@@ -4,6 +4,63 @@ All notable changes to Signal Rot // Master.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.1.0] — 2026-09-01
+
+A sound-quality release: three of the audible-quality caveats in
+[`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) are now fixed in the export path, with
+measured before/after numbers.
+
+### Changed — audio (exports sound better)
+
+- **Saturation no longer aliases in exports.** The offline render lifts the saturation
+  stage out of the Web Audio graph and runs it through a dedicated engine
+  (`src/audio/render/saturate-hq.js`): the exact same transfer curve, evaluated
+  analytically (no 4096-point lookup error) at **4× the sample rate** through a 257-tap
+  Kaiser-windowed polyphase resampler (β = 9, zero net delay). Measured on a 15 kHz sine
+  at 44.1 kHz, full drive: the folded third-harmonic alias at 900 Hz fell from
+  **−18.8 dB to −126.6 dB** — a **107.8 dB** improvement — with the fundamental level
+  unchanged. Because the aliasing is actually gone, the alias-mitigation low-pass
+  (22 kHz → 17.5 kHz with drive) is no longer applied to exports: **saturated masters
+  keep their top octave**. Exports also stop depending on the browser's undefined
+  `WaveShaperNode` oversampling quality — saturation is now bit-identical across
+  engines. The live preview still uses the WaveShaper (with its mitigations); the render
+  report records which engine ran.
+- **`shaped` dither is now psychoacoustically weighted at 44.1/48 kHz.** The plain
+  second-order `(1 − z⁻¹)²` shaper is replaced by the 9-coefficient F-weighted
+  minimum-audibility error-feedback filter published by Lipshitz, Vanderkooy and
+  Wannamaker (JAES 39(11), 1991). Measured 16-bit quantisation-error energy in the ear's
+  most sensitive band (2–6 kHz): **−18.4 dB versus flat TPDF and −9.4 dB versus the old
+  second-order shaper**, with the displaced energy parked above 15 kHz. At other sample
+  rates — where the published coefficients are not valid — the second-order shaper
+  remains, and the render report states which filter actually ran.
+- **The limiter's gain trajectory is smoother.** The sliding-minimum gain curve is now
+  smoothed by a cascade of two full-width Hann kernels (over a correspondingly widened
+  minimum window, so the ≤-required-gain guarantee is preserved). The cascade's spectrum
+  has ≈ −62 dB sidelobes against a single Hann's −31 dB; measured on a transient notch,
+  peak gain slope fell **25 %** and peak curvature **46 %**, so the limiter writes less
+  modulation-distortion splatter into the programme for the same reduction depth. The
+  only behavioural change is that reduction is anticipated up to one extra look-ahead
+  window (2.5 ms at the default) earlier.
+
+### Added
+
+- `tests/dsp/saturate-hq.test.js` — alias suppression (> 40 dB asserted, > 100 dB
+  measured), transfer-curve equivalence with the live WaveShaper table, zero-delay
+  alignment, top-octave retention, DC-freedom, determinism.
+- Dither tests for shaper selection by sample rate, the 2–6 kHz improvement, and
+  error-feedback boundedness.
+- Limiter tests for the cascaded smoothing's slope/curvature win and its ≤-required
+  guarantee.
+- The render report now carries a `saturation` block (engine, oversampling factor,
+  prototype taps, gain staging) and the dither block a `shaper` field.
+
+### Documentation
+
+- `docs/LIMITATIONS.md`, `docs/DSP-SIGNAL-FLOW.md`, `docs/TRUE-PEAK-LIMITER.md`,
+  `docs/BROWSER-COMPATIBILITY.md` and the README updated: the saturation-aliasing and
+  noise-shaping caveats now apply to the live preview only or are gone, and the
+  roadmap's "oversampled saturation" item is done.
+
 ## [7.0.0] — 2026-08-18
 
 A full audit, refactor and DSP-reliability pass. The audit that drove it is preserved at

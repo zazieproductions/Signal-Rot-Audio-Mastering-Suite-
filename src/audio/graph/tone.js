@@ -23,14 +23,21 @@
  *     harmonic content it is generating.
  *
  * ── Aliasing ─────────────────────────────────────────────────────────────────────────
- * `WaveShaperNode.oversample = '4x'` is set, but the specification does not define the
- * quality of that oversampling and implementations differ. A tanh-family curve generates
- * harmonics without limit, so 4× is not enough at high drive. Two mitigations:
+ * This WaveShaper stage drives the **live preview only**. Offline renders bypass it and
+ * run the identical transfer function through the oversampled, alias-suppressed engine in
+ * `render/saturate-hq.js` (measured fold-back ≤ −100 dB), so exports neither alias nor
+ * need the mitigations below.
+ *
+ * For the preview, `WaveShaperNode.oversample = '4x'` is set, but the specification does
+ * not define the quality of that oversampling and implementations differ. A tanh-family
+ * curve generates harmonics without limit, so 4× is not enough at high drive. Two
+ * mitigations:
  *   · A pre-shaper gain reduction (up to −3.1 dB at full drive) keeps the signal in the
  *     gentler part of the curve, with matching make-up after.
  *   · A post-shaper low-pass tightens from 22 kHz to 17.5 kHz as drive rises, removing
  *     the top of the aliased region.
- * These reduce audible aliasing; they do not eliminate it. `docs/LIMITATIONS.md` says so.
+ * These reduce audible preview aliasing; they do not eliminate it. `docs/LIMITATIONS.md`
+ * says so.
  */
 
 import { clamp } from '../dsp/math.js';

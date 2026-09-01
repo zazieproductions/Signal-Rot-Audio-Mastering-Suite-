@@ -71,19 +71,22 @@ Signal Rot detects the plateau, stops iterating and reports `targetReachable: fa
 explanation. It does **not** secretly insert a clipper. Getting louder than this needs
 clipping, distortion, or a different mix — and no clipping mode is offered.
 
-### Waveshaper saturation aliases
+### Waveshaper saturation aliases — in the live preview only
 
-`WaveShaperNode.oversample = '4x'` is set, but the Web Audio specification does not define
-the quality of that oversampling and implementations differ. A tanh-family curve generates
-harmonics without limit, so 4× is not enough at high drive.
+**Exports are fixed as of 7.1.0.** The offline render runs saturation through a dedicated
+engine (`src/audio/render/saturate-hq.js`): the same transfer curve, evaluated
+analytically at 4× the sample rate through a 257-tap Kaiser-windowed polyphase resampler.
+Measured on a 15 kHz sine at 44.1 kHz at full drive, the folded third-harmonic alias fell
+from −18.8 dB to −126.6 dB, and because the aliasing is actually gone the mitigation
+low-pass is not applied — exported masters keep their top octave.
 
-Mitigations: up to −3.1 dB of pre-gain into the shaper with matching make-up, and a
-post-shaper low-pass tightening from 22 kHz to 17.5 kHz as drive rises. These **reduce**
-audible aliasing; they do not eliminate it. Clearly audible on bright synthetic material
-above roughly 20 % saturation. The `Rust` preset uses 32 % and the aliasing is part of the
-sound.
-
-A properly oversampled saturator with an anti-imaging filter is on the roadmap.
+The **live preview** still uses `WaveShaperNode.oversample = '4x'`, whose quality the Web
+Audio specification does not define. Its mitigations remain: up to −3.1 dB of pre-gain
+into the shaper with matching make-up, and a post-shaper low-pass tightening from 22 kHz
+to 17.5 kHz as drive rises. These **reduce** audible aliasing in the preview; they do not
+eliminate it, and the preview loses top end at high drive that the export keeps. What you
+export is cleaner and brighter than what you monitor at high saturation — the render
+report's `saturation` block records the engine that ran.
 
 ### The multiband compressors are browser nodes
 
@@ -229,13 +232,18 @@ The verification pass measures the finished float buffer. It does not measure:
 
 Export at your delivery rate, and leave headroom for lossy distribution.
 
-### Noise shaping is not psychoacoustic
+### Noise shaping is psychoacoustic at 44.1/48 kHz only
 
-The `shaped` dither mode is a plain second-order error-feedback shaper with a
-`(1 − z⁻¹)²` noise transfer function. It is **not** POW-R, not UV22, not the
-Lipshitz/Vanderkooy E-weighted minimum-audibility curve. Roughly 6–8 dB of perceived
-improvement over flat TPDF, not the ~15 dB a high-order optimised curve achieves. The UI
-calls it "2nd-order noise shaping" and never "psychoacoustic".
+The `shaped` dither mode uses the 9-coefficient F-weighted minimum-audibility
+error-feedback filter published by Lipshitz, Vanderkooy and Wannamaker (_Minimally
+Audible Noise Shaping_, JAES 39(11), 1991) — at 44.1 and 48 kHz, where those coefficients
+are valid. Measured against flat TPDF at 16 bits, quantisation-error energy in the
+2–6 kHz maximum-sensitivity band drops by ≈ 18 dB. It is still not POW-R and not UV22,
+and no such claim is made.
+
+At any other sample rate the mode falls back to a plain second-order `(1 − z⁻¹)²`
+shaper, which pushes noise toward Nyquist without psychoacoustic weighting. The render
+report's `dither.shaper` field states which filter actually ran.
 
 ### Batch export depends on sequential downloads
 
@@ -248,9 +256,11 @@ files, not for fifty.
 ## Reproducibility
 
 A render is **bit-reproducible within one browser engine** given the same engine version,
-the same parameters and the same texture seed. It is **not** reproducible across engines,
-because `DynamicsCompressorNode`, `WaveShaperNode` oversampling and `PannerNode` HRTF are
-all implementation-defined.
+the same parameters and the same texture seed. Since 7.1.0, exported saturation runs in
+the deterministic offline engine, so `WaveShaperNode` oversampling no longer affects
+exports. Cross-engine reproducibility is still **not** guaranteed, because
+`DynamicsCompressorNode` (the multiband section) and `PannerNode` HRTF are
+implementation-defined.
 
 The render report states this in its `reproducibility` block.
 

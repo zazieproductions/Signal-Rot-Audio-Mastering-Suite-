@@ -27,6 +27,7 @@ export function buildRenderReport(input) {
     loudnessResult,
     transient,
     dither,
+    saturation,
     source,
     output,
     presetName,
@@ -159,9 +160,24 @@ export function buildRenderReport(input) {
         }
       : { applied: false },
 
+    saturation:
+      saturation && saturation.applied
+        ? {
+            applied: true,
+            amount: num(saturation.amount, 2),
+            engine: 'oversampled analytic transfer (offline)',
+            oversampling: saturation.oversampling,
+            prototypeTaps: saturation.prototypeTaps,
+            preGain: num(saturation.preGain, 4),
+            makeupGain: num(saturation.makeupGain, 4),
+            mitigationLowpassBypassed: saturation.mitigationLowpassBypassed === true,
+          }
+        : { applied: false },
+
     dither: {
       mode: dither.mode,
       applied: dither.applied,
+      shaper: dither.shaper ?? null,
       reason: dither.reason ?? null,
     },
 
@@ -177,8 +193,10 @@ export function buildRenderReport(input) {
       textureSeed: parameters.textureSeed,
       note:
         'Re-rendering with this engine version, these parameters and this texture seed ' +
-        'produces an identical file. Browser differences in DynamicsCompressorNode and ' +
-        'WaveShaperNode oversampling can change results across engines.',
+        'produces an identical file. Saturation is rendered by the deterministic offline ' +
+        'engine, so exports no longer depend on browser WaveShaperNode oversampling; ' +
+        'browser differences in DynamicsCompressorNode can still change results across ' +
+        'engines when the multiband section is engaged.',
     },
 
     warnings,

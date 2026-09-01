@@ -37,23 +37,23 @@ load time and shows what it actually found.
 
 ## Platform features used
 
-| Feature                                  | Required      | Fallback                                                   | Status           |
-| ---------------------------------------- | ------------- | ---------------------------------------------------------- | ---------------- |
-| `AudioContext`                           | yes           | none — a clear error message                               | tested (fake)    |
-| `webkitAudioContext`                     | —             | used if the unprefixed form is absent                      | expected         |
-| `OfflineAudioContext`                    | yes           | none — export is impossible without it                     | tested (fake)    |
-| `Worker` with `type: 'module'`           | no            | `analyseInline` runs the identical code on the main thread | tested           |
-| `PannerNode` with `panningModel: 'HRTF'` | binaural only | `setPosition()` for pre-14.1 Safari                        | expected         |
-| `DynamicsCompressorNode.reduction`       | meters only   | reads 0                                                    | tested (fake)    |
-| `WaveShaperNode.oversample`              | saturation    | quality is implementation-defined everywhere               | expected         |
-| `AudioBuffer.copyToChannel`              | yes           | none                                                       | expected         |
-| `Blob` + `URL.createObjectURL`           | export        | none                                                       | expected         |
-| `<a download>`                           | export        | none                                                       | expected         |
-| `localStorage`                           | autosave only | autosave is skipped silently                               | tested           |
-| `CSS color-mix()`                        | cosmetic      | the affected surfaces fall back to flat colours            | expected         |
-| `prefers-reduced-motion`                 | accessibility | ignored                                                    | tested (CSS)     |
-| `prefers-contrast: more`                 | accessibility | ignored                                                    | expected         |
-| `OffscreenCanvas`                        | not used      | —                                                          | probed, reported |
+| Feature                                  | Required                       | Fallback                                                                     | Status           |
+| ---------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------- | ---------------- |
+| `AudioContext`                           | yes                            | none — a clear error message                                                 | tested (fake)    |
+| `webkitAudioContext`                     | —                              | used if the unprefixed form is absent                                        | expected         |
+| `OfflineAudioContext`                    | yes                            | none — export is impossible without it                                       | tested (fake)    |
+| `Worker` with `type: 'module'`           | no                             | `analyseInline` runs the identical code on the main thread                   | tested           |
+| `PannerNode` with `panningModel: 'HRTF'` | binaural only                  | `setPosition()` for pre-14.1 Safari                                          | expected         |
+| `DynamicsCompressorNode.reduction`       | meters only                    | reads 0                                                                      | tested (fake)    |
+| `WaveShaperNode.oversample`              | saturation (live preview only) | quality is implementation-defined everywhere; exports use the offline engine | expected         |
+| `AudioBuffer.copyToChannel`              | yes                            | none                                                                         | expected         |
+| `Blob` + `URL.createObjectURL`           | export                         | none                                                                         | expected         |
+| `<a download>`                           | export                         | none                                                                         | expected         |
+| `localStorage`                           | autosave only                  | autosave is skipped silently                                                 | tested           |
+| `CSS color-mix()`                        | cosmetic                       | the affected surfaces fall back to flat colours                              | expected         |
+| `prefers-reduced-motion`                 | accessibility                  | ignored                                                                      | tested (CSS)     |
+| `prefers-contrast: more`                 | accessibility                  | ignored                                                                      | expected         |
+| `OffscreenCanvas`                        | not used                       | —                                                                            | probed, reported |
 
 ---
 
@@ -92,14 +92,14 @@ failure produces a specific message naming the formats that work everywhere.
 
 ## Known behavioural differences
 
-| Area                                | Difference                                               | Consequence                                                                       |
-| ----------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `DynamicsCompressorNode`            | Internals are implementation-defined                     | The multiband will not sound bit-identical across browsers                        |
-| `WaveShaperNode` 4× oversampling    | Quality is unspecified                                   | Saturation aliasing differs across browsers                                       |
-| `PannerNode` HRTF dataset           | Chromium ships an IRCAM-derived set; others differ       | The binaural monitor sounds different in each browser                             |
-| Autoplay policy                     | All browsers suspend `AudioContext` until a user gesture | Import and playback both resume it; the reference and batch inputs do too         |
-| Programmatic download rate-limiting | Varies                                                   | Batch export pauses 450 ms between files; some browsers still block after several |
-| `Float32Array` allocation limits    | Vary by platform and available memory                    | Long high-rate renders fail differently in each browser                           |
+| Area                                | Difference                                               | Consequence                                                                                                   |
+| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `DynamicsCompressorNode`            | Internals are implementation-defined                     | The multiband will not sound bit-identical across browsers                                                    |
+| `WaveShaperNode` 4× oversampling    | Quality is unspecified                                   | Live-preview saturation aliasing differs across browsers; exports are unaffected (offline engine since 7.1.0) |
+| `PannerNode` HRTF dataset           | Chromium ships an IRCAM-derived set; others differ       | The binaural monitor sounds different in each browser                                                         |
+| Autoplay policy                     | All browsers suspend `AudioContext` until a user gesture | Import and playback both resume it; the reference and batch inputs do too                                     |
+| Programmatic download rate-limiting | Varies                                                   | Batch export pauses 450 ms between files; some browsers still block after several                             |
+| `Float32Array` allocation limits    | Vary by platform and available memory                    | Long high-rate renders fail differently in each browser                                                       |
 
 The first three mean **a render is only bit-reproducible within one browser engine**. The
 render report says so explicitly in its `reproducibility` block.
