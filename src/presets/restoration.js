@@ -100,7 +100,7 @@ export const RESTORATION_PRESETS = [
     audit:
       'Width stays at 100%; ms −0.1 narrows the side slightly and bass-mono 160 Hz makes the ' +
       'infrastructure genuinely mono below that corner. The small crossfeed is headphone ' +
-      'only and is not a widening effect. This is a check, not a polish — use it to confirm ' +
-      'the fold-down before a club or broadcast delivery.',
+      'only and is not a widening effect. This is a check, not a polish — a starting point, ' +
+      'not a repair. Use it to confirm the fold-down before a club or broadcast delivery.',
   }),
 ];
