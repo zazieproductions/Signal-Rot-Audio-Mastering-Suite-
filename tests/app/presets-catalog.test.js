@@ -5,7 +5,7 @@ import { PARAMETERS, defaultParameters } from '../../src/app/parameters.js';
 import { phaseRiskFromParameters } from '../../src/audio/analysis/correlation.js';
 
 describe('catalogue integrity', () => {
-  it('exposes six groups', () => {
+  it('exposes seven groups', () => {
     expect(PRESET_GROUPS.map((g) => g.id)).toEqual([
       'dimension',
       'genre',
@@ -13,6 +13,7 @@ describe('catalogue integrity', () => {
       'mood',
       'color',
       'spatial',
+      'restoration',
     ]);
   });
 
@@ -29,6 +30,14 @@ describe('catalogue integrity', () => {
       'Obsidian',
       'Rust',
       'Holographic',
+      'Ferric Bloom',
+      'Ray Field',
+      'Magnetic Memory',
+      'Aperture',
+      'Depth Lens',
+      'Wide Awake',
+      'Binaural Stage',
+      'Polar Maze',
     ]) {
       expect(findPreset(name), `preset "${name}" is missing`).toBeTruthy();
     }
@@ -109,6 +118,30 @@ describe('safety review', () => {
     }
   });
 
+  it('anchors the low end whenever high-band width exceeds 150 %', () => {
+    for (const p of ALL_PRESETS) {
+      const parameters = expandCatalogPreset(p.parameters);
+      if (parameters.widthHigh > 1.5) {
+        expect(
+          parameters.bassMono,
+          `${p.name} boosts high width with no low-frequency anchor`,
+        ).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('sets an explicit spread whenever binaural processing is enabled', () => {
+    for (const p of ALL_PRESETS) {
+      const parameters = expandCatalogPreset(p.parameters);
+      if (parameters.binaural) {
+        expect(
+          parameters.spread,
+          `${p.name} enables binaural without saying how much to spread`,
+        ).toBeGreaterThan(0);
+      }
+    }
+  });
+
   it('keeps stacked low-frequency shelves under +6 dB', () => {
     // `sub` (55 Hz shelf) and `warm` (120 Hz shelf) overlap, so they add at 50 Hz.
     for (const p of ALL_PRESETS) {
@@ -160,6 +193,25 @@ describe('safety review', () => {
       expect(
         /dynamic|no loudness war|silence|instability|preserve/i.test(`${p.description} ${p.audit}`),
         `${p.name} disables normalisation without explaining why`,
+      ).toBe(true);
+    }
+  });
+
+  it('keeps the restoration group conservative and honest', () => {
+    const group = PRESET_GROUPS.find((g) => g.id === 'restoration');
+    expect(group).toBeTruthy();
+    expect(group.presets.length).toBe(4);
+    for (const p of group.presets) {
+      expect(p.risk).toBe('safe');
+      const parameters = expandCatalogPreset(p.parameters);
+      expect(parameters.haas).toBe(0);
+      expect(parameters.phaseRot).toBe(0);
+      expect(parameters.binaural).toBe(false);
+      expect(parameters.width, `${p.name}`).toBeLessThanOrEqual(1.1);
+      expect(parameters.sat, `${p.name}`).toBeLessThanOrEqual(5);
+      expect(
+        /\bstarting point\b|not a repair/i.test(`${p.description} ${p.audit}`),
+        `${p.name} does not position itself as a starting point`,
       ).toBe(true);
     }
   });

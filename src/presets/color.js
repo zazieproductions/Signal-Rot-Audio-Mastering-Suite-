@@ -136,4 +136,100 @@ export const COLOR_PRESETS = [
       'catalogue, and the character engines brought in so the name means something. ' +
       'Waveshaper aliasing is clearly audible here and is part of the aesthetic.',
   }),
+  preset({
+    name: 'Amber',
+    tag: 'color',
+    description: 'Warm mid-forward tube tones, soft saturation, a little tape.',
+    parameters: {
+      targetLUFS: -13,
+      ceiling: -1.0,
+      drive: 1.5,
+      warm: 1.2,
+      body: 2.0,
+      tilt: 0.4,
+      sat: 22,
+      width: 1.1,
+      bassMono: 80,
+      mbMid: 15,
+      mbMix: 75,
+      tape: 8,
+      textureSeed: 0x0f6a1004,
+    },
+    audit:
+      'Body +2.0 at 350 Hz is the amber centre; sat 22 is the tube asymmetry and tape 8 the ' +
+      'head bump. Width 110% with bass-mono 80 Hz, so it stays mono-safe. Explicit seed for ' +
+      'the tape texture.',
+  }),
+  preset({
+    name: 'Slate',
+    tag: 'color',
+    description: 'Dull grey, mid-dominant, restrained top. Controlled body.',
+    parameters: {
+      targetLUFS: -14,
+      ceiling: -1.0,
+      drive: 1,
+      body: 1.8,
+      warm: 0.6,
+      harsh: -1.2,
+      air: -1.5,
+      tilt: -0.8,
+      mbMid: 20,
+      mbMix: 80,
+      width: 1.05,
+      sat: 10,
+    },
+    audit:
+      '−1.2 at 2.8 kHz and −1.5 air with tilt −0.8 make the top sit back; mbMid 20 at an 80% ' +
+      'parallel mix gives a controlled grey body without pumping. Width 105% is safely inside ' +
+      'mono.',
+  }),
+  preset({
+    name: 'Iris',
+    tag: 'color',
+    description: 'Cool luminous bloom with depth and air — violet light, not clinical.',
+    parameters: {
+      targetLUFS: -14,
+      ceiling: -1.0,
+      drive: 0.8,
+      clarity: 1.6,
+      air: 2.2,
+      tilt: 1.2,
+      depth: 25,
+      depthSize: 'large',
+      width: 1.3,
+      bassMono: 80,
+      crossfeed: 0.25,
+      ms: 0.12,
+      sat: 2,
+    },
+    audit:
+      'The luminous quality is depth 25 large plus air 2.2; ms 0.12 biases slightly toward the ' +
+      'sides but stays well under the phase analyser threshold. Width 130% with bass-mono 80 ' +
+      'Hz. crossfeed 0.25 softens the bloom on headphones. At 2% saturation it is a light, not ' +
+      'a colour wash.',
+  }),
+  preset({
+    name: 'Chartreuse',
+    tag: 'color',
+    description: 'Acid-forward mids, slightly gritty and bright.',
+    parameters: {
+      targetLUFS: -13,
+      ceiling: -1.0,
+      drive: 1.5,
+      clarity: 1.8,
+      body: 1.2,
+      harsh: 1.0,
+      air: 0.8,
+      tilt: 0.8,
+      sat: 20,
+      width: 1.15,
+      bassMono: 80,
+      mbMid: 15,
+      mbMix: 80,
+    },
+    audit:
+      'clarity +1.8 and harsh +1.0 at 2.8 kHz give the acid-forward bite; sat 20 rounds it ' +
+      'into grit and mbMid 15 holds it from ringing. Width 115% with bass-mono 80 Hz; no ' +
+      'phase risk.',
+  }),
 ];

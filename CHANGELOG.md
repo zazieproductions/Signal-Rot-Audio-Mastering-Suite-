@@ -4,6 +4,24 @@ All notable changes to Signal Rot // Master.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Twenty-eight new presets, with a seventh `restoration` group.** The catalogue grows
+  from 40 to 68 presets across 7 groups. Four new signature presets per existing group
+  (Dimension: `Ferric Bloom`, `Ray Field`, `Magnetic Memory`, `Aperture`; Genre: `Modern
+  Country`, `Drum & Bass`, `Reggae / Dub`, `Jazz Trio`; Cinematic: `Trailer Impact`,
+  `Documentary`, `Game Loop`, `Dialogue Under Score`; Mood: `Bittersweet Glow`, `Uneasy
+  Calm`, `Suspended`, `Hiraeth`; Colour: `Amber`, `Slate`, `Iris`, `Chartreuse`; Spatial:
+  `Depth Lens`, `Wide Awake`, `Binaural Stage`, `Polar Maze`), plus four corrective
+  restoration presets (`Dull Mix Rescue`, `Harsh / Sibilance Tamer`, `Boomy Room
+  Corrective`, `Broadcast Mono First`).
+- **Catalogue tests tightened.** The gate now expects seven groups, asserts that
+  restoration presets stay safe and conservative, anchors high-band width above 150% with
+  bass-mono, and requires an explicit spread whenever binaural processing is enabled. The
+  new signature presets are registered by name.
+
 ## [7.0.0] — 2026-08-18
 
 A full audit, refactor and DSP-reliability pass. The audit that drove it is preserved at

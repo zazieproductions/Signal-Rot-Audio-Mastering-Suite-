@@ -129,4 +129,92 @@ export const SPATIAL_PRESETS = [
       'The most destructive preset in the catalogue. 14 ms of Haas on a whole channel plus ' +
       '240 % width: mono fold-down is severely comb-filtered. Use it because you want that.',
   }),
+  preset({
+    name: 'Depth Lens',
+    tag: 'spatial',
+    description: 'A large depth lens — early reflections pull the mix apart without reverb.',
+    parameters: {
+      targetLUFS: -15,
+      ceiling: -1.0,
+      depth: 60,
+      depthSize: 'large',
+      width: 1.3,
+      bassMono: 90,
+      ms: 0.15,
+      warm: 0.6,
+      air: 1.5,
+      crossfeed: 0.2,
+      sat: 5,
+    },
+    audit:
+      'Depth 60 is near maximum; the taps at 27/47 ms and their low-passed, cross-fed returns ' +
+      'are first-arrival bloom only. ms +0.15 biases a touch toward the sides; width 130% with ' +
+      'bass-mono 90 Hz anchors the low end. No phase trigger on the analyser.',
+  }),
+  preset({
+    name: 'Wide Awake',
+    tag: 'spatial',
+    description: 'Top-heavy spatial crown — high width and air, anchored low end.',
+    risk: 'caution',
+    parameters: {
+      targetLUFS: -13,
+      ceiling: -1.0,
+      widthHigh: 2.0,
+      widthMid: 1.35,
+      widthLow: 0.85,
+      width: 1.2,
+      bassMono: 110,
+      air: 1.5,
+      sat: 4,
+    },
+    audit:
+      'The analyser does not monitor widthHigh, so widthHigh 200% is my own risk call: a mono ' +
+      'fold-down will lose significant presence above 4 kHz. bass-mono 110 Hz and widthLow 0.85 ' +
+      'keep the bottom and the lower mid stable. Declared caution, not destructive, because ' +
+      'the top-only loss is recoverable by the delivery chain.',
+  }),
+  preset({
+    name: 'Binaural Stage',
+    tag: 'spatial',
+    description: 'Headphone monitor stage — binaural spread, headphone glue and small-room depth.',
+    risk: 'caution',
+    parameters: {
+      targetLUFS: -14,
+      ceiling: -1.0,
+      binaural: true,
+      spread: 0.6,
+      crossfeed: 0.6,
+      depth: 20,
+      depthSize: 'small',
+      width: 1.1,
+      air: 0.8,
+      sat: 3,
+    },
+    audit:
+      'binaural true forces crossfeed to at least 0.35 and lifts air through the spread term; ' +
+      'effective side width is about 1.1 × 1.36 = 1.50×. On speakers this reads as width, not ' +
+      'depth. Check the mono fold-down before delivery; declared caution.',
+  }),
+  preset({
+    name: 'Polar Maze',
+    tag: 'spatial',
+    description: 'Spatial comb labyrinth — wide, phase-blended, low-band image split.',
+    risk: 'destructive',
+    parameters: {
+      targetLUFS: -13,
+      ceiling: -1.0,
+      phaseRot: 0.75,
+      width: 1.6,
+      widthLow: 1.5,
+      ms: 0.3,
+      bassMono: 100,
+      air: 1.0,
+      sat: 5,
+    },
+    audit:
+      'widthLow 1.5 sends the analyser to danger on purpose: below 250 Hz the side channel is ' +
+      'enlarged 150% and the all-pass blend is 75%, so both low-mid and side content comb-filter ' +
+      'in mono. Declared destructive. bass-mono 100 Hz protects only the <100 Hz region; the ' +
+      '100–250 Hz band is the field being manipulated.',
+  }),
 ];

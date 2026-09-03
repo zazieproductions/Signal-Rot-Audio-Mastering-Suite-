@@ -114,4 +114,93 @@ export const GENRE_PRESETS = [
       'Normalisation off, so the loudness target is inactive and shown greyed out. The ' +
       'limiter still runs as peak protection.',
   }),
+  preset({
+    name: 'Modern Country',
+    tag: 'country',
+    description: 'Bright, present, modern country. Gentle mid glue and controlled width.',
+    parameters: {
+      targetLUFS: -12,
+      ceiling: -1.0,
+      drive: 1.2,
+      clarity: 1.2,
+      air: 1.2,
+      warm: 0.6,
+      width: 1.2,
+      bassMono: 100,
+      mbMid: 15,
+      mbMix: 75,
+      sat: 4,
+    },
+    audit:
+      'The presence shelf and air lift a vocal without opening the top too far. mbMid 15 at a ' +
+      '75% parallel mix is gentle glue on a mix that already has a voice. Width 120% with ' +
+      'bass-mono 100 Hz is mono-safe.',
+  }),
+  preset({
+    name: 'Drum & Bass',
+    tag: 'bass',
+    description: 'Sub-heavy, punchy, transient-forward club master with a wide, bright top.',
+    parameters: {
+      targetLUFS: -10,
+      ceiling: -1.0,
+      drive: 2.5,
+      sub: 1.8,
+      air: 1.5,
+      clarity: 1.4,
+      transAttack: 25,
+      mbLow: 30,
+      mbMix: 90,
+      bassMono: 130,
+      width: 1.15,
+      sat: 12,
+    },
+    audit:
+      'Sub is +1.8 dB at 55 Hz with no warm shelf stacking on it; the low band and 130 Hz ' +
+      'bass-mono keep the bottom steady. transAttack 25 is +1.5 dB of transient emphasis; at ' +
+      '−10 LUFS expect noticeable limiter action on the snare and kick. sat 12 is safe at this target.',
+  }),
+  preset({
+    name: 'Reggae / Dub',
+    tag: 'dub',
+    description: 'Deep anchored bass and a large-room bloom. Spacious dub, not a reverb.',
+    parameters: {
+      targetLUFS: -14,
+      ceiling: -1.0,
+      drive: 1,
+      sub: 1.6,
+      warm: 0.8,
+      tilt: -0.6,
+      width: 1.3,
+      bassMono: 130,
+      depth: 35,
+      depthSize: 'large',
+      mbLow: 20,
+      mbMix: 70,
+      sat: 8,
+    },
+    audit:
+      'sub + warm is +2.4 dB at 50 Hz before the low band — intentional for a dub bottom, but ' +
+      'the low-band compressor holds it. The "bloom" is 35% depth at large size: two early ' +
+      '27/47 ms reflections, not reverb. Keep the ceiling at −1.0 dBTP even if you are cutting ' +
+      'a dub plate; lossy delivery still needs that headroom.',
+  }),
+  preset({
+    name: 'Jazz Trio',
+    tag: 'jazz',
+    description: 'Natural trio sound — dynamics preserved, no loudness war, only gentle presence.',
+    parameters: {
+      targetLUFS: -17,
+      ceiling: -1.0,
+      normalize: false,
+      drive: 0,
+      warm: 0.5,
+      clarity: 0.5,
+      width: 1.1,
+      sat: 0,
+    },
+    audit:
+      'Normalisation off so the trio’s quiet passages stay quiet; the limiter still protects ' +
+      'peaks. Only +0.5 dB on warmth and presence, so this sits closer to Transparent than to ' +
+      'any colour preset.',
+  }),
 ];

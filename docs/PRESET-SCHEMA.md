@@ -4,7 +4,7 @@ Implementation: [`src/app/parameters.js`](../src/app/parameters.js) ·
 [`src/app/presets-io.js`](../src/app/presets-io.js)
 Tests: [`tests/app/parameters.test.js`](../tests/app/parameters.test.js) (23) ·
 [`tests/app/presets-io.test.js`](../tests/app/presets-io.test.js) (21) ·
-[`tests/app/presets-catalog.test.js`](../tests/app/presets-catalog.test.js) (13)
+[`tests/app/presets-catalog.test.js`](../tests/app/presets-catalog.test.js) (16)
 
 ---
 
@@ -149,7 +149,7 @@ so that switching presets does not silently change your noise.
 
 ## The catalogue
 
-Forty presets in six groups. Each entry:
+Sixty-eight presets in seven groups. Each entry:
 
 ```js
 preset({

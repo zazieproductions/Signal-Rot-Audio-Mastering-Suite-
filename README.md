@@ -223,7 +223,7 @@ src/
 │   ├── render/                 render-master · transient · normalize · limiter · dither · report
 │   ├── immersive/              layouts · sonic-lab · speaker-feeds · binaural · adm
 │   └── encode/                 wav · aiff · mp3 · download
-├── presets/                    dimension · genre · cinematic · mood · color · spatial
+├── presets/                    dimension · genre · cinematic · mood · color · spatial · restoration
 ├── ui/                         dom · controls · tabs · transport · signal-flow · palette · …
 ├── visualizers/                waveform · spectrum · vectorscope · speaker-map · …
 ├── workers/                    analysis worker + client with in-thread fallback
@@ -344,8 +344,8 @@ and shows what it actually found, which is more reliable than any table.
 
 ## Presets
 
-Forty presets in six groups. Every one carries a review note recording what was checked and
-anything you should know before reaching for it, and a risk level:
+Sixty-eight presets in seven groups. Every one carries a review note recording what was
+checked and anything you should know before reaching for it, and a risk level:
 
 - **safe** — no mono-compatibility or level hazard
 - **caution** — legitimate creative territory that needs a check
