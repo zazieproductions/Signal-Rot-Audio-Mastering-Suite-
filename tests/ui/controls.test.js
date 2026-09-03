@@ -130,6 +130,18 @@ describe('schema-driven controls', () => {
     expect(range.getAttribute('aria-valuetext')).toBe('-4.2 dB');
   });
 
+  it('supports fine tuning with Shift and resets to the schema default on double-click', () => {
+    const { store, host } = setup('tone');
+    const range = host.querySelector('#p-warm');
+    range.value = '1.23';
+    const input = new Event('input');
+    Object.defineProperty(input, 'shiftKey', { value: true });
+    range.dispatchEvent(input);
+    expect(store.getParameters().warm).toBeCloseTo(1.23, 6);
+    range.dispatchEvent(new Event('dblclick'));
+    expect(store.getParameters().warm).toBe(0);
+  });
+
   it('badges parameters the live monitor cannot honour', () => {
     document.body.innerHTML = '<div data-controls="loudness"></div>';
     initControls({ store: createStore() });

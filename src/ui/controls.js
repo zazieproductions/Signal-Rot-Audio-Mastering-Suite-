@@ -166,7 +166,17 @@ function buildControl(spec, store, onChange) {
       max: String(spec.max),
       step: String(spec.step ?? 0.01),
       'aria-describedby': spec.hint ? hintId : undefined,
-      oninput: (e) => commit(Number(e.target.value)),
+      // Shift makes the control ten times finer without changing the schema's
+      // normal quantisation. This is handled at the edge so DSP parameters keep
+      // their canonical step and keyboard behaviour remains native.
+      oninput: (e) => {
+        const step = spec.step ?? 0.01;
+        const value = Number(e.target.value);
+        const increment = e.shiftKey ? step / 10 : step;
+        const fineValue = e.shiftKey ? Math.round(value / increment) * increment : value;
+        commit(fineValue);
+      },
+      ondblclick: () => commit(spec.defaultValue),
     });
     const node = el('div', { class: 'ctl' }, [
       el('div', { class: 'row' }, [
