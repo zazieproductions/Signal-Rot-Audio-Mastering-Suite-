@@ -140,4 +140,97 @@ export const MOOD_PRESETS = [
       'Normalisation off so the silences stay silent. Bass-mono added at 60 Hz: at 160 % ' +
       'width the audited version let sub content wander.',
   }),
+  preset({
+    name: 'Bittersweet Glow',
+    tag: 'mood',
+    description: 'Warm, gently compressed, with a soft airy bloom. Sweet but not bright.',
+    parameters: {
+      targetLUFS: -15,
+      ceiling: -1.0,
+      drive: 1,
+      warm: 1.6,
+      body: 1.0,
+      air: 1.8,
+      tilt: 0.6,
+      mbMid: 15,
+      mbMix: 80,
+      depth: 15,
+      width: 1.15,
+      bassMono: 80,
+      sat: 10,
+    },
+    audit:
+      'mbMid 15 provides the compression; depth 15 is the soft bloom. Warmth +1.6 and air +1.8 ' +
+      'give a warm-then-clear curve, not the rolled-off top of Melancholic Sunset. Width 115% ' +
+      'with bass-mono 80 Hz is mono-safe.',
+  }),
+  preset({
+    name: 'Uneasy Calm',
+    tag: 'mood',
+    description: 'Low-mid tension, withheld brightness, a controlled breath of compression.',
+    parameters: {
+      targetLUFS: -14,
+      ceiling: -1.0,
+      drive: 1,
+      body: 1.6,
+      warm: 0.6,
+      harsh: -0.8,
+      air: -1.2,
+      mbMid: 25,
+      mbMix: 70,
+      width: 1.1,
+      bassMono: 80,
+      sat: 6,
+    },
+    audit:
+      '+1.6 body sits in the 350 Hz register and −1.2 air withholds the top. mbMid 25 at a 70% ' +
+      'parallel mix is the breath, on medium ballistics so it does not pump. Width 110% with ' +
+      'bass-mono 80 Hz; no phase risk.',
+  }),
+  preset({
+    name: 'Suspended',
+    tag: 'mood',
+    description: 'Floating and still. Dynamics preserved, no loudness war, silence stays silent.',
+    parameters: {
+      targetLUFS: -17,
+      ceiling: -1.0,
+      normalize: false,
+      drive: 0,
+      depth: 18,
+      depthSize: 'small',
+      width: 1.25,
+      bassMono: 70,
+      air: 0.8,
+      sat: 0,
+    },
+    audit:
+      'Normalisation off so the silences are real. Depth small gives a slight air pocket without ' +
+      'a tail; width 125% with bass-mono 70 Hz is safe. No saturation.',
+  }),
+  preset({
+    name: 'Hiraeth',
+    tag: 'mood',
+    description: 'Warm tape, soft hiss and a small-room bloom — longing, not melancholy.',
+    parameters: {
+      targetLUFS: -16,
+      ceiling: -1.0,
+      drive: 1,
+      tape: 25,
+      hiss: 8,
+      warm: 1.4,
+      body: 0.8,
+      harsh: -0.8,
+      air: 1.2,
+      depth: 12,
+      depthSize: 'small',
+      sat: 8,
+      width: 1.15,
+      bassMono: 75,
+      textureSeed: 0x0f6a1003,
+    },
+    audit:
+      'Tape 25 gives a gentle head bump and hiss 8 a faint bed; depth small is a 11/19 ms ' +
+      'bloom. Width 115% with bass-mono 75 Hz. The top is slightly tamed by −0.8 at 2.8 kHz ' +
+      'but keeps +1.2 air, so it is warm rather than dull. Explicit seed for deterministic export.',
+  }),
 ];
