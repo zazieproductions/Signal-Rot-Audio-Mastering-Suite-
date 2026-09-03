@@ -1,7 +1,7 @@
 /**
  * The preset catalogue.
  *
- * Six groups, forty presets, every one of them reviewed against the criteria in
+ * Seven groups, sixty-eight presets, every one of them reviewed against the criteria in
  * `docs/PRESET-SCHEMA.md`: excessive gain, unsafe width, ceiling choice, low-frequency
  * build-up, contradictory settings, description accuracy, clipping risk and phase risk.
  * The per-preset `audit` string records the outcome and is shown in the UI.
@@ -13,6 +13,7 @@ import { CINEMATIC_PRESETS } from './cinematic.js';
 import { MOOD_PRESETS } from './mood.js';
 import { COLOR_PRESETS } from './color.js';
 import { SPATIAL_PRESETS } from './spatial.js';
+import { RESTORATION_PRESETS } from './restoration.js';
 
 export const PRESET_GROUPS = Object.freeze([
   {
@@ -25,6 +26,7 @@ export const PRESET_GROUPS = Object.freeze([
   { id: 'mood', label: 'Mood', presets: MOOD_PRESETS },
   { id: 'color', label: 'Colour', presets: COLOR_PRESETS },
   { id: 'spatial', label: 'Spatial', presets: SPATIAL_PRESETS },
+  { id: 'restoration', label: 'Restoration / corrective', presets: RESTORATION_PRESETS },
 ]);
 
 /** Flat list of every preset. */
@@ -40,4 +42,5 @@ export {
   MOOD_PRESETS,
   COLOR_PRESETS,
   SPATIAL_PRESETS,
+  RESTORATION_PRESETS,
 };

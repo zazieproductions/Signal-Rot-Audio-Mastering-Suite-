@@ -5,7 +5,7 @@ import { PARAMETERS, defaultParameters } from '../../src/app/parameters.js';
 import { phaseRiskFromParameters } from '../../src/audio/analysis/correlation.js';
 
 describe('catalogue integrity', () => {
-  it('exposes six groups', () => {
+  it('exposes seven groups', () => {
     expect(PRESET_GROUPS.map((g) => g.id)).toEqual([
       'dimension',
       'genre',
@@ -13,6 +13,7 @@ describe('catalogue integrity', () => {
       'mood',
       'color',
       'spatial',
+      'restoration',
     ]);
   });
 
