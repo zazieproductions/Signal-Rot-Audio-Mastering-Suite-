@@ -175,4 +175,96 @@ export const CINEMATIC_PRESETS = [
       'Ceiling raised from −0.5 to −1.0 dBTP during review. 22 % saturation with a +1.8 dB ' +
       'boost at 2.8 kHz is intentionally abrasive.',
   }),
+  preset({
+    name: 'Trailer Impact',
+    tag: 'cinema',
+    description: 'Big transient punch, deep sub and bright top for an impact-focused trailer.',
+    parameters: {
+      targetLUFS: -12,
+      ceiling: -1.0,
+      drive: 2,
+      sub: 1.8,
+      warm: 0.6,
+      body: -1.5,
+      clarity: 1.0,
+      air: 2.5,
+      transAttack: 30,
+      mbLow: 25,
+      mbHigh: 20,
+      mbMix: 75,
+      width: 1.35,
+      bassMono: 110,
+      sat: 10,
+    },
+    audit:
+      'Unlike the existing Cinematic Trailer, this one leans on transAttack 30 (+1.8 dB) and ' +
+      'high-band control to make hits feel faster. sub + warm is +2.4 dB, held by the low band. ' +
+      'At −12 LUFS expect 3–5 dB of limiter reduction on the transient cells.',
+  }),
+  preset({
+    name: 'Documentary',
+    tag: 'cinema',
+    description: 'Dialogue-forward, measured, dynamics preserved, no loudness war.',
+    parameters: {
+      targetLUFS: -20,
+      ceiling: -1.0,
+      normalize: false,
+      drive: 0,
+      body: 0.8,
+      clarity: 1.0,
+      harsh: -1.0,
+      air: 1.0,
+      width: 1.05,
+      sat: 0,
+    },
+    audit:
+      'Normalisation off so natural speech dynamics survive; the only shaping is corrective EQ, ' +
+      'no compression. The −1 dB at 2.8 kHz reduces polite sibilance without dulling the ' +
+      '5 kHz presence that keeps dialogue intelligible.',
+  }),
+  preset({
+    name: 'Game Loop',
+    tag: 'cinema',
+    description: 'Loop-safe glue and a subtle stage — consistent from bar one to bar four hundred.',
+    parameters: {
+      targetLUFS: -14,
+      ceiling: -1.0,
+      drive: 1,
+      mbLow: 20,
+      mbMid: 20,
+      mbHigh: 15,
+      mbMix: 70,
+      mbSpeed: 'fast',
+      depth: 15,
+      width: 1.2,
+      bassMono: 80,
+      clarity: 0.8,
+      air: 1.2,
+      sat: 6,
+    },
+    audit:
+      'Fast ballistics keep the compressor from accumulating gain reduction across a long loop; ' +
+      'the 70% parallel mix avoids pumping on repeated transitions. Depth 15 is early reflections, ' +
+      'no tail. Width 120% with bass-mono 80 Hz is mono-safe.',
+  }),
+  preset({
+    name: 'Dialogue Under Score',
+    tag: 'cinema',
+    description: 'Intimate centre, controlled sibilance, gentle warm body. The score sits under the voice.',
+    parameters: {
+      targetLUFS: -18,
+      ceiling: -1.0,
+      drive: 0.5,
+      body: 1.0,
+      harsh: -2,
+      clarity: 2.0,
+      air: 1.0,
+      width: 1.0,
+      sat: 3,
+    },
+    audit:
+      'Width at 100% keeps the voice solid in the middle of a wide score. The −2 dB at 2.8 kHz ' +
+      'tames sibilance while +2 dB clarity keeps dialogue intelligible. No dynamics; the −18 ' +
+      'target leaves the quiet sections of the score in place.',
+  }),
 ];
