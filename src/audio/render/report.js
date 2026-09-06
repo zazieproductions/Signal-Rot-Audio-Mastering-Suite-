@@ -32,6 +32,7 @@ export function buildRenderReport(input) {
     presetName,
     moduleBypass,
     renderMs,
+    adaptation,
   } = input;
 
   const limiter = loudnessResult.limiter ?? {};
@@ -53,6 +54,13 @@ export function buildRenderReport(input) {
     warnings.push(
       `True peak ${num(limiter.achievedTruePeakDb)} dBTP exceeds the ${parameters.ceiling} dBTP ` +
         'ceiling. The limiter could not hold it; reduce input drive or saturation.',
+    );
+  }
+  if (loudnessResult.ambitionReduced) {
+    warnings.push(
+      `Loudness ambition was reduced to protect the sound: the ${parameters.targetLUFS} LUFS ` +
+        `target would have needed constant heavy limiting, so the master settled at ` +
+        `${num(loudnessResult.achievedLufs, 1)} LUFS instead. Transparency over loudness.`,
     );
   }
   if (parameters.normalize && Number.isFinite(loudnessResult.deltaLu)) {
@@ -137,7 +145,22 @@ export function buildRenderReport(input) {
       deltaLu: num(loudnessResult.deltaLu),
       refinementPasses: loudnessResult.passes,
       targetReachable: loudnessResult.targetReachable !== false,
+      ambitionReduced: loudnessResult.ambitionReduced === true,
+      effectiveTargetLufs:
+        loudnessResult.ambitionReduced && parameters.normalize
+          ? num(loudnessResult.effectiveTargetLufs)
+          : parameters.normalize
+            ? num(parameters.targetLUFS)
+            : null,
     },
+
+    adaptation: adaptation
+      ? {
+          sourceClass: adaptation.sourceClass ?? 'unmeasured',
+          applied: (adaptation.adaptations ?? []).length > 0,
+          notes: [...(adaptation.adaptations ?? [])],
+        }
+      : { sourceClass: 'unmeasured', applied: false, notes: [] },
 
     limiter: {
       ceilingDbtp: parameters.ceiling,

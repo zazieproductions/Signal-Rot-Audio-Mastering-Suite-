@@ -12,8 +12,9 @@
  * the original engine because it was already unusually careful, and its reasoning is worth
  * keeping:
  *
- *   · Drive scales 1…2.2, not 1…4 — gentle enough to stay in the "density" region rather
- *     than the "crunch" region.
+ *   · Drive scales 1…1.8 — gentle enough to stay in the "density" region rather than
+ *     the "crunch" region. Clean mastering presets leave this at or near zero; the
+ *     control exists for colour, not for loudness.
  *   · Asymmetry is introduced as `x + a·(x² − x⁴)`, whose integral over [−1, 1] is
  *     approximately zero, so even harmonics appear without a DC shift.
  *   · Any residual DC is measured and subtracted from the curve.
@@ -97,8 +98,8 @@ export function makeSaturationCurve(amount) {
   if (amount <= 0) return IDENTITY_CURVE;
   const n = 4096;
   const c = new Float32Array(n);
-  const k = 1 + amount * 1.2; // drive 1 … 2.2
-  const asym = amount * 0.06; // even-harmonic asymmetry
+  const k = 1 + amount * 0.8; // drive 1 … 1.8
+  const asym = amount * 0.04; // even-harmonic asymmetry
 
   for (let i = 0; i < n; i++) {
     const x = (i / (n - 1)) * 2 - 1;
@@ -132,8 +133,8 @@ export function makeSaturationCurve(amount) {
 export function saturationGainStaging(amount) {
   return {
     preGain: 1 - amount * 0.35, // up to −3.1 dB into the shaper
-    postGain: 1 + amount * 0.25, // partial make-up; tanh has already curtailed peaks
-    postLowpassHz: 22000 - amount * 4500,
+    postGain: 1 + amount * 0.12, // restrained make-up; saturation is character, not level
+    postLowpassHz: 22000 - amount * 6000,
   };
 }
 

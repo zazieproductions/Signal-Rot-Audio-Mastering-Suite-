@@ -53,12 +53,19 @@ import {
 } from '../analysis/true-peak.js';
 
 /**
+ * The limiter is the final safety/polish stage, not the sound of the master. Its defaults
+ * are tuned for transparency: a wide soft knee so gain reduction begins gradually, a
+ * generous look-ahead so transients are anticipated rather than chopped, and a slow,
+ * program-dependent release that recovers without pumping. Routine masters should show
+ * modest activity here — if reaching the target needs constant heavy limiting, the
+ * normalisation loop (`render/normalize.js`) backs the target down instead of crushing.
+ *
  * @typedef {object} LimiterOptions
  * @property {number} ceilingDb        target true-peak ceiling, dBTP
- * @property {number} [lookaheadMs]    default 2.5 ms
- * @property {number} [releaseFastMs]  default 15 ms
- * @property {number} [releaseSlowMs]  default 180 ms
- * @property {number} [kneeDb]         soft-knee width below the ceiling, default 1 dB
+ * @property {number} [lookaheadMs]    default 3 ms
+ * @property {number} [releaseFastMs]  default 25 ms
+ * @property {number} [releaseSlowMs]  default 220 ms
+ * @property {number} [kneeDb]         soft-knee width below the ceiling, default 1.5 dB
  * @property {number[]} [lfeChannels]  channel indices excluded from peak detection
  * @property {boolean} [verify]        run the post-render verification pass, default true
  */
@@ -155,7 +162,7 @@ export function computeLimiterGain(data, opts) {
   const sr = data.sampleRate;
   const n = data.length;
   const ceiling = dbToGain(opts.ceilingDb);
-  const kneeDb = opts.kneeDb ?? 1;
+  const kneeDb = opts.kneeDb ?? 1.5;
   const kneeStart = dbToGain(opts.ceilingDb - kneeDb);
   const lfe = new Set(opts.lfeChannels ?? []);
   const factor = oversamplingFactorFor(sr);
@@ -189,7 +196,7 @@ export function computeLimiterGain(data, opts) {
   }
 
   // ── 3. Look-ahead: sliding minimum, then Hann smoothing of the same width ──
-  const look = Math.max(1, Math.round(sr * ((opts.lookaheadMs ?? 2.5) / 1000)));
+  const look = Math.max(1, Math.round(sr * ((opts.lookaheadMs ?? 3) / 1000)));
   const minimum = slidingMinimum(required, look);
   const smoothed = hannSmooth(minimum, look);
 
@@ -200,8 +207,8 @@ export function computeLimiterGain(data, opts) {
   for (let i = 0; i < n; i++) if (smoothed[i] > required[i]) smoothed[i] = required[i];
 
   // ── 4. Program-dependent release ──
-  const relFast = Math.max(1, sr * ((opts.releaseFastMs ?? 15) / 1000));
-  const relSlow = Math.max(1, sr * ((opts.releaseSlowMs ?? 180) / 1000));
+  const relFast = Math.max(1, sr * ((opts.releaseFastMs ?? 25) / 1000));
+  const relSlow = Math.max(1, sr * ((opts.releaseSlowMs ?? 220) / 1000));
   const blendSamples = Math.max(1, sr * 0.05);
   const out = new Float32Array(n);
   let g = 1;

@@ -50,9 +50,9 @@ import { designBiquad, cascadeResponse, cadd, cabs } from '../dsp/biquad.js';
 
 /** Ballistics presets. Attack/release in seconds. */
 export const MB_BALLISTICS = Object.freeze({
-  fast: { attack: 0.003, release: 0.1, label: 'Fast — transparent grip' },
-  med: { attack: 0.01, release: 0.25, label: 'Medium — musical glue' },
-  slow: { attack: 0.03, release: 0.4, label: 'Slow — deep breathing' },
+  fast: { attack: 0.006, release: 0.12, label: 'Fast — transparent grip' },
+  med: { attack: 0.015, release: 0.3, label: 'Medium — musical glue' },
+  slow: { attack: 0.03, release: 0.45, label: 'Slow — deep breathing' },
 });
 
 /**
@@ -67,13 +67,13 @@ export const MB_BALLISTICS = Object.freeze({
 export function bandAmountToSettings(amount) {
   const a = Math.max(0, Math.min(100, amount));
   return {
-    // 0 → 0 dB (the compressor never engages), 100 → −36 dB (deep, obvious compression).
+    // 0 → 0 dB (the compressor never engages), 100 → −24 dB (firm, obvious compression).
     // `a === 0 ? 0` avoids producing negative zero, which would show up as "-0" in the
     // render report JSON.
-    thresholdDb: a === 0 ? 0 : -a * 0.36,
-    // 1:1 → 5:1. Above about 4:1 a mastering multiband stops sounding like glue.
-    ratio: 1 + a * 0.04,
-    kneeDb: 9,
+    thresholdDb: a === 0 ? 0 : -a * 0.24,
+    // 1:1 → 3:1. Above about 3:1 a mastering multiband stops sounding like glue.
+    ratio: 1 + a * 0.02,
+    kneeDb: 12,
   };
 }
 
@@ -149,9 +149,9 @@ export function buildMultiband(ctx, opts = {}) {
     const c = ctx.createDynamicsCompressor();
     c.threshold.value = 0;
     c.ratio.value = 1;
-    c.knee.value = 9;
-    c.attack.value = 0.01;
-    c.release.value = 0.25;
+    c.knee.value = 12;
+    c.attack.value = 0.015;
+    c.release.value = 0.3;
     return c;
   };
   const compLow = mk();
