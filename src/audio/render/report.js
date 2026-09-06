@@ -56,7 +56,18 @@ export function buildRenderReport(input) {
     );
   }
   if (parameters.normalize && Number.isFinite(loudnessResult.deltaLu)) {
-    if (loudnessResult.targetReachable === false) {
+    if (loudnessResult.crestAware?.capped === true) {
+      // Reaching the target is physically possible but would exceed the gain-reduction
+      // budget — the loop delivered the loudest clean result instead.
+      warnings.push(
+        `The ${parameters.targetLUFS} LUFS target is not delivered: hitting it would need ` +
+          `more than ${num(loudnessResult.crestAware.maxAverageGainReductionDb, 1)} dB ` +
+          `average / ${num(loudnessResult.crestAware.maxPeakGainReductionDb, 1)} dB peak gain ` +
+          'reduction, which would brickwall the record. Delivered the loudest clean master ' +
+          `at ${num(loudnessResult.achievedLufs, 1)} LUFS ` +
+          `(${num(loudnessResult.deltaLu, 1)} LU below target).`,
+      );
+    } else if (loudnessResult.targetReachable === false) {
       warnings.push(
         `The ${parameters.targetLUFS} LUFS target is not reachable on this material at a ` +
           `${parameters.ceiling} dBTP ceiling: the limiter saturated at ` +
@@ -137,6 +148,15 @@ export function buildRenderReport(input) {
       deltaLu: num(loudnessResult.deltaLu),
       refinementPasses: loudnessResult.passes,
       targetReachable: loudnessResult.targetReachable !== false,
+      crestAware: loudnessResult.crestAware
+        ? {
+            capped: loudnessResult.crestAware.capped,
+            requestedLufs: num(loudnessResult.crestAware.requestedLufs, 1),
+            deliveredLufs: num(loudnessResult.crestAware.deliveredLufs, 1),
+            maxAverageGainReductionDb: num(loudnessResult.crestAware.maxAverageGainReductionDb, 1),
+            maxPeakGainReductionDb: num(loudnessResult.crestAware.maxPeakGainReductionDb, 1),
+          }
+        : null,
     },
 
     limiter: {

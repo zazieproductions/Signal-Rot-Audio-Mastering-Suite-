@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { shapeTransients } from '../../src/audio/render/transient-shaper.js';
-import { normalizeAndLimit } from '../../src/audio/render/normalize.js';
+import { normalizeAndLimit, CREST_AWARE_BUDGET } from '../../src/audio/render/normalize.js';
 import { applyDither } from '../../src/audio/render/dither.js';
 import { buildRenderReport, summariseReport } from '../../src/audio/render/report.js';
 import { analyseLoudness } from '../../src/audio/analysis/loudness.js';
@@ -19,7 +19,7 @@ import { pinkNoise, transientTrain, sine, silence } from '../helpers/signals.js'
  * lives. The `OfflineAudioContext` stage cannot run in Node — `tests/integration/graph.test.js`
  * covers its construction, and `e2e/` exercises it in a real browser.
  */
-function runPipeline(input, parameters, { bitDepth = 24 } = {}) {
+function runPipeline(input, parameters, { bitDepth = 24, budget = null } = {}) {
   const data = cloneAudioData(input);
   const analysisBefore = {
     loudness: analyseLoudness(data),
@@ -35,6 +35,7 @@ function runPipeline(input, parameters, { bitDepth = 24 } = {}) {
     targetLufs: parameters.targetLUFS,
     ceilingDb: parameters.ceiling,
     refine: true,
+    ...(budget ?? {}),
   });
   const dither = applyDither(data, parameters.dither, bitDepth, parameters.textureSeed);
   const analysisAfter = {
@@ -348,5 +349,56 @@ describe('render report', () => {
     expect(summary).toMatch(/LUFS/);
     expect(summary).toMatch(/dBTP/);
     expect(summary).not.toContain('OVER');
+  });
+});
+
+describe('crest-aware loudness budget (audit §2.6)', () => {
+  it('delivers below the target instead of brickwalling dense material at −9 LUFS', () => {
+    const parameters = { ...defaultParameters(), targetLUFS: -9, ceiling: -1 };
+    const source = transientTrain({ seconds: 8, peakAmplitude: 1.2, bedAmplitude: 0.15 });
+    const { report, loudnessResult } = runPipeline(source, parameters, {
+      budget: CREST_AWARE_BUDGET,
+    });
+
+    // The budget refused the −10 dB-of-limit route to −9 LUFS…
+    expect(loudnessResult.crestAware.capped).toBe(true);
+    expect(loudnessResult.crestAware.requestedLufs).toBe(-9);
+    // …delivered the loudest clean result at or below the target (this synthetic train is
+    // so peaky that "clean" lands well below −9 — that is the point of the budget)…
+    expect(loudnessResult.achievedLufs).toBeLessThanOrEqual(-9 + 0.15);
+    expect(loudnessResult.achievedLufs).toBeGreaterThan(-15.5);
+    expect(loudnessResult.deltaLu).toBeLessThan(-0.2);
+    // …and kept the limiting inside the budget while still respecting the ceiling.
+    expect(loudnessResult.limiter.averageGainReductionDb).toBeGreaterThanOrEqual(-2.05);
+    expect(loudnessResult.limiter.maxGainReductionDb).toBeGreaterThanOrEqual(-6.05);
+    expect(loudnessResult.limiter.ceilingRespected).toBe(true);
+    expect(loudnessResult.targetReachable).toBe(false);
+    // The report explains what happened instead of hiding it.
+    expect(report.loudness.crestAware.capped).toBe(true);
+    expect(report.warnings.some((w) => /loudest clean master/.test(w))).toBe(true);
+  });
+
+  it('leaves gentle targets untouched: the budget only engages when it must', () => {
+    const parameters = { ...defaultParameters(), targetLUFS: -18, ceiling: -1 };
+    const { report, loudnessResult } = runPipeline(
+      pinkNoise({ amplitude: 0.1, seconds: 8, seed: 11 }),
+      parameters,
+      { budget: CREST_AWARE_BUDGET },
+    );
+    expect(Math.abs(report.loudness.deltaLu)).toBeLessThan(0.25);
+    expect(loudnessResult.crestAware.capped).toBe(false);
+    expect(report.loudness.crestAware.capped).toBe(false);
+    expect(report.loudness.targetReachable).toBe(true);
+  });
+
+  it('is opt-in: without a budget the existing behaviour is unchanged', () => {
+    const parameters = { ...defaultParameters(), targetLUFS: -9, ceiling: -1 };
+    const source = transientTrain({ seconds: 8, peakAmplitude: 1.2, bedAmplitude: 0.15 });
+    const { report, loudnessResult } = runPipeline(source, parameters, { budget: null });
+    expect(loudnessResult.crestAware).toBe(null);
+    // No budget means the loop keeps pushing to the requested target and converges there
+    // (the existing pre-budget behaviour, asserted elsewhere for this same fixture).
+    expect(report.loudness.targetReachable).toBe(true);
+    expect(Math.abs(report.loudness.deltaLu)).toBeLessThan(0.25);
   });
 });

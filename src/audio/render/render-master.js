@@ -5,7 +5,9 @@
  *   1. `OfflineAudioContext` render of the full mastering chain (the *same*
  *      `buildMasteringChain` the live monitor uses — one constructor, one truth).
  *   2. Transient shaping (per-sample, offline only).
- *   3. Normalisation + true-peak limiting, iterated to convergence.
+ *   3. Normalisation + true-peak limiting, iterated to convergence, with a
+ *      crest-aware gain-reduction budget so hot targets are never met by brickwalling
+ *      (`docs/GAIN-STRUCTURE-AUDIT.md` §2.6).
  *   4. Dither, if the output is fixed-point.
  *   5. Verification and report.
  *
@@ -28,7 +30,7 @@ import { analysePeaks } from '../analysis/true-peak.js';
 import { crestFactorDb } from '../analysis/rms.js';
 import { monoCompatibility } from '../analysis/correlation.js';
 import { shapeTransients } from './transient-shaper.js';
-import { normalizeAndLimit } from './normalize.js';
+import { normalizeAndLimit, CREST_AWARE_BUDGET } from './normalize.js';
 import { applyDither } from './dither.js';
 import { buildRenderReport } from './report.js';
 
@@ -153,6 +155,10 @@ export async function renderMaster(opts) {
     targetLufs: parameters.targetLUFS,
     ceilingDb: parameters.ceiling,
     refine: opts.refine !== false,
+    // The export must never brickwall a record to hit a hot target: if the material
+    // cannot take the limiting the target demands, deliver the loudest clean result and
+    // say so (docs/GAIN-STRUCTURE-AUDIT.md §2.6).
+    ...CREST_AWARE_BUDGET,
     onProgress: (stage, f) => onProgress(stage, 0.5 + f * 0.35),
   });
 

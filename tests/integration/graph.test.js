@@ -12,6 +12,7 @@ import { defaultParameters } from '../../src/app/parameters.js';
 import { MATCH_FREQS } from '../../src/app/constants.js';
 import { expandCatalogPreset } from '../../src/app/presets-io.js';
 import { ALL_PRESETS } from '../../src/presets/index.js';
+import { dynamicsCompressorMakeupCompensation } from '../../src/audio/dsp/dynamics-compressor.js';
 
 const params = (patch = {}) => ({ ...defaultParameters(), ...patch });
 
@@ -52,8 +53,28 @@ describe('mastering chain construction', () => {
     expect(chain.saturation.makeup).toBeTruthy();
     expect(chain.saturation.makeup).not.toBe(chain.output);
     applyParameters(chain, params({ sat: 100 }));
-    expect(chain.saturation.makeup.gain.value).toBeCloseTo(1.25, 6);
+    // Make-up is the exact inverse of the drive attenuation (1 / 0.65), so the stage is
+    // 0 dB for small signals — not the old 1 + 0.25a constant that sat on top of a
+    // curve whose slope at zero already exceeded 1 (up to +5.2 dB of hidden gain).
+    expect(chain.saturation.makeup.gain.value).toBeCloseTo(1 / 0.65, 6);
     expect(chain.output.gain.value).toBe(1);
+  });
+
+  it('gives the saturation stage 12 dB of shaper headroom and a transparent sat=0 path', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    applyParameters(chain, params({ sat: 0 }));
+    // Identity over the headroom domain: pre divides by SATURATION_HEADROOM (4) and the
+    // curve multiplies by it, so sat = 0 cannot hard-clip until +12 dBFS.
+    expect(chain.saturation.shaper.curve[chain.saturation.shaper.curve.length - 1]).toBeCloseTo(
+      4,
+      6,
+    );
+    expect(chain.saturation.preGain.gain.value).toBeCloseTo(1 / 4, 6);
+    expect(chain.saturation.makeup.gain.value).toBe(1);
+    applyParameters(chain, params({ sat: 100 }));
+    expect(chain.saturation.preGain.gain.value).toBeCloseTo(0.65 / 4, 6);
+    expect(chain.saturation.makeup.gain.value).toBeCloseTo(1 / 0.65, 6);
   });
 
   it('starts every generator exactly once and stops them on dispose', () => {
@@ -146,6 +167,50 @@ describe('parameter application', () => {
     expect(chain.multiband.lowMakeup.gain.value).toBe(1);
     applyParameters(chain, params({ mbLow: 80, mbAutoMakeup: true }));
     expect(chain.multiband.lowMakeup.gain.value).toBeGreaterThan(1);
+  });
+
+  it('cancels the compressor spec make-up exactly, per band, from the node settings', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    // Inactive bands (ratio 1:1) must be bit-transparent through the compensation node.
+    applyParameters(chain, params({ mbLow: 0, mbMid: 0, mbHigh: 0 }));
+    expect(chain.multiband.specMakeupLow.gain.value).toBe(1);
+    expect(chain.multiband.specMakeupMid.gain.value).toBe(1);
+    expect(chain.multiband.specMakeupHigh.gain.value).toBe(1);
+
+    applyParameters(chain, params({ mbLow: 50, mbMid: 20, mbHigh: 100 }));
+    // Compensation = 1 / pow(1 / Saturate(1,k), 0.6) for the *same* settings pushed to
+    // the compressor — the makeup the browser will actually apply.
+    const expectCancellation = (specNode, comp) => {
+      const expected = dynamicsCompressorMakeupCompensation(
+        comp.threshold.value,
+        comp.knee.value,
+        comp.ratio.value,
+      );
+      expect(specNode.gain.value).toBeCloseTo(expected, 10);
+      expect(specNode.gain.value).toBeLessThan(1); // a real make-up is being cancelled
+    };
+    expectCancellation(chain.multiband.specMakeupLow, chain.multiband.compLow);
+    expectCancellation(chain.multiband.specMakeupMid, chain.multiband.compMid);
+    expectCancellation(chain.multiband.specMakeupHigh, chain.multiband.compHigh);
+    // The spec compensation node is inside the band path (before the solo + wet mix).
+    expect(isConnected(chain.multiband.compLow, chain.multiband.specMakeupLow)).toBe(true);
+    expect(isConnected(chain.multiband.specMakeupLow, chain.multiband.lowMakeup)).toBe(true);
+  });
+
+  it('wires the multiband dry path through a 6 ms delay to match the compressor look-ahead', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    // The dry path is input → dryDelay(6 ms) → AP2(fLow) → AP2(fHigh) → dry gain.
+    expect(chain.multiband.dryDelay).toBeTruthy();
+    expect(chain.multiband.dryDelay.delayTime.value).toBeCloseTo(0.006, 9);
+    expect(isConnected(chain.multiband.input, chain.multiband.dryDelay)).toBe(true);
+    expect(isConnected(chain.multiband.dryDelay, chain.multiband.dry)).toBe(true);
+    // The wet path must not carry an extra delay node — the compressor's own 6 ms
+    // look-ahead provides the delay there, so a second one would double it.
+    const wetInputSources = (chain.multiband.wet.inputs ?? []).map((i) => i.source);
+    expect(wetInputSources).toHaveLength(3);
+    expect(wetInputSources.every((s) => s.nodeType === 'gain')).toBe(true);
   });
 
   it('uses a 4th-order Linkwitz-Riley high-pass for bass mono', () => {

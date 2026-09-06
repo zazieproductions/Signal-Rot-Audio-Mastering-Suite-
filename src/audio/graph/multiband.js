@@ -31,18 +31,37 @@
  * was the single worst defect in the audited implementation (see `docs/AUDIT.md` §3.1 C).
  *
  * The dry path here runs through `AP2(fLow) · AP2(fHigh)`: bit-for-bit the same transfer
- * function the band sum collapses to, with no dynamics in it. Wet and dry are then phase-coherent and the mix control
- * does what its label says. `tests/dsp/multiband-crossover.test.js` asserts flat
- * reconstruction at every mix position and reproduces the old failure for comparison.
+ * function the band sum collapses to, with no dynamics in it. Wet and dry are then
+ * phase-coherent and the mix control does what its label says.
+ * `tests/dsp/multiband-crossover.test.js` asserts flat reconstruction at every mix
+ * position and reproduces the old failure for comparison.
+ *
+ * ── Delay matching ───────────────────────────────────────────────────────────────────
+ * `DynamicsCompressorNode` is a *look-ahead* compressor: every engine delays the signal
+ * by a fixed pre-delay (`kPreDelay = 0.006 s` in Chromium, and the same constant in the
+ * WebKit/Gecko kernels). Phase coherence is not enough for a parallel mix — a wet path
+ * arriving 6 ms late against an undelayed dry path is a delay comb with notches at
+ * 83 / 250 / 417 / 583 Hz …, which sits exactly in the kick-fundamental and body region
+ * (`docs/GAIN-STRUCTURE-AUDIT.md` §2.4). The dry path therefore also runs through a
+ * 6 ms `DelayNode` before the all-passes. All three band compressors share the same
+ * look-ahead, so the band *sum* is internally consistent; only the dry path needs the
+ * explicit delay. The residual mismatch is whatever the running browser's pre-delay
+ * rounding is, a fraction of a millisecond.
  *
  * ── Compressor nodes ─────────────────────────────────────────────────────────────────
  * The per-band dynamics use `DynamicsCompressorNode`. That node is a fixed-topology
- * feed-forward compressor with its own internal detector and a small amount of
- * look-ahead; its exact behaviour is implementation-defined and it is **not** a
- * mastering-grade compressor. It is used because it is the only per-sample dynamics
- * processor available without an `AudioWorklet`, and it does glue convincingly at modest
- * settings. The UI does not pretend otherwise, and `reduction` is metered per band so the
- * user can see exactly how much is happening.
+ * feed-forward compressor with its own internal detector, a fixed 6 ms look-ahead and —
+ * critically — a fixed, non-configurable **make-up gain** of
+ * `pow(1 / Saturate(1, k), 0.6)` that is a pure function of (threshold, knee, ratio)
+ * (see `src/audio/dsp/dynamics-compressor.js`). It is **not** a pure downward
+ * compressor, and it is **not** a mastering-grade compressor. It is used because it is
+ * the only per-sample dynamics processor available without an `AudioWorklet`, and it
+ * does glue convincingly at modest settings — but every band carries an exact
+ * compensating gain node (`specMakeupLow/Mid/High`) so the browser's fixed make-up is
+ * cancelled and the *only* make-up in the signal path is the user's `mbAutoMakeup`.
+ * `docs/GAIN-STRUCTURE-AUDIT.md` §2.2 measures what that hidden gain was doing
+ * (+0.8 … +15.4 dB per band, stacked on top of each other). `reduction` is still
+ * metered per band so the user can see exactly how much is happening.
  */
 
 import { MB_CROSSOVER_LOW, MB_CROSSOVER_HIGH } from '../../app/constants.js';
@@ -54,6 +73,14 @@ export const MB_BALLISTICS = Object.freeze({
   med: { attack: 0.01, release: 0.25, label: 'Medium — musical glue' },
   slow: { attack: 0.03, release: 0.4, label: 'Slow — deep breathing' },
 });
+
+/**
+ * Fixed look-ahead pre-delay of `DynamicsCompressorNode` in seconds, from the engine
+ * sources (`kPreDelay = 0.006f` in Chromium, identical constant in WebKit/Gecko). The
+ * dry path of the parallel mix carries a `DelayNode` of this length so wet and dry
+ * arrive together (see the module header).
+ */
+export const MB_COMPRESSOR_LOOKAHEAD_S = 0.006;
 
 /**
  * Map the 0–100 "amount" control onto threshold and ratio.
@@ -98,12 +125,16 @@ function lr4Section(ctx, type, freq) {
  * @property {DynamicsCompressorNode} compLow
  * @property {DynamicsCompressorNode} compMid
  * @property {DynamicsCompressorNode} compHigh
+ * @property {GainNode} specMakeupLow  exact inverse of the node's fixed spec make-up
+ * @property {GainNode} specMakeupMid
+ * @property {GainNode} specMakeupHigh
+ * @property {GainNode} lowMakeup     optional user auto make-up (the only make-up heard)
+ * @property {GainNode} midMakeup
+ * @property {GainNode} highMakeup
  * @property {GainNode} lowSolo
  * @property {GainNode} midSolo
  * @property {GainNode} highSolo
- * @property {GainNode} lowMakeup
- * @property {GainNode} midMakeup
- * @property {GainNode} highMakeup
+ * @property {DelayNode} dryDelay     delay-matches the dry path to the compressor look-ahead
  * @property {GainNode} wet
  * @property {GainNode} dry
  * @property {BiquadFilterNode[]} crossoverNodes
@@ -144,7 +175,7 @@ export function buildMultiband(ctx, opts = {}) {
   hpLow.out.connect(lpHigh.in);
   hpLow.out.connect(hpHigh.in);
 
-  // ── Per-band dynamics, solo/bypass and makeup ──
+  // ── Per-band dynamics, spec make-up compensation, solo/bypass and make-up ──
   const mk = () => {
     const c = ctx.createDynamicsCompressor();
     c.threshold.value = 0;
@@ -161,30 +192,46 @@ export function buildMultiband(ctx, opts = {}) {
   const lowSolo = ctx.createGain();
   const midSolo = ctx.createGain();
   const highSolo = ctx.createGain();
+  // Exact inverse of the browser's fixed spec make-up, set by `applyParameters` from the
+  // same (threshold, knee, ratio) the compressor was given. Ratio 1:1 ⇒ gain 1 ⇒ the
+  // node is bit-transparent when a band is inactive or bypassed.
+  const specMakeupLow = ctx.createGain();
+  const specMakeupMid = ctx.createGain();
+  const specMakeupHigh = ctx.createGain();
+  specMakeupLow.gain.value = 1;
+  specMakeupMid.gain.value = 1;
+  specMakeupHigh.gain.value = 1;
   const lowMakeup = ctx.createGain();
   const midMakeup = ctx.createGain();
   const highMakeup = ctx.createGain();
 
   apHighForLow.out.connect(compLow);
-  compLow.connect(lowMakeup);
+  compLow.connect(specMakeupLow);
+  specMakeupLow.connect(lowMakeup);
   lowMakeup.connect(lowSolo);
   lowSolo.connect(wet);
 
   lpHigh.out.connect(compMid);
-  compMid.connect(midMakeup);
+  compMid.connect(specMakeupMid);
+  specMakeupMid.connect(midMakeup);
   midMakeup.connect(midSolo);
   midSolo.connect(wet);
 
   hpHigh.out.connect(compHigh);
-  compHigh.connect(highMakeup);
+  compHigh.connect(specMakeupHigh);
+  specMakeupHigh.connect(highMakeup);
   highMakeup.connect(highSolo);
   highSolo.connect(wet);
 
-  // ── Phase-matched dry path ──
-  // AP4(fLow) · AP4(fHigh): identical phase to the band sum, no dynamics.
+  // ── Delay-matched dry path ──
+  // The compressors look 6 ms ahead, so the wet path emerges 6 ms late. The dry path
+  // carries the same 6 ms so a parallel mix is delay-matched as well as phase-matched.
+  const dryDelay = ctx.createDelay(0.05);
+  dryDelay.delayTime.value = MB_COMPRESSOR_LOOKAHEAD_S;
   const dryAp1 = lr4AllpassNodes(ctx, fLow);
   const dryAp2 = lr4AllpassNodes(ctx, fHigh);
-  input.connect(dryAp1.in);
+  input.connect(dryDelay);
+  dryDelay.connect(dryAp1.in);
   dryAp1.out.connect(dryAp2.in);
   dryAp2.out.connect(dry);
 
@@ -197,12 +244,16 @@ export function buildMultiband(ctx, opts = {}) {
     compLow,
     compMid,
     compHigh,
+    specMakeupLow,
+    specMakeupMid,
+    specMakeupHigh,
     lowSolo,
     midSolo,
     highSolo,
     lowMakeup,
     midMakeup,
     highMakeup,
+    dryDelay,
     wet,
     dry,
     crossoverFrequencies: { low: fLow, high: fHigh },

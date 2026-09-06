@@ -62,6 +62,7 @@ import { buildCharacter, applyCharacter } from './character.js';
 import { buildDepth, applyDepth } from './depth.js';
 import { MATCH_FREQS } from '../../app/constants.js';
 import { dbToGain } from '../dsp/math.js';
+import { dynamicsCompressorMakeupCompensation } from '../dsp/dynamics-compressor.js';
 
 /**
  * @typedef {object} MasteringChain
@@ -200,7 +201,7 @@ export function applyParameters(chain, p, opts = {}) {
 function applyMultiband(n, p, bypass) {
   const ballistics = MB_BALLISTICS[p.mbSpeed] ?? MB_BALLISTICS.med;
 
-  const setBand = (comp, makeup, solo, amount, soloState, bandBypass) => {
+  const setBand = (comp, specMakeup, makeup, solo, amount, soloState, bandBypass) => {
     const active = !bypass && !bandBypass;
     const s = bandAmountToSettings(active ? amount : 0);
     comp.threshold.value = s.thresholdDb;
@@ -208,9 +209,20 @@ function applyMultiband(n, p, bypass) {
     comp.knee.value = s.kneeDb;
     comp.attack.value = ballistics.attack;
     comp.release.value = ballistics.release;
+    // Cancel the compressor's *fixed* spec make-up exactly. `DynamicsCompressorNode`
+    // applies `pow(1 / Saturate(1, k), 0.6)` — a pure function of (threshold, knee,
+    // ratio) worth up to +15 dB per band at deep settings — so without this node the
+    // band's output level and tone do not belong to the user's settings at all. With
+    // ratio 1:1 (inactive or bypassed band) the compensation is exactly 1.
+    specMakeup.gain.value = dynamicsCompressorMakeupCompensation(
+      s.thresholdDb,
+      s.kneeDb,
+      s.ratio,
+    );
     // Optional auto make-up: a compressor with ratio R and threshold T applied to
     // programme sitting ~6 dB above threshold loses roughly (1 − 1/R) · 6 dB. This is a
-    // rule of thumb, deliberately conservative, and off by default.
+    // rule of thumb, deliberately conservative, and off by default. With the spec
+    // make-up compensated above, this is the *only* make-up the band can have.
     const autoDb = p.mbAutoMakeup && active ? (1 - 1 / s.ratio) * 6 * 0.5 : 0;
     makeup.gain.value = dbToGain(autoDb);
     solo.gain.value = soloState;
@@ -219,9 +231,33 @@ function applyMultiband(n, p, bypass) {
   const anySolo = p.mbSolo && p.mbSolo !== 'none';
   const soloFor = (band) => (anySolo ? (p.mbSolo === band ? 1 : 0) : 1);
 
-  setBand(n.compLow, n.lowMakeup, n.lowSolo, p.mbLow, soloFor('low'), p.mbBypassLow);
-  setBand(n.compMid, n.midMakeup, n.midSolo, p.mbMid, soloFor('mid'), p.mbBypassMid);
-  setBand(n.compHigh, n.highMakeup, n.highSolo, p.mbHigh, soloFor('high'), p.mbBypassHigh);
+  setBand(
+    n.compLow,
+    n.specMakeupLow,
+    n.lowMakeup,
+    n.lowSolo,
+    p.mbLow,
+    soloFor('low'),
+    p.mbBypassLow,
+  );
+  setBand(
+    n.compMid,
+    n.specMakeupMid,
+    n.midMakeup,
+    n.midSolo,
+    p.mbMid,
+    soloFor('mid'),
+    p.mbBypassMid,
+  );
+  setBand(
+    n.compHigh,
+    n.specMakeupHigh,
+    n.highMakeup,
+    n.highSolo,
+    p.mbHigh,
+    soloFor('high'),
+    p.mbBypassHigh,
+  );
 
   // Soloing a band means hearing only that band, so the dry path must be muted too.
   const engaged = !bypass && (p.mbLow > 0 || p.mbMid > 0 || p.mbHigh > 0);

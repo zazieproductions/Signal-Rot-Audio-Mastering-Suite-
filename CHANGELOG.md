@@ -22,6 +22,44 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   bass-mono, and requires an explicit spread whenever binaural processing is enabled. The
   new signature presets are registered by name.
 
+### Fixed — gain structure (driven by `docs/GAIN-STRUCTURE-AUDIT.md`)
+
+- **The saturation stage was a hard clipper at 0 dBFS — even at `sat = 0`.** The
+  `WaveShaperNode` input clamp to [−1, 1] squared off every transient that reached full
+  scale (measured at 0.007–2.7 % of samples, peaks flattened by up to 5.7 dB) before the
+  true-peak limiter ever saw the signal. The curve domain is now ±4 (12 dB of structural
+  headroom) and the input gain divides by the same factor, so the clamp physically cannot
+  engage until +12 dBFS. At `sat = 0` the curve is a straight line across that whole
+  domain instead of an identity that clipped at ±1.
+- **The saturator added +0.4 … +5.2 dB it was documented not to add.** The curve was
+  peak-normalised but its small-signal slope exceeded unity, and the `1 + 0.25a` make-up
+  sat on top — a second, uncontrolled upward compressor. The curve is now normalised to
+  unity small-signal slope and the make-up node is exactly `1/preGain`: the stage is 0 dB
+  for small signals at every drive setting, and `sat` controls harmonics and peak
+  rounding only. The generated curve is DC-free and monotonic over the full headroom
+  domain.
+- **Every multiband band carried the `DynamicsCompressorNode` fixed make-up gain**
+  `pow(1/Saturate(1, k), 0.6)` — up to +15.4 dB per band at deep settings, stacked three
+  bands deep, mixed against an uncompensated dry path. A new engine-exact analytic model
+  (`src/audio/dsp/dynamics-compressor.js`, mirroring the Blink/Gecko knee, `kAtSlope`
+  search and full-scale saturation) feeds an exact inverse-gain node after each band's
+  compressor, so `mbAutoMakeup` — off by default — is again the only make-up in the path,
+  exactly as the code already believed.
+- **The multiband parallel mix was a 6 ms comb filter.** `DynamicsCompressorNode` looks
+  6 ms ahead but the phase-matched dry path was undelayed, so `mbMix < 100` combed the
+  kick and body regions (notches at 83/250/417 Hz…). The dry path now carries the same
+  6 ms delay, so wet and dry arrive together as well as in phase.
+- **The live preview lied about level.** The monitor's safety compressor
+  (−1.2 dB, 20:1) applied its own fixed +0.68 dB make-up, so what was tuned by ear sat
+  above the ceiling it was meant to protect. The monitor path now compensates the make-up
+  exactly, tracking the threshold when the ceiling control moves it.
+- **Hot loudness targets brickwalled the record.** Nine presets target ≥ −11 LUFS; a
+  12 dB-crest mix delivered −9 LUFS only via −10 dB peak / −3.1 dB average gain
+  reduction. Final exports now carry a crest-aware gain-reduction budget (average ≤ 2 dB,
+  peak ≤ 6 dB): when hitting the requested target would exceed it, the loop delivers the
+  loudest clean master at or below the target and the render report states the requested
+  vs delivered loudness and why (new `loudness.crestAware` block).
+
 ## [7.0.0] — 2026-08-18
 
 A full audit, refactor and DSP-reliability pass. The audit that drove it is preserved at
