@@ -11,6 +11,12 @@ rendering · ADM BWF interchange · deliberately degraded media · **two workspa
 Everything runs locally in the tab. No upload, no account, no server. Open it, drop a file
 in, and the only thing that leaves your machine is the file you choose to download.
 
+**Repository colour key** — seven domain codes colour every diagram in this README and
+`docs/`, `.github/labeler.yml`, and `--dom-*` tokens in `src/styles/tokens.css`:
+● DSP (violet) · ● SPATIAL (azure) · ● RUNTIME (chartreuse) · ● EXPORT (fuchsia) ·
+● TESTING (sky) · ● UI (pink) · ● APP (slate). Full spec:
+[`docs/COLOR-SYSTEM.md`](docs/COLOR-SYSTEM.md).
+
 > **Product experience by Agent E** — see [`docs/PRODUCT-EXPERIENCE.md`](docs/PRODUCT-EXPERIENCE.md) for the full design system, workspace, A/B, macros, Spatial Lab, preset browser, export and accessibility.
 
 ```
@@ -29,6 +35,7 @@ signal-flow view and on every affected control.
 - [What this is not](#what-this-is-not)
 - [Feature matrix](#feature-matrix)
 - [Architecture](#architecture)
+- [Visual organisation](#visual-organisation)
 - [Signal flow](#signal-flow)
 - [Live preview versus export](#live-preview-versus-export)
 - [Getting started](#getting-started)
@@ -36,6 +43,7 @@ signal-flow view and on every affected control.
 - [Presets](#presets)
 - [Immersive audio](#immersive-audio)
 - [Testing](#testing)
+- [Workstreams & ownership](#workstreams--ownership)
 - [Technical limitations](#technical-limitations)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
@@ -140,67 +148,81 @@ Full detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 
 ## Architecture
 
+Same graph as before, re-inked with the domain colours from
+[`docs/COLOR-SYSTEM.md`](docs/COLOR-SYSTEM.md) — the hue tells you which workstream owns a
+node before you read its name. Fuchsia nodes inside an otherwise-violet island are the
+export-owned writers living among the DSP (ADM is a spatial⇄export boundary; the analysis
+worker is runtime plumbing).
+
 ```mermaid
 graph TD
   subgraph Shell
-    HTML[index.html] --> MAIN[src/main.js]
-    MAIN --> BOOT[app/bootstrap.js]
+    HTML[index.html]:::dom-ui --> MAIN[src/main.js]:::dom-app
+    MAIN --> BOOT[app/bootstrap.js]:::dom-app
   end
 
   subgraph State
-    BOOT --> STORE[app/state.js<br/>validated store]
-    STORE --- SCHEMA[app/parameters.js<br/>parameter schema]
-    STORE --- PIO[app/presets-io.js<br/>serialise · validate · migrate]
+    BOOT --> STORE[app/state.js<br/>validated store]:::dom-app
+    STORE --- SCHEMA[app/parameters.js<br/>parameter schema]:::dom-app
+    STORE --- PIO[app/presets-io.js<br/>serialise · validate · migrate]:::dom-app
   end
 
   subgraph UI
-    BOOT --> CTRL[ui/controls.js<br/>generated from schema]
-    BOOT --> TABS[ui/tabs.js]
-    BOOT --> FLOW[ui/signal-flow.js]
-    BOOT --> TRANS[ui/transport.js]
-    BOOT --> PAL[ui/command-palette.js]
-    BOOT --> VIZ[visualizers/*]
+    BOOT --> CTRL[ui/controls.js<br/>generated from schema]:::dom-ui
+    BOOT --> TABS[ui/tabs.js]:::dom-ui
+    BOOT --> FLOW[ui/signal-flow.js]:::dom-ui
+    BOOT --> TRANS[ui/transport.js]:::dom-ui
+    BOOT --> PAL[ui/command-palette.js]:::dom-ui
+    BOOT --> VIZ[visualizers/*]:::dom-ui
   end
 
   subgraph Audio
-    BOOT --> CTX[audio/context.js]
-    BOOT --> CHAIN[audio/graph/build-mastering-chain.js]
-    CHAIN --> TONE[graph/tone.js]
-    CHAIN --> MB[graph/multiband.js]
-    CHAIN --> ST[graph/stereo.js]
-    CHAIN --> CH[graph/character.js]
-    CHAIN --> DP[graph/depth.js]
+    BOOT --> CTX[audio/context.js]:::dom-dsp
+    BOOT --> CHAIN[audio/graph/build-mastering-chain.js]:::dom-dsp
+    CHAIN --> TONE[graph/tone.js]:::dom-dsp
+    CHAIN --> MB[graph/multiband.js]:::dom-dsp
+    CHAIN --> ST[graph/stereo.js]:::dom-dsp
+    CHAIN --> CH[graph/character.js]:::dom-dsp
+    CHAIN --> DP[graph/depth.js]:::dom-dsp
   end
 
   subgraph Offline
-    EXP[app/export-controller.js] --> RM[render/render-master.js]
+    EXP[app/export-controller.js]:::dom-export --> RM[render/render-master.js]:::dom-dsp
     RM --> CHAIN
-    RM --> TS[render/transient-shaper.js]
-    RM --> NORM[render/normalize.js]
-    NORM --> LIM[render/limiter.js]
-    RM --> DITH[render/dither.js]
-    RM --> REP[render/report.js]
-    RM --> ENC[encode/wav · aiff · mp3]
+    RM --> TS[render/transient-shaper.js]:::dom-dsp
+    RM --> NORM[render/normalize.js]:::dom-dsp
+    NORM --> LIM[render/limiter.js]:::dom-dsp
+    RM --> DITH[render/dither.js]:::dom-dsp
+    RM --> REP[render/report.js]:::dom-dsp
+    RM --> ENC[encode/wav · aiff · mp3]:::dom-export
   end
 
   subgraph Analysis
-    W[workers/analysis.worker.js] --> LOUD[analysis/loudness.js]
-    W --> TP[analysis/true-peak.js]
-    W --> CORR[analysis/correlation.js]
-    W --> SM[analysis/spectral-match.js]
+    W[workers/analysis.worker.js]:::dom-runtime --> LOUD[analysis/loudness.js]:::dom-dsp
+    W --> TP[analysis/true-peak.js]:::dom-dsp
+    W --> CORR[analysis/correlation.js]:::dom-dsp
+    W --> SM[analysis/spectral-match.js]:::dom-dsp
   end
 
   subgraph Immersive
-    IMM[app/immersive-controller.js] --> LAY[immersive/layouts.js]
-    IMM --> SL[immersive/sonic-lab.js]
-    IMM --> FEEDS[immersive/speaker-feeds.js]
-    IMM --> BIN[immersive/binaural.js]
-    IMM --> ADM[immersive/adm.js]
+    IMM[app/immersive-controller.js]:::dom-spatial --> LAY[immersive/layouts.js]:::dom-spatial
+    IMM --> SL[immersive/sonic-lab.js]:::dom-spatial
+    IMM --> FEEDS[immersive/speaker-feeds.js]:::dom-spatial
+    IMM --> BIN[immersive/binaural.js]:::dom-spatial
+    IMM --> ADM[immersive/adm.js]:::dom-export
   end
 
   BOOT --> W
   BOOT --> EXP
   BOOT --> IMM
+
+  classDef dom-dsp fill:#222131,stroke:#a78bfa,color:#a78bfa
+  classDef dom-spatial fill:#152332,stroke:#58a6ff,color:#58a6ff
+  classDef dom-runtime fill:#262c19,stroke:#c8e15c,color:#c8e15c
+  classDef dom-export fill:#2a1a2c,stroke:#e26bd8,color:#e26bd8
+  classDef dom-testing fill:#112631,stroke:#38bdf8,color:#38bdf8
+  classDef dom-ui fill:#2d1b27,stroke:#f472b6,color:#f472b6
+  classDef dom-app fill:#1f2328,stroke:#94a3b8,color:#94a3b8
 ```
 
 The organising principle: **every numeric routine is a pure function over plain typed
@@ -238,11 +260,62 @@ src/
 
 ---
 
+## Visual organisation
+
+Seven colours code the repository's major areas. They are design tokens
+(`--dom-*` in [`src/styles/tokens.css`](src/styles/tokens.css)), the palette of every
+diagram in this file and in `docs/`, the `area:*` GitHub labels applied by
+[`.github/labeler.yml`](.github/labeler.yml) — and deliberately nothing else: the product
+keeps its two-accent identity (cyan = original, orange = processed), and no meter or scope
+ever borrows a domain hue. The claim "same colour, same meaning, everywhere" is enforced by
+`tests/app/visual-system.test.js`.
+
+```mermaid
+graph LR
+  DSP["DSP & MEASUREMENT<br/>4,855 lines · 392 tests"]:::dom-dsp
+  SPA["SPATIAL & IMMERSIVE<br/>856 lines · up to 24-ch"]:::dom-spatial
+  RUN["RUNTIME & WORKERS<br/>386 lines · contract layer"]:::dom-runtime
+  EXP["EXPORT & FORMATS<br/>3,119 lines · 492 tests"]:::dom-export
+  TST["TESTING & CONFORMANCE<br/>1,068 + 37 + 7"]:::dom-testing
+  UII["UI & PRODUCT<br/>5,460 lines · 52 tests"]:::dom-ui
+  APP["APP STATE & PRESETS<br/>5,064 lines · 72 presets"]:::dom-app
+
+  classDef dom-dsp fill:#222131,stroke:#a78bfa,color:#a78bfa
+  classDef dom-spatial fill:#152332,stroke:#58a6ff,color:#58a6ff
+  classDef dom-runtime fill:#262c19,stroke:#c8e15c,color:#c8e15c
+  classDef dom-export fill:#2a1a2c,stroke:#e26bd8,color:#e26bd8
+  classDef dom-testing fill:#112631,stroke:#38bdf8,color:#38bdf8
+  classDef dom-ui fill:#2d1b27,stroke:#f472b6,color:#f472b6
+  classDef dom-app fill:#1f2328,stroke:#94a3b8,color:#94a3b8
+```
+
+| Domain              | Primary paths                                                          |    Lines (non-blank) | Guarded by                                                 |
+| ------------------- | ---------------------------------------------------------------------- | -------------------: | ---------------------------------------------------------- |
+| ● DSP `#a78bfa`     | `audio/{dsp,analysis,graph,render,adaptive}` + `context.js` — 25 files |                4,855 | `tests/dsp` (238) + `tests/integration` (154)              |
+| ● SPATIAL `#58a6ff` | `audio/immersive` (minus `adm.js`) + spatial lab UI                    |             856 + UI | `tests/format/{layouts,adm}`, browser immersive spec       |
+| ● RUNTIME `#c8e15c` | `src/runtime` + `src/workers` — 8 files                                |                  386 | `tests/runtime` (6)                                        |
+| ● EXPORT `#e26bd8`  | `audio/encode` + `immersive/adm.js` + export controller — 12 files     |                3,119 | `tests/format` (159) + `tests/interoperability` (333)      |
+| ● TESTING `#38bdf8` | `tests/` · `e2e/` · `tests/browser` · `ci/` · lab tooling              | 11,760 (tests + e2e) | itself — four CI gates, [docs/TESTING.md](docs/TESTING.md) |
+| ● UI `#f472b6`      | `src/ui` + `src/visualizers` + `src/styles` + `index.html`             |                5,460 | `tests/ui` (52) + a11y/responsive e2e                      |
+| ● APP `#94a3b8`     | `src/app` core + `src/presets` + entry — 18 files                      |                5,064 | `tests/app` (93)                                           |
+
+Counts are measured at this commit (104 source files / 19,403 lines total); the full
+mapping — every directory, its agents, docs and boundary files — is
+[docs/COLOR-SYSTEM.md](docs/COLOR-SYSTEM.md).
+
+---
+
 ## Signal flow
+
+Colour marks the owning domain of each stage: every process node is ● DSP — one chain
+constructor serves both paths — the monitor surface is ● UI, verification and ingest are
+● APP, and the encode at the end belongs to ● EXPORT. The full stage-by-stage ownership
+table, with the module that builds each node, is in
+[`docs/DSP-SIGNAL-FLOW.md`](docs/DSP-SIGNAL-FLOW.md).
 
 ```mermaid
 flowchart LR
-  IN([Source]) --> TRIM[Input drive]
+  IN([Source]):::dom-app --> TRIM[Input drive]
   TRIM --> MATCH[Match EQ<br/>8 bells]
   MATCH --> TONE[Tone<br/>6 bands + tilt]
   TONE --> MB[Multiband<br/>serial LR4 140 Hz / 3.2 kHz]
@@ -250,7 +323,7 @@ flowchart LR
   STEREO --> CHAR[Character<br/>tape · vinyl · hiss]
   CHAR --> DEPTH[Depth<br/>early reflections]
   DEPTH --> SAT[Saturation<br/>waveshaper]
-  SAT --> LIVE([Live monitor])
+  SAT --> LIVE([Live monitor]):::dom-ui
   SAT -.offline.-> TRANS[Transient shaper]
   TRANS --> NORM[Normalise]
   NORM --> LIMIT[True-peak limiter]
@@ -258,7 +331,17 @@ flowchart LR
   VERIFY -->|over| TRIM2[Bounded corrective trim]
   TRIM2 --> VERIFY
   VERIFY -->|ok| DITHER[Dither]
-  DITHER --> ENCODE([Encode])
+  DITHER --> ENCODE([Encode]):::dom-export
+
+  classDef dom-dsp fill:#222131,stroke:#a78bfa,color:#a78bfa
+  classDef dom-spatial fill:#152332,stroke:#58a6ff,color:#58a6ff
+  classDef dom-runtime fill:#262c19,stroke:#c8e15c,color:#c8e15c
+  classDef dom-export fill:#2a1a2c,stroke:#e26bd8,color:#e26bd8
+  classDef dom-testing fill:#112631,stroke:#38bdf8,color:#38bdf8
+  classDef dom-ui fill:#2d1b27,stroke:#f472b6,color:#f472b6
+  classDef dom-app fill:#1f2328,stroke:#94a3b8,color:#94a3b8
+
+  class TRIM,MATCH,TONE,MB,STEREO,CHAR,DEPTH,SAT,TRANS,NORM,LIMIT,VERIFY,TRIM2,DITHER dom-dsp
 ```
 
 Why this order, and what changed from the pre-7.0 chain, is argued in
@@ -307,7 +390,7 @@ npm run dev            # http://localhost:5173
 | `npm run lint`             | ESLint over `src`, `tests` and `tools`                                          |
 | `npm run format`           | Prettier, write                                                                 |
 | `npm run format:check`     | Prettier, check only (used by CI)                                               |
-| `npm run test`             | Vitest: 971 unit, DSP, format, interoperability and integration tests           |
+| `npm run test`             | Vitest: 1,068 unit, DSP, format, interoperability and integration tests         |
 | `npm run test:watch`       | Vitest in watch mode                                                            |
 | `npm run test:coverage`    | Coverage report                                                                 |
 | `npm run test:e2e`         | Playwright browser tests (needs `npx playwright install chromium`)              |
@@ -354,7 +437,7 @@ and shows what it actually found, which is more reliable than any table.
 
 ## Presets
 
-Sixty-eight presets in seven groups. Every one carries a review note recording what was
+Seventy-two presets in eight groups. Every one carries a review note recording what was
 checked and anything you should know before reaching for it, and a risk level:
 
 - **safe** — no mono-compatibility or level hazard
@@ -392,9 +475,22 @@ channel map.
 ## Testing
 
 ```bash
-npm run test              # 971 tests, ~170 s
+npm run test              # 1,068 tests, ~165 s
 npm run test:e2e          # 37 browser tests (install Chromium first)
+npm run test:conformance  # 7 lab specs × chromium/firefox/webkit — measurements, not assertions of belief
 npm run validate:exports  # real exports, checked by parsers that are not ours
+```
+
+Four gates stand between a change and a release — detailed, colour-coded, in
+[docs/TESTING.md §The pipeline](docs/TESTING.md#the-pipeline):
+
+```text
+GATE 1  npm run check            format · lint · 1,068 vitest · validate:exports · build
+GATE 2  CI browser job           37 Playwright specs on real Chromium — bytes parsed
+GATE 3  CI conformance matrix    goldens (Node) + 7 specs × chromium/firefox/webkit
+                                 measurements → lab-results JSON → Agent A's findings inbox
+GATE 4  CI export interop        production writers → independent parsers + ffprobe
+                                 ≥25 fixtures · channel order from the AUDIO · no over-claims
 ```
 
 > **Note on the browser suite.** The Playwright specs are written and configured but were
@@ -404,12 +500,15 @@ npm run validate:exports  # real exports, checked by parsers that are not ours
 
 | Suite                     | Tests | What it proves                                                                                                                                                                                         |
 | ------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tests/dsp/`              | 179   | K-weighting matches the BS.1770-4 tables to 1e-12; the crossover reconstructs to 0.00000 dB; the limiter holds every ceiling on every pathological signal; dither is triangular and decorrelating      |
+| `tests/dsp/`              | 238   | K-weighting matches the BS.1770-4 tables to 1e-12; the crossover reconstructs to 0.00000 dB; the limiter holds every ceiling on every pathological signal; dither is triangular and decorrelating      |
 | `tests/format/`           | 159   | RIFF and IFF chunk sizes, padding, endianness, channel masks, ADM ID cross-references, `chna` entry widths, RF64/BW64 `ds64` planning at the 4 GiB boundary                                            |
 | `tests/interoperability/` | 333   | Multichannel round trips through an **independent** decoder; channel order recovered from the audio itself; RF64/BW64 write path; hostile-metadata fuzzing; delivery profiles, manifests and checksums |
-| `tests/app/`              | 74    | Schema integrity, clamping, hostile preset files, catalogue safety review                                                                                                                              |
-| `tests/integration/`      | 116   | Graph topology against a recording fake context; the full post-render pipeline                                                                                                                         |
-| `tests/ui/`               | 40    | Schema-driven controls, ARIA tab pattern, DOM-injection safety, application boot against the real `index.html`                                                                                         |
+| `tests/app/`              | 93    | Schema integrity, clamping, hostile preset files, catalogue safety review                                                                                                                              |
+| `tests/integration/`      | 154   | Graph topology against a recording fake context; the full post-render pipeline                                                                                                                         |
+| `tests/ui/`               | 52    | Schema-driven controls, ARIA tab pattern, DOM-injection safety, application boot against the real `index.html`                                                                                         |
+| `tests/runtime/`          | 6     | Scheduler backpressure and cancellation, RPC transfer hygiene, memory planning, pyramid levels, chunk stream                                                                                           |
+| `tests/fixtures/`         | 13    | Golden bank snapshots — a DSP change that moves measured numbers moves a test first                                                                                                                    |
+| `tests/conformance/`      | 20    | The lab's own classification and immersive catalog fixtures — the instrument is calibrated, too                                                                                                        |
 | `e2e/`                    | 37    | Real browser: import, decode, render, download, verify header bytes                                                                                                                                    |
 
 All test signals are generated programmatically (`tests/helpers/signals.js`) — no
@@ -428,6 +527,43 @@ are valid.**
 
 More: [`docs/TESTING.md`](docs/TESTING.md) and
 [`docs/EXPORT-INTEROPERABILITY.md`](docs/EXPORT-INTEROPERABILITY.md).
+
+---
+
+## Workstreams & ownership
+
+Five workstreams, one findings loop, three boundary conventions — the full map is
+[`docs/WORKSTREAMS.md`](docs/WORKSTREAMS.md). Agents are coloured by the domain they own:
+
+```mermaid
+flowchart LR
+  A["AGENT A<br/>DSP engine + measurement<br/>+ spatial feeds & layouts"]:::dom-dsp
+  B["AGENT B<br/>conformance lab<br/>findings inbox · golden bank"]:::dom-testing
+  C["AGENT C<br/>encoders · ADM · delivery<br/>interoperability gate"]:::dom-export
+  D["AGENT D<br/>scheduler · RPC · budgets<br/>preflight · pyramid"]:::dom-runtime
+  E["AGENT E<br/>both workspaces · scopes<br/>styles · export summary UX"]:::dom-ui
+
+  B -- "finding + kept regression test<br/>never fixes DSP" --> A
+  A -- "routing flags · chain API" --> E
+  C -- "writer APIs" --> E
+  D -- "progress · memory · levels<br/>// adapter boundary" --> E
+  D -. "cancellation" .-> A
+  D -. "batch keys" .-> C
+  R["HOUSE — store · schema · 72 presets"]:::dom-app
+  R == "one parameter schema for everyone" ==> E
+
+  classDef dom-dsp fill:#222131,stroke:#a78bfa,color:#a78bfa
+  classDef dom-runtime fill:#262c19,stroke:#c8e15c,color:#c8e15c
+  classDef dom-export fill:#2a1a2c,stroke:#e26bd8,color:#e26bd8
+  classDef dom-testing fill:#112631,stroke:#38bdf8,color:#38bdf8
+  classDef dom-ui fill:#2d1b27,stroke:#f472b6,color:#f472b6
+  classDef dom-app fill:#1f2328,stroke:#94a3b8,color:#94a3b8
+```
+
+The loop that makes it work: **B measures the real engine and files findings; the
+regression test that produced a finding always stays; A fixes against it or tightens the
+threshold with a one-line reason.** Nobody retunes DSP from a lab printout, and nobody
+fixes a format claim by editing the claim.
 
 ---
 

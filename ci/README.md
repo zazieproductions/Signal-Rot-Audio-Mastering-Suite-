@@ -1,7 +1,7 @@
 # CI configuration
 
 `github-actions-ci.yml` is the GitHub Actions workflow for this project. It runs the
-format check, the linter, the 544-test Vitest suite and the production build, then runs
+format check, the linter, the 1,068-test Vitest suite and the production build, then runs
 the Playwright browser suite in a separate job.
 
 ## Installing it

@@ -25,26 +25,28 @@ duplicating 400 MB of float data at every stage.
 
 ## Module map
 
+The same map, colour-coded by repository domain — the seven hues of
+[COLOR-SYSTEM.md](COLOR-SYSTEM.md), the counts measured from this tree. One convention
+carries the honesty of the whole picture: **a dotted edge is a contract that exists but is
+not yet consumed**, never a dependency that was imagined.
+
 ```mermaid
 graph LR
-  subgraph "app/ — orchestration"
+  subgraph APPG["app/ · 7 files · 3,243 lines — orchestration"]
     BOOT[bootstrap.js]
     STATE[state.js]
     PARAMS[parameters.js]
     PIO[presets-io.js]
+    CONST[constants.js]
     EXPC[export-controller.js]
     IMMC[immersive-controller.js]
-    CONST[constants.js]
   end
 
-  subgraph "audio/dsp — primitives"
+  subgraph DSPP["audio/dsp · audio/analysis · 11 files · 1,558 lines — primitives & measurement"]
     MATH[math.js]
     BQ[biquad.js]
     AD[audio-data.js]
     PRNG[prng.js]
-  end
-
-  subgraph "audio/analysis — measurement"
     LOUD[loudness.js]
     TPK[true-peak.js]
     RMS[rms.js]
@@ -53,16 +55,13 @@ graph LR
     SMATCH[spectral-match.js]
   end
 
-  subgraph "audio/graph — realtime"
+  subgraph GRAPH["audio/graph · audio/render · 12 files · 2,862 lines — realtime & offline"]
     CHAIN[build-mastering-chain.js]
     TONE[tone.js]
     MB[multiband.js]
     ST[stereo.js]
     CHAR[character.js]
     DEPTH[depth.js]
-  end
-
-  subgraph "audio/render — offline"
     RM[render-master.js]
     TS[transient-shaper.js]
     NORM[normalize.js]
@@ -71,7 +70,7 @@ graph LR
     REP[report.js]
   end
 
-  subgraph "audio/immersive"
+  subgraph IMM["audio/immersive · 5 files · 1,344 lines — speaker fields"]
     LAY[layouts.js]
     SLAB[sonic-lab.js]
     FEED[speaker-feeds.js]
@@ -79,15 +78,44 @@ graph LR
     ADM[adm.js]
   end
 
-  subgraph "audio/encode"
+  subgraph ENC["audio/encode · 10 files · 2,294 lines — deliverables"]
     WAV[wav.js]
     AIFF[aiff.js]
     MP3[mp3.js]
     DL[download.js]
+    DELIV[delivery · profiles · manifest · checksum · channel-identification · riff-layout]
+  end
+
+  subgraph RUNI["runtime + workers · 8 files · 386 lines — plumbing"]
+    WC[workers/analysis-client.js]
+    WK[workers/analysis.worker.js]
+    JSCH[runtime/job-scheduler.js]
+    RPC[runtime/worker-rpc.js]
+    MEM[runtime/memory-budget.js]
+    PF[runtime/render-preflight.js]
+    PYR[runtime/waveform-pyramid.js]
+    STRM[runtime/audio-stream.js]
+  end
+
+  subgraph PRES["presets/ · 10 files · 1,794 lines — 72 presets · 8 groups"]
+    PINDEX[index.js]
+    PSHARED[_shared.js]
+  end
+
+  subgraph UII["ui/ · visualizers/ · styles/ — product surface"]
+    CTRL[controls.js · tabs.js · transport.js · signal-flow.js · …19 files]
+    SLABI[ui/spatial-lab.js]
+    EXPS[ui/export-summary.js]
+    VIZ[visualizers/* · 11 files]
   end
 
   BOOT --> STATE --> PARAMS
   BOOT --> CHAIN
+  BOOT --> WC
+  EXPC --> WC
+  BOOT --> PINDEX
+  PIO --> PARAMS
+  PIO --> PSHARED
   CHAIN --> TONE & MB & ST & CHAR & DEPTH
   EXPC --> RM --> CHAIN
   RM --> TS --> NORM --> LIM --> DITH --> REP
@@ -102,8 +130,36 @@ graph LR
   CHAR --> PRNG
   DITH --> PRNG
   MB --> BQ
-  PIO --> PARAMS
+  WC --> WK
+  WK --> LOUD & TPK & RMS & CORR & SMATCH
+  CTRL --> STATE & PARAMS & CONST
+  SLABI --> IMMC
+  EXPS --> EXPC
+  VIZ --> STATE
+  BOOT --> CTRL
+  BOOT -. "progress · jobs · estimates — contracts ready, awaiting adoption" .-> JSCH
+  EXPC -. batch keys .-> JSCH
+  RM -. cancellation .-> JSCH
+
+  classDef dom-dsp fill:#222131,stroke:#a78bfa,color:#a78bfa
+  classDef dom-spatial fill:#152332,stroke:#58a6ff,color:#58a6ff
+  classDef dom-runtime fill:#262c19,stroke:#c8e15c,color:#c8e15c
+  classDef dom-export fill:#2a1a2c,stroke:#e26bd8,color:#e26bd8
+  classDef dom-ui fill:#2d1b27,stroke:#f472b6,color:#f472b6
+  classDef dom-app fill:#1f2328,stroke:#94a3b8,color:#94a3b8
+
+  class BOOT,STATE,PARAMS,PIO,CONST,PINDEX,PSHARED dom-app
+  class EXPC,ADM dom-export
+  class IMMC,LAY,SLAB,FEED,BIN,SLABI dom-spatial
+  class MATH,BQ,AD,PRNG,LOUD,TPK,RMS,CORR,FFT,SMATCH,CHAIN,TONE,MB,ST,CHAR,DEPTH,RM,TS,NORM,LIM,DITH,REP dom-dsp
+  class WAV,AIFF,MP3,DL,DELIV,EXPS dom-export
+  class WC,WK,JSCH,RPC,MEM,PF,PYR,STRM dom-runtime
+  class CTRL,VIZ dom-ui
 ```
+
+Counts: files and non-blank lines, `wc`-measured. `styles/` (7 files, 2,274 lines of CSS,
+including the `--dom-*` tokens themselves) is folded into the UI subgraph to keep the map
+on modules rather than directories.
 
 ## Dependency direction
 
@@ -113,6 +169,23 @@ Strictly one way:
 ui/ · visualizers/  →  app/  →  audio/  →  audio/dsp/
                                   ↓
                               presets/
+```
+
+The same rule, coloured — each band takes the hue of its owning domain; the spatial
+builders live inside the audio band here, and carry their azure colour in the module map
+above. The runtime island is drawn alone because, at this commit, nothing imports it
+(contracts tested, awaiting adoption):
+
+```mermaid
+flowchart LR
+  UI["ui/ · visualizers/"]:::dom-ui --> APP["app/"]:::dom-app --> AUDIO["audio/ — graph · render · immersive · encode"]:::dom-dsp --> DSPPURE["audio/dsp/ — pure typed arrays, imports only dsp"]:::dom-dsp
+  AUDIO --> PRE["presets/ — data only"]:::dom-app
+  RT["runtime + workers — zero importers, contracts consumable"]:::dom-runtime
+
+  classDef dom-dsp fill:#222131,stroke:#a78bfa,color:#a78bfa
+  classDef dom-runtime fill:#262c19,stroke:#c8e15c,color:#c8e15c
+  classDef dom-ui fill:#2d1b27,stroke:#f472b6,color:#f472b6
+  classDef dom-app fill:#1f2328,stroke:#94a3b8,color:#94a3b8
 ```
 
 - `audio/**` never imports from `ui/**` or `app/bootstrap.js`.

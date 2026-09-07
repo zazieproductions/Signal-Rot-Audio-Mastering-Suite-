@@ -2,6 +2,19 @@
 
 <!-- One paragraph. If it changes what a render sounds like, say so in the first sentence. -->
 
+## Area
+
+<!-- The seven repository domains from docs/COLOR-SYSTEM.md. The labeler applies the
+     matching `area:*` labels from your touched paths; check this list against them. -->
+
+- [ ] DSP — engine, measurement, render maths
+- [ ] Spatial — immersive beds, speaker fields, Sonic Lab
+- [ ] Runtime — jobs, workers, budgets, preflight
+- [ ] Export — formats, ADM, delivery, interoperability
+- [ ] Testing — suites, conformance lab, CI
+- [ ] UI — controls, visualizers, styles
+- [ ] App — state, schema, presets
+
 ## Type
 
 - [ ] Bug fix
