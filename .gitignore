@@ -15,3 +15,6 @@ lab-results/
 # Generated export-validation fixtures and reports (tools/export-validation).
 .fixtures/
 export-validation-report.json
+
+# Python bytecode caches from the QA measurement scripts (qa/scripts).
+__pycache__/
