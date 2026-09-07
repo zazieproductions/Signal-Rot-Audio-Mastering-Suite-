@@ -17,6 +17,32 @@
       <header>
         <span class="logo">SIGNAL ROT // MASTER</span>
         <span class="badge" id="engineBadge">web dsp</span>
+        <div
+          class="workspace-switch"
+          id="workspaceSwitch"
+          role="tablist"
+          aria-label="Workspace — Master or Spatial Lab"
+        >
+          <button
+            class="ws-btn"
+            data-ws="master"
+            aria-selected="true"
+            role="tab"
+            title="Master — tonal balance, dynamics, loudness, export (M)"
+          >
+            Master
+          </button>
+          <button
+            class="ws-btn"
+            data-ws="spatial"
+            aria-selected="false"
+            role="tab"
+            title="Spatial Lab — immersive layouts, speaker map, binaural (L)"
+          >
+            Spatial Lab
+          </button>
+        </div>
+        <span class="ws-hint" id="wsHint" aria-hidden="true">M → Master · L → Lab</span>
         <span class="spacer"></span>
         <button class="btn ghost" id="undoBtn" title="Undo (Ctrl/Cmd+Z)" disabled>↶</button>
         <button class="btn ghost" id="redoBtn" title="Redo (Ctrl/Cmd+Shift+Z)" disabled>↷</button>
@@ -166,6 +192,220 @@
         <section class="scopes" id="scopesRow" hidden aria-label="Scopes">
           <canvas id="spectrum" aria-label="Spectrum analyser"></canvas>
           <canvas id="gonio" aria-label="Goniometer and correlation history"></canvas>
+        </section>
+
+        <!-- ── SOURCE HERO — concise analysis summary ─────────────────────────── -->
+        <section class="card" id="sourceHero" hidden aria-label="Source analysis">
+          <div class="hd">
+            <span>Source</span>
+            <span class="sp">
+              <span class="hint" style="margin: 0" id="sourceHeroHint">no file loaded</span>
+            </span>
+          </div>
+          <div class="h-body" id="sourceHeroBody">
+            <div class="onboard" id="sourceOnboard">
+              <div class="eyebrow">Signal Rot — browser-native mastering laboratory</div>
+              <h3>Drop a track to begin</h3>
+              <p>
+                Everything runs in this tab. No upload, no account. Your audio never leaves the
+                machine — the only thing that leaves is the file you choose to export.
+              </p>
+              <div class="onboard-steps">
+                <div class="onboard-step">
+                  <div class="n">1</div>
+                  <strong>Load</strong><span>WAV · MP3 · FLAC · AIFF · M4A · 16 → 32-bit float · up to 192 kHz</span>
+                </div>
+                <div class="onboard-step">
+                  <div class="n">2</div>
+                  <strong>Choose profile</strong><span>Reference, corrective, character or spatial — 68 presets</span>
+                </div>
+                <div class="onboard-step">
+                  <div class="n">3</div>
+                  <strong>Compare</strong><span>A/B at matched loudness — the only honest comparison</span>
+                </div>
+                <div class="onboard-step">
+                  <div class="n">4</div>
+                  <strong>Export</strong><span>True-peak verified · ADM BWF · 7.1.4 · 20.4 · channel map</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── MASTERING STATUS — compact delivery health strip ───────────────── -->
+        <section class="card" id="masterStatusCard" hidden aria-label="Mastering status">
+          <div class="hd">
+            <span>Mastering status</span>
+            <span class="sp">
+              <span class="hint" style="margin: 0">integrated · true peak · range · crest · limiter</span>
+              <button class="btn ghost" id="masterStatusInfoBtn" style="padding: 3px 8px" title="What these numbers mean">?</button>
+            </span>
+          </div>
+          <div class="h-body">
+            <div class="master-status" id="masterStatusGrid" aria-live="polite"></div>
+            <div id="masterStatusBudget" style="margin-top: 10px"></div>
+          </div>
+        </section>
+
+        <!-- ── A/B LISTENING — central comparison strip ───────────────────────── -->
+        <section id="abEnhanced" aria-label="A/B comparison">
+          <div class="ab-strip" id="abStrip">
+            <span class="ab-label">Listen</span>
+            <div class="ab-seg" role="group" aria-label="A/B comparison — original vs mastered">
+              <button id="abAenh" data-ab="A" aria-pressed="false" title="Original (A) — press A">○ Original</button>
+              <button id="abBenh" data-ab="B" aria-pressed="true" title="Mastered (B) — press B">● Mastered</button>
+              <button id="abBlindenh" class="ab-blind" aria-pressed="false" title="Blind A/B — hide which is which (H)">Blind</button>
+            </div>
+            <div class="ab-actions">
+              <button class="ab-chip" id="abMatchChip" aria-pressed="false" title="Loudness-matched comparison (M)">⟺ Match</button>
+              <button class="ab-chip" id="abDimChip" aria-pressed="false" title="Dim 12 dB for late-night checks">Dim</button>
+              <span class="ab-hint" id="abHint">B · Mastered</span>
+            </div>
+          </div>
+          <div class="hint" id="abHelp" style="margin-top: 6px">
+            <b>A</b> Original · <b>B</b> Mastered · <b>M</b> Match loudness · <b>X</b> Toggle A/B · <b>Space</b> Play/pause · <b>H</b> Blind · When matching is on, both sides play at the same loudness — the only honest comparison.
+          </div>
+        </section>
+
+        <!-- ── SONIC CHANGE SUMMARY — human-readable processing summary ──────── -->
+        <section class="card" id="sonicSummaryCard" hidden aria-label="Sonic change summary">
+          <div class="hd">
+            <span>Sonic summary</span>
+            <span class="sp"><span class="hint" style="margin: 0">derived from actual parameters — not AI</span></span>
+          </div>
+          <div class="h-body">
+            <div class="sonic-summary" id="sonicSummaryGrid"></div>
+            <div class="hint" id="sonicSummaryHint" style="margin-top: 8px"></div>
+          </div>
+        </section>
+
+        <!-- ── PERCEPTUAL MACROS — simple surface + advanced depth ───────────── -->
+        <section class="card" id="macroCard" aria-label="Perceptual controls">
+          <div class="hd">
+            <span>Perceptual macros</span>
+            <span class="sp">
+              <span class="hint" style="margin: 0">simple surface → advanced depth — same engine, clearer language</span>
+              <button class="btn ghost" id="macroAdvancedToggle" aria-expanded="false" aria-controls="macroAdvanced" style="padding: 3px 9px">Advanced ▾</button>
+            </span>
+          </div>
+          <div class="h-body">
+            <div class="macro-grid" id="macroGrid" role="group" aria-label="Perceptual macro controls"></div>
+            <div id="macroAdvanced" hidden>
+              <div class="macro-advanced">
+                <div class="hint">
+                  Macros map onto the same safe parameter combinations the engine already exposes. Advanced
+                  view reveals the underlying controls — nothing is hidden, the language is just clearer.
+                </div>
+                <div class="module-cards" style="margin-top: 12px" id="macroAdvancedCards"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SPATIAL LAB — immersive signature workspace ───────────────────── -->
+        <section class="card" id="spatialLabCard" hidden aria-label="Spatial Lab">
+          <div class="hd">
+            <span>Spatial Lab</span>
+            <span class="sp">
+              <span class="hint" style="margin: 0">immersive bed · binaural monitor · energy · motion</span>
+              <span class="badge" style="background: var(--orig); color: #0a0c0e; font: 700 8px var(--mono); padding: 2px 6px; border-radius: 4px">LAB</span>
+            </span>
+          </div>
+          <div class="h-body">
+            <div class="spatial-lab">
+              <div class="spatial-map-card">
+                <div class="hd">
+                  <span>Speaker field</span>
+                  <span class="sp">
+                    <span class="hint" style="margin: 0">top-down · click to solo · shift-click multi</span>
+                  </span>
+                </div>
+                <div class="spatial-map-wrap">
+                  <canvas id="spatialMapMain" aria-label="Interactive speaker map — top-down view"></canvas>
+                  <div class="ab-blinder" id="spatialMapBlinder" aria-hidden="true"></div>
+                </div>
+                <div class="spatial-controls-strip" id="spatialGroupStrip" role="group" aria-label="Speaker group audition">
+                  <button class="spatial-group-btn" data-group="front" aria-pressed="false">Front</button>
+                  <button class="spatial-group-btn" data-group="centre" aria-pressed="false">Centre</button>
+                  <button class="spatial-group-btn" data-group="surround" aria-pressed="false">Surround</button>
+                  <button class="spatial-group-btn" data-group="rear" aria-pressed="false">Rear</button>
+                  <button class="spatial-group-btn" data-group="height" aria-pressed="false">Height</button>
+                  <button class="spatial-group-btn" data-group="sub" aria-pressed="false">Sub</button>
+                  <button class="btn ghost" id="spatialSoloClear" style="padding: 3px 8px; margin-left: auto">Clear solo</button>
+                </div>
+                <div class="hint" id="spatialMapHint" style="padding: 8px 12px 10px; margin: 0">Solo is monitoring only — it does not change the exported file.</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <div class="elevation-view">
+                  <div class="hd" style="padding: 0 0 8px; border: none">
+                    <span style="font: 600 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted)">Elevation</span>
+                    <span class="sp"><span class="hint" style="margin: 0">side view · height rings</span></span>
+                  </div>
+                  <canvas id="spatialMapElevation" aria-label="Elevation view — speaker height"></canvas>
+                  <div class="hint" style="margin-top: 8px">Height field dominates the mix when ambience above 38 % — this bar turns amber.</div>
+                </div>
+                <div class="card" style="margin: 0">
+                  <div class="hd">
+                    <span>Spatial energy</span>
+                    <span class="sp"><span class="hint" style="margin: 0">front · rear · height · sub — live estimate</span></span>
+                  </div>
+                  <div class="h-body compact">
+                    <div class="energy-grid" id="spatialEnergyGrid"></div>
+                    <div id="spatialEnergyWarnings" style="margin-top: 10px"></div>
+                  </div>
+                </div>
+                <div class="card" style="margin: 0">
+                  <div class="hd">
+                    <span>Motion</span>
+                    <span class="sp">
+                      <span class="hint" style="margin: 0" id="spatialMotionLabel">static</span>
+                    </span>
+                  </div>
+                  <div class="h-body compact">
+                    <div class="field" style="margin: 0">
+                      <label class="fl" for="spatialMotionSelect">Trajectory</label>
+                      <select id="spatialMotionSelect">
+                        <option value="static">Static</option>
+                        <option value="orbit">Orbit — slow rotation</option>
+                        <option value="front-rear">Front → Rear — depth sweep</option>
+                        <option value="rise">Rise — height bloom</option>
+                        <option value="fall">Fall — height collapse</option>
+                        <option value="breathing">Breathing field — subtle expansion</option>
+                      </select>
+                    </div>
+                    <canvas
+                      id="spatialMotionViz"
+                      class="viz"
+                      style="height: 88px; margin-top: 10px"
+                      aria-label="Motion trajectory preview"
+                    ></canvas>
+                    <div class="hint">Motion is monitoring visualization — it does not add automation unless rendering a motion-aware layout.</div>
+                  </div>
+                </div>
+                <div class="card" style="margin: 0">
+                  <div class="hd"><span>Listener</span><span class="sp"><span class="hint" style="margin: 0">orientation</span></span></div>
+                  <div class="h-body compact">
+                    <div class="orientation-ctl">
+                      <div class="orient-dial" id="orientDial" role="slider" aria-label="Listener yaw" aria-valuemin="-180" aria-valuemax="180" aria-valuenow="0" tabindex="0"></div>
+                      <div style="display: flex; flex-direction: column; gap: 6px">
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                          <button class="orient-btn" data-yaw="0" aria-pressed="true">Front</button>
+                          <button class="orient-btn" data-yaw="90" aria-pressed="false">Left</button>
+                          <button class="orient-btn" data-yaw="-90" aria-pressed="false">Right</button>
+                          <button class="orient-btn" data-yaw="180" aria-pressed="false">Rear</button>
+                        </div>
+                        <button class="btn ghost" id="orientReset" style="padding: 4px 10px">Reset</button>
+                        <div class="hint" id="orientHint">0° — facing front. Drag dial or use arrow keys.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="callout" style="margin-top: 14px">
+              <strong>Immersive honesty.</strong> Height channels are <em>synthesised</em> from stereo ambience — not recovered. ADM BWF here is a <code>DirectSpeakers</code> bed, not a Dolby Atmos master. See <code>docs/IMMERSIVE-AUDIO.md</code>.
+            </div>
+          </div>
         </section>
 
         <!-- ── TABS ──────────────────────────────────────────────────────────────── -->

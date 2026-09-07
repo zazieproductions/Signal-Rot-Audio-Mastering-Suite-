@@ -1,11 +1,17 @@
 # SIGNAL ROT // MASTER
 
-**A browser-native mastering and immersive-audio laboratory.**
+**A browser-native mastering and immersive-audio laboratory — experimental, technical, atmospheric.**
+
 Web Audio API · BS.1770-4 loudness · band-limited true-peak limiting · 24-channel periphonic
-rendering · ADM BWF interchange · deliberately degraded media.
+rendering · ADM BWF interchange · deliberately degraded media · **two workspaces: MASTER + SPATIAL LAB**
+
+> **Master** — calm, reference-focused: source → profile → tonal/dynamics/space → loudness → listen → export.  
+> **Spatial Lab** — the signature immersive workstation: speaker field (top-down + elevation) → depth/height/motion → energy → binaural → bed.
 
 Everything runs locally in the tab. No upload, no account, no server. Open it, drop a file
 in, and the only thing that leaves your machine is the file you choose to download.
+
+> **Product experience by Agent E** — see [`docs/PRODUCT-EXPERIENCE.md`](docs/PRODUCT-EXPERIENCE.md) for the full design system, workspace, A/B, macros, Spatial Lab, preset browser, export and accessibility.
 
 ```
 INPUT → MATCH EQ → TONE → MULTIBAND → STEREO → CHARACTER → DEPTH → SATURATION
