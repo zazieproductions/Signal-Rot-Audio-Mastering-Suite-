@@ -365,8 +365,11 @@ export function buildDeliveryManifest(input) {
       'Immersive layouts are up-mixed from stereo; height content is synthesised.',
       'ADM output is a DirectSpeakers bed, structurally validated but not schema validated ' +
         'and not Atmos certified.',
-      'Files above roughly 2 GiB cannot be produced in a browser regardless of container, ' +
-        'because the whole file is materialised in a single ArrayBuffer.',
+      'The in-memory export path materialises the whole file in one ArrayBuffer, which ' +
+        'browsers cap at roughly 2 GiB; the direct stereo/immersive export instead streams ' +
+        'straight to disk via the File System Access API (Chromium-based browsers), where ' +
+        'only RF64/BW64 container limits apply. Firefox and Safari lack that API and keep ' +
+        'the ≈2 GiB ceiling for direct downloads.',
     ],
     readMore: 'docs/EXPORT-INTEROPERABILITY.md and docs/LIMITATIONS.md',
   };

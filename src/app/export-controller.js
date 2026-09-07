@@ -12,9 +12,12 @@
 
 import { renderMaster } from '../audio/render/render-master.js';
 import { writeWav, estimateWavBytes } from '../audio/encode/wav.js';
+import { writeWavStreamed } from '../audio/encode/wav-stream.js';
 import { writeAiff } from '../audio/encode/aiff.js';
 import { encodeMp3 } from '../audio/encode/mp3.js';
 import { downloadBlob, downloadJson, baseNameOf } from '../audio/encode/download.js';
+import { supportsStreamingSave } from '../audio/encode/stream-sinks.js';
+import { exportWithStreaming } from './streaming-export.js';
 import { summariseReport } from '../audio/render/report.js';
 import { analyseBuffer } from '../workers/analysis-client.js';
 import { getAudioContext, resumeAudioContext } from '../audio/context.js';
@@ -163,21 +166,43 @@ export function createExportController(opts) {
       });
 
       progress(0.9, 'encoding');
+      const name = `${baseNameOf(state.source.name)}_master_${(data.sampleRate / 1000).toFixed(1)}k.${format.ext}`;
+
       if (format.container === 'wav') {
         const bytes = estimateWavBytes(data, format.bitDepth);
-        if (bytes > LIMITS.RIFF_MAX_BYTES) {
+        // The streaming-to-disk path promotes to RF64/BW64 automatically, so the hard
+        // 4 GiB RIFF ceiling only applies when it is not available.
+        if (bytes > LIMITS.RIFF_MAX_BYTES && !supportsStreamingSave()) {
           throw new Error(
-            `The encoded file would be ${formatBytes(bytes)}, above the 4 GB RIFF limit. ` +
-              'Use a lower sample rate or bit depth.',
+            `The encoded file would be ${formatBytes(bytes)}, above the 4 GB RIFF limit, ` +
+              'and this browser cannot stream straight to disk (needs the File System ' +
+              'Access API — Chromium-based browsers have it). Use a lower sample rate or ' +
+              'bit depth, or try a Chromium-based browser.',
           );
         }
-      }
-      const { blob } = await encode(data, formatKey);
+        const outcome = await exportWithStreaming({
+          filename: name,
+          estimatedBytes: bytes,
+          onProgress: (fraction, stage) => progress(0.9 + fraction * 0.1, stage),
+          stream: (sink) =>
+            writeWavStreamed(
+              data,
+              { bitDepth: format.bitDepth, onProgress: (f, s) => progress(0.9 + f * 0.08, s) },
+              sink,
+            ),
+          encodeBlob: () => writeWav(data, { bitDepth: format.bitDepth }),
+        });
+        if (outcome.mode === 'cancelled') {
+          toast('Save cancelled — no file written.');
+          return;
+        }
+      } else {
+        const { blob } = await encode(data, formatKey);
 
-      progress(1, 'saving');
-      const name = `${baseNameOf(state.source.name)}_master_${(data.sampleRate / 1000).toFixed(1)}k.${format.ext}`;
-      const result = downloadBlob(blob, name);
-      if (!result.ok) throw result.error ?? new Error('Download failed');
+        progress(1, 'saving');
+        const result = downloadBlob(blob, name);
+        if (!result.ok) throw result.error ?? new Error('Download failed');
+      }
 
       lastReport = report;
       history.push({ report, at: new Date(), name });
