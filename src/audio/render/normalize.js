@@ -114,15 +114,38 @@ export const CREST_AWARE_BUDGET = Object.freeze({
 export const LIMITER_GR_BUDGET_DB = 1.5;
 /** Average reduction (dB) beyond which the loop stops pushing, full stop. */
 export const LIMITER_GR_CEILING_DB = 3;
+/**
+ * Peak GR (dB, positive magnitude) treated as "still clean". Sparse 3 dB cuts on
+ * transients are normal mastering; 6 dB peak GR for half a LU is not (issue #24).
+ */
+export const CLEAN_PEAK_GR_DB = 3;
+/**
+ * Extra peak GR must buy at least this many LU, otherwise the quieter pass wins.
+ * SON-6: +0.5 LU for +1.65 dB peak GR is 0.30 LU/dB — below this line, so it loses.
+ */
+export const MIN_LUFS_PER_PEAK_GR = 0.4;
 
 /**
- * Score a refinement pass. Lower is better. Loudness error counts 1:1; every dB of
- * average limiting beyond the budget counts 1.5×, so the loop prefers a quieter clean
- * master over a louder crushed one.
+ * Score a refinement pass. Lower is better.
+ *
+ * When the target is hit, cleanliness alone decides. When it is not, damage (average
+ * GR over budget, peak GR past {@link CLEAN_PEAK_GR_DB}) is weighted 4× louder than
+ * loudness error, so a pass that is 0.5 LU louder with 2 dB more peak reduction
+ * strictly loses — the failure mode in issue #24 / SON-6, where `|delta|` domination
+ * silently changed the objective from "least damage" to "closest to an impossible
+ * number".
+ *
+ * @param {number} deltaLu
+ * @param {number} averageGainReductionDb  ≤ 0
+ * @param {number} [peakGainReductionDb]   ≤ 0 (omit = 0, back-compat)
  */
-export function scoreRefinementPass(deltaLu, averageGainReductionDb) {
-  const over = Math.max(0, -averageGainReductionDb - LIMITER_GR_BUDGET_DB);
-  return Math.abs(deltaLu) + over * 1.5;
+export function scoreRefinementPass(deltaLu, averageGainReductionDb, peakGainReductionDb = 0) {
+  const avgOver = Math.max(0, -averageGainReductionDb - LIMITER_GR_BUDGET_DB);
+  const peakOver = Math.max(0, -peakGainReductionDb - CLEAN_PEAK_GR_DB);
+  const damage = avgOver * 1.5 + peakOver * 1.25;
+  const err = Math.abs(deltaLu);
+  if (err <= 0.15) return damage;
+  return damage * 4 + err * 0.35;
 }
 
 /**
@@ -222,7 +245,7 @@ export function normalizeAndLimit(data, opts) {
 
     const delta = achieved - targetLufs;
     const score = refine
-      ? scoreRefinementPass(delta, limiter.averageGainReductionDb)
+      ? scoreRefinementPass(delta, limiter.averageGainReductionDb, limiter.maxGainReductionDb)
       : Math.abs(delta);
     if (score < bestScore) {
       bestScore = score;
@@ -265,7 +288,11 @@ export function normalizeAndLimit(data, opts) {
 
   // If the final pass was not the best one, redo the best.
   const finalScore = refine && limiter
-    ? scoreRefinementPass(achieved - targetLufs, limiter.averageGainReductionDb)
+    ? scoreRefinementPass(
+        achieved - targetLufs,
+        limiter.averageGainReductionDb,
+        limiter.maxGainReductionDb,
+      )
     : Math.abs(achieved - targetLufs);
   if (refine && pristine && finalScore > bestScore + 1e-9) {
     for (let c = 0; c < data.channels.length; c++) data.channels[c].set(pristine.channels[c]);
@@ -365,6 +392,76 @@ export function normalizeAndLimit(data, opts) {
   }
   if (crestAware && !crestAware.capped && Number.isFinite(achieved)) {
     crestAware.deliveredLufs = achieved;
+  }
+
+  // ── Musical walk-back (issue #24 / SON-6) ──────────────────────────────────────
+  // When the target is still unreachable, extra peak GR that buys almost no loudness
+  // is a bad trade. Compare the current pass against 1.5 / 3 dB quieter operating
+  // points and keep the better musical score.
+  if (
+    refine &&
+    pristine &&
+    limiter &&
+    Number.isFinite(achieved) &&
+    achieved < targetLufs - toleranceLu &&
+    -limiter.maxGainReductionDb > CLEAN_PEAK_GR_DB + 0.4
+  ) {
+    const deliver = (gainDb) => {
+      for (let c = 0; c < data.channels.length; c++) data.channels[c].set(pristine.channels[c]);
+      applyGain(data, dbToGain(gainDb));
+      return limitTruePeak(data, { ceilingDb, lfeChannels });
+    };
+    const wallGain = totalGainDb;
+    const wallLufs = achieved;
+    const wallPeak = -limiter.maxGainReductionDb;
+    const wallScore = scoreRefinementPass(
+      wallLufs - targetLufs,
+      limiter.averageGainReductionDb,
+      limiter.maxGainReductionDb,
+    );
+    let bestGain = wallGain;
+    let bestScore = wallScore;
+    for (const drop of [1.5, 3]) {
+      const g = wallGain - drop;
+      const lim = deliver(g);
+      const lufs = analyseLoudness(data, { weights: channelWeights }).integrated;
+      passes += 1;
+      if (!Number.isFinite(lufs)) continue;
+      if (hasBudget && !(
+        lim.averageGainReductionDb >= -maxAverageGainReductionDb &&
+        lim.maxGainReductionDb >= -maxPeakGainReductionDb
+      )) continue;
+      // Stay within 2 LU of the requested target: walking further is a different
+      // master, not a cleaner take on the same one.
+      if (targetLufs - lufs > 2) continue;
+      const savedPeak = wallPeak - -lim.maxGainReductionDb;
+      const lostLufs = wallLufs - lufs;
+      if (savedPeak <= 0.4 || lostLufs >= MIN_LUFS_PER_PEAK_GR * savedPeak) continue;
+      const score = scoreRefinementPass(
+        lufs - targetLufs,
+        lim.averageGainReductionDb,
+        lim.maxGainReductionDb,
+      );
+      if (score < bestScore) {
+        bestScore = score;
+        bestGain = g;
+      }
+    }
+    if (bestGain !== wallGain) {
+      limiter = deliver(bestGain);
+      totalGainDb = bestGain;
+      achieved = analyseLoudness(data, { weights: channelWeights }).integrated;
+      passes += 1;
+      if (crestAware) {
+        crestAware.capped = true;
+        crestAware.deliveredLufs = achieved;
+      }
+      ambitionReduced = true;
+    } else {
+      // Restore the wall pass (the last deliver() left a quieter candidate in `data`).
+      limiter = deliver(wallGain);
+      achieved = analyseLoudness(data, { weights: channelWeights }).integrated;
+    }
   }
 
   const finalDelta = Number.isFinite(achieved) ? achieved - targetLufs : NaN;

@@ -21,20 +21,24 @@
  *     (figures below, reproduced by `tests/dsp/true-peak.test.js`).
  *
  * Measured against analytically known answers at 48 kHz, 4× oversampling
- * (12 taps per phase, Kaiser β = 8.6), reproduced by `tests/dsp/true-peak.test.js`:
+ * (24 taps per phase, Kaiser β = 8.6), reproduced by `tests/dsp/true-peak.test.js`:
  *
  * | Test signal                                     | this module | cubic (previous) |
  * | ----------------------------------------------- | ----------- | ---------------- |
- * | 0 dBTP sine at fs/4, sampled at ±45°             | **−0.168 dB** | **−1.072 dB**  |
- * | 0 dBTP sines, 1–23 kHz × 12 phases, worst case   | +0.0002 dB  | −1.072 dB        |
+ * | 0 dBTP sine at fs/4, sampled at ±45°             | **~−0.17 dB** | **−1.072 dB**  |
+ * | 0 dBTP sines, 1–23 kHz × 12 phases, worst case   | ~0 dB       | −1.072 dB        |
  * | DC (interior)                                    | exact       | exact            |
  *
  * The fs/4 row is the one that matters: it is the case a limiter must not miss, and the
- * cubic interpolator it replaces missed it by more than a decibel. The residual −0.17 dB
- * is *not* a design defect — the sinc series for that particular signal has 1/n tails and
- * converges too slowly for any short FIR; lengthening the filter to 32 taps per phase
- * changes the reading by under 0.001 dB. A real limiter therefore still needs a small
- * safety allowance, which `render/limiter.js` provides and verifies.
+ * cubic interpolator it replaces missed it by more than a decibel. A short windowed sinc
+ * still under-reads that particular series (1/n tails). The limiter therefore:
+ *   · detects with this FIR (fast, per-sample envelope);
+ *   · works to a small safety allowance below the requested ceiling;
+ *   · verifies with `truePeakChannelExact` (FFT interpolation) on short buffers or a
+ *     longer FIR on long ones — an independent meter, not the detector grading itself
+ *     (issue #21 / SON-2);
+ *   · applies a static trim if the independent meter still sees an over, rather than
+ *     crushing the limiter harder.
  *
  * Samples outside the buffer are treated as silence, so a hard-edged block (e.g. constant
  * DC with no fade) reads the genuine reconstruction overshoot at its own discontinuity.
@@ -45,6 +49,16 @@
  */
 
 import { gainToDb } from '../dsp/math.js';
+import { fftRadix2, ifftRadix2 } from './fft.js';
+
+/** Detection FIR: 24 taps/phase. Longer than the original 12, still cheap per sample. */
+export const TRUE_PEAK_DETECT_TAPS = 24;
+/** Independent verify FIR, used when the buffer is too long for an FFT interpolator. */
+export const TRUE_PEAK_VERIFY_TAPS = 48;
+/** FFT interpolator is used for verification when `length · factor` stays under this.
+ *  ~5.5 s of 48 kHz at 4×; longer files fall back to the 48-tap FIR so export verify
+ *  stays bounded. Short worst-case fixtures (fs/4, HF bursts) still get the exact meter. */
+const EXACT_MAX_INTERPOLATED = 1 << 20; // 1,048,576
 
 /** Modified Bessel function of the first kind, order 0 — for the Kaiser window. */
 function besselI0(x) {
@@ -74,7 +88,7 @@ const filterCache = new Map();
  * @param {number} beta Kaiser window shape parameter
  * @returns {Float64Array[]} `factor` branches of `tapsPerPhase` coefficients
  */
-export function buildPolyphaseFilter(factor = 4, tapsPerPhase = 12, beta = 8.6) {
+export function buildPolyphaseFilter(factor = 4, tapsPerPhase = TRUE_PEAK_DETECT_TAPS, beta = 8.6) {
   const key = `${factor}/${tapsPerPhase}/${beta}`;
   const cached = filterCache.get(key);
   if (cached) return cached;
@@ -127,13 +141,15 @@ export function oversamplingFactorFor(sampleRate) {
  * @param {Float32Array} channel
  * @param {number} sampleRate
  * @param {number} [factor] override the oversampling factor
+ * @param {number} [tapsPerPhase] override the FIR length (default {@link TRUE_PEAK_DETECT_TAPS})
  * @returns {number} linear amplitude (≥ sample peak)
  */
-export function truePeakChannel(channel, sampleRate, factor) {
+export function truePeakChannel(channel, sampleRate, factor, tapsPerPhase) {
   const n = channel.length;
   if (n === 0) return 0;
 
   const f = factor ?? oversamplingFactorFor(sampleRate);
+  const tapsN = tapsPerPhase ?? TRUE_PEAK_DETECT_TAPS;
 
   // Sample peak is always a lower bound and is exact for factor 1.
   let peak = 0;
@@ -143,7 +159,7 @@ export function truePeakChannel(channel, sampleRate, factor) {
   }
   if (f <= 1) return peak;
 
-  const phases = buildPolyphaseFilter(f);
+  const phases = buildPolyphaseFilter(f, tapsN);
   const taps = phases[0].length;
   const half = taps >> 1;
 
@@ -197,6 +213,119 @@ export function analysePeaks(data, factor) {
       if (a > sp) sp = a;
     }
     const tp = truePeakChannel(ch, data.sampleRate, f);
+    if (sp > samplePeak) samplePeak = sp;
+    if (tp > truePeak) truePeak = tp;
+    perChannel.push(gainToDb(tp));
+  }
+
+  return {
+    samplePeak,
+    truePeak,
+    samplePeakDb: gainToDb(samplePeak),
+    truePeakDb: gainToDb(truePeak),
+    perChannelTruePeakDb: perChannel,
+    oversamplingFactor: f,
+  };
+}
+
+function nextPow2(n) {
+  let p = 1;
+  while (p < n) {
+    p <<= 1;
+    if (p > 1 << 30) throw new Error(`true-peak: length ${n} is too large to interpolate`);
+  }
+  return p;
+}
+
+/**
+ * Band-limited peak via frequency-domain interpolation (zero-pad the FFT, IFFT).
+ * Independent of the detection FIR — this is the verifier, not the detector.
+ *
+ * Falls back to a long polyphase FIR when the interpolated buffer would exceed
+ * {@link EXACT_MAX_INTERPOLATED} samples (long files).
+ *
+ * @param {Float32Array} channel
+ * @param {number} [factor=4]
+ * @returns {number} linear amplitude (≥ sample peak)
+ */
+export function truePeakChannelExact(channel, factor = 4) {
+  const n = channel.length;
+  if (n === 0) return 0;
+  let samplePeak = 0;
+  for (let i = 0; i < n; i++) {
+    const a = Math.abs(channel[i]);
+    if (a > samplePeak) samplePeak = a;
+  }
+  const f = factor | 0;
+  if (f <= 1) return samplePeak;
+
+  const N = nextPow2(n);
+  if (N * f > EXACT_MAX_INTERPOLATED) {
+    return Math.max(samplePeak, truePeakChannel(channel, 48000, f, TRUE_PEAK_VERIFY_TAPS));
+  }
+
+  const reN = new Float64Array(N);
+  const imN = new Float64Array(N);
+  for (let i = 0; i < n; i++) reN[i] = channel[i];
+  fftRadix2(reN, imN);
+
+  const Nf = N * f;
+  const re = new Float64Array(Nf);
+  const im = new Float64Array(Nf);
+  const half = N >> 1;
+  for (let k = 0; k < half; k++) {
+    re[k] = reN[k];
+    im[k] = imN[k];
+  }
+  // Split the Nyquist bin so the interpolated sequence stays real.
+  re[half] = reN[half] * 0.5;
+  im[half] = imN[half] * 0.5;
+  re[Nf - half] = reN[half] * 0.5;
+  im[Nf - half] = -imN[half] * 0.5;
+  for (let k = half + 1; k < N; k++) {
+    re[Nf - N + k] = reN[k];
+    im[Nf - N + k] = imN[k];
+  }
+
+  ifftRadix2(re, im);
+  let peak = samplePeak;
+  const limit = n * f;
+  for (let i = 0; i < limit; i++) {
+    const a = Math.hypot(re[i] * f, im[i] * f);
+    if (a > peak) peak = a;
+  }
+  return peak;
+}
+
+/**
+ * Independent true-peak measurement used to grade the limiter. Short buffers use
+ * FFT interpolation; long buffers use a 48-tap FIR — never the 24-tap detector.
+ *
+ * @param {import('../dsp/audio-data.js').AudioData} data
+ * @param {number} [factor]
+ * @returns {PeakResult}
+ */
+export function analysePeaksVerified(data, factor) {
+  const f = factor ?? oversamplingFactorFor(data.sampleRate);
+  let samplePeak = 0;
+  let truePeak = 0;
+  const perChannel = [];
+
+  for (const ch of data.channels) {
+    let sp = 0;
+    for (let i = 0; i < ch.length; i++) {
+      const a = Math.abs(ch[i]);
+      if (a > sp) sp = a;
+    }
+    const N = nextPow2(Math.max(1, ch.length));
+    const independent =
+      N * f <= EXACT_MAX_INTERPOLATED
+        ? truePeakChannelExact(ch, f)
+        : truePeakChannel(ch, data.sampleRate, f, TRUE_PEAK_VERIFY_TAPS);
+    // Never grade optimistic vs the detector: a truncated HF sine can make the
+    // FFT interpolator miss Gibbs overshoot the FIR sees. Take the hotter read.
+    const detect = truePeakChannel(ch, data.sampleRate, f);
+    const tp = Math.max(sp, independent, detect);
     if (sp > samplePeak) samplePeak = sp;
     if (tp > truePeak) truePeak = tp;
     perChannel.push(gainToDb(tp));

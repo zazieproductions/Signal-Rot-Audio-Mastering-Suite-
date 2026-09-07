@@ -152,6 +152,14 @@ describe('validateParameters', () => {
     expect(warnings.some((w) => w.includes('ceiling'))).toBe(true);
   });
 
+  it('warns when it replaces an invalid enum with the default', () => {
+    const { parameters, warnings } = validateParameters({ haasSide: 7, mbSpeed: 'instant' });
+    expect(parameters.haasSide).toBe(1);
+    expect(parameters.mbSpeed).toBe('med');
+    expect(warnings.some((w) => w.includes('haasSide'))).toBe(true);
+    expect(warnings.some((w) => w.includes('mbSpeed'))).toBe(true);
+  });
+
   it('survives hostile input without throwing', () => {
     for (const input of [null, undefined, 42, 'string', [], () => {}]) {
       const { parameters } = validateParameters(input);

@@ -32,7 +32,7 @@
 import { describe, it, expect } from 'vitest';
 import { analyseLoudness } from '../../src/audio/analysis/loudness.js';
 import { limitTruePeak } from '../../src/audio/render/limiter.js';
-import { truePeakChannel } from '../../src/audio/analysis/true-peak.js';
+import { analysePeaksVerified } from '../../src/audio/analysis/true-peak.js';
 import { whiteNoise } from '../helpers/signals.js';
 
 const SR = 48000;
@@ -132,11 +132,7 @@ describe('true-peak ceiling is delivered, not just requested', () => {
   const noiseAt = (amplitude, seconds = 20) =>
     whiteNoise({ amplitude, seconds, sampleRate: SR, channels: 2, seed: 51 });
 
-  const measure = (data) => {
-    let peak = 0;
-    for (const ch of data.channels) peak = Math.max(peak, truePeakChannel(ch, data.sampleRate, 4));
-    return 20 * Math.log10(peak);
-  };
+  const measure = (data) => analysePeaksVerified(data).truePeakDb;
 
   it.each([-0.1, -0.3, -1.0, -2.0])('holds a %s dBTP ceiling on dense material', (ceilingDb) => {
     const data = noiseAt(0.9);

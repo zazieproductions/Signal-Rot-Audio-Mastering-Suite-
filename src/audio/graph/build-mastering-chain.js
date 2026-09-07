@@ -298,6 +298,11 @@ function applyMultiband(n, p, bypass) {
   const mix = anySolo ? 1 : engaged ? p.mbMix / 100 : 0;
   n.wet.gain.value = mix;
   n.dry.gain.value = anySolo ? 0 : 1 - mix;
+  // When the wet path is silent the compressor look-ahead is not in circuit, so the
+  // dry delay is pure unreported latency (issue #23). Restore it whenever mix > 0
+  // so a parallel mix stays delay-matched.
+  const nominal = n.dryDelaySeconds ?? n.dryDelay.delayTime.value;
+  n.dryDelay.delayTime.value = mix > 0 ? nominal : 0;
 }
 
 /**

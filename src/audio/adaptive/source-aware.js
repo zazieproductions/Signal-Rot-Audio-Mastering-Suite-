@@ -42,6 +42,9 @@ import { clamp } from '../dsp/math.js';
  * @property {number} [channels]     source channel count; when 1 the bass-mono
  *   guardrail is skipped (a mono sub is already centred — raising the corner would
  *   only force a stereo render). Absent = unknown = previous behaviour.
+ * @property {number} [correlation]  Pearson L/R correlation in [-1, 1]. Low or
+ *   negative values mean the source is already wide or phasey — width processors
+ *   are scaled down, never up.
  */
 
 /**
@@ -72,6 +75,10 @@ export const ADAPTATION_THRESHOLDS = Object.freeze({
   brightTrebleDb: 3,
   hotPresenceDb: 4,
   heavyBassDb: 4,
+  /** Correlation below this: source is already wide — don't add more width. */
+  wideCorrelation: 0.35,
+  /** Correlation below this: phasey / out of phase — kill widening. */
+  phaseyCorrelation: 0.15,
 });
 
 const scale100 = (v, f) => Math.round(clamp(v, 0, 100) * f);
@@ -85,10 +92,10 @@ const scaleSym100 = (v, f) => Math.round(clamp(v, -100, 100) * f);
 export function classifySource(stats = {}) {
   const T = ADAPTATION_THRESHOLDS;
   const tags = [];
-  const { integrated, lra, crestDb, truePeakDb, spectral } = stats;
+  const { integrated, lra, crestDb, truePeakDb, spectral, correlation: corr } = stats;
   const hasCore =
     Number.isFinite(integrated) || Number.isFinite(crestDb) || Number.isFinite(lra);
-  if (!hasCore && !spectral) return 'unmeasured';
+  if (!hasCore && !spectral && !Number.isFinite(corr)) return 'unmeasured';
 
   if (Number.isFinite(integrated) && integrated >= T.loudLufs) tags.push('loud');
   else if (Number.isFinite(integrated) && integrated <= -20) tags.push('quiet');
@@ -107,6 +114,10 @@ export function classifySource(stats = {}) {
   else if (dynamic) tags.push('dynamic');
 
   if (Number.isFinite(truePeakDb) && truePeakDb > T.hotTruePeakDb) tags.push('hot');
+  if (Number.isFinite(corr)) {
+    if (corr < T.phaseyCorrelation) tags.push('phasey');
+    else if (corr < T.wideCorrelation) tags.push('wide');
+  }
   if (spectral) {
     if (spectral.trebleDb > T.brightTrebleDb) tags.push('bright');
     if (spectral.bassDb > T.heavyBassDb) tags.push('bass-heavy');
@@ -158,7 +169,7 @@ export function adaptParameters(parameters, stats = {}) {
   const { integrated, lra, crestDb, truePeakDb, spectral } = stats;
   const hasCore =
     Number.isFinite(integrated) || Number.isFinite(crestDb) || Number.isFinite(lra);
-  if (!hasCore && !spectral) {
+  if (!hasCore && !spectral && !Number.isFinite(stats.correlation)) {
     return { parameters: p, adaptations: [], sourceClass: 'unmeasured' };
   }
 
@@ -202,6 +213,26 @@ export function adaptParameters(parameters, stats = {}) {
         const next = scaleSym100(p[key], 0.4);
         notes.push(`${key} ${p[key]} → ${next} (${why})`);
         p[key] = next;
+      }
+    }
+    // Already-mastered: don't add HF polish or extra width on top of a finished record.
+    if (alreadyLoud) {
+      if (p.air > 0.5) {
+        notes.push(`air +${p.air} → +0.5 dB (${why})`);
+        p.air = 0.5;
+      }
+      if (p.clarity > 0.5) {
+        notes.push(`clarity +${p.clarity} → +0.5 dB (${why})`);
+        p.clarity = 0.5;
+      }
+      if (p.tilt > 0) {
+        notes.push(`tilt +${p.tilt} → +0 dB (${why})`);
+        p.tilt = 0;
+      }
+      if (p.width > 1) {
+        const next = 1 + (p.width - 1) * 0.25;
+        notes.push(`width ${p.width.toFixed(2)} → ${next.toFixed(2)} (${why})`);
+        p.width = next;
       }
     }
   } else if (Number.isFinite(crestDb) && crestDb < T.denseCrestDb) {
@@ -326,6 +357,47 @@ export function adaptParameters(parameters, stats = {}) {
           notes.push(`mono-below ${p.bassMono} → 90 Hz (bass-heavy source)`);
           p.bassMono = 90;
         }
+      }
+    }
+  }
+
+  // ── 4. Already-wide / phasey: don't invent more width ──
+  // Scale the deviation of width-like controls toward their neutral, never away.
+  // bassMono is *not* raised here: a phasey source is a stereo problem, not a
+  // loose-sub problem, and raising the corner would be an increase.
+  const corr = stats.correlation;
+  if (Number.isFinite(corr) && (corr < T.wideCorrelation || corr < T.phaseyCorrelation)) {
+    const phasey = corr < T.phaseyCorrelation;
+    const why = phasey
+      ? `source correlation ${corr.toFixed(2)} (phasey)`
+      : `source already wide (ρ=${corr.toFixed(2)})`;
+    const widthFactor = phasey ? 0 : 0.35;
+    const mbFactor = phasey ? 0 : 0.4;
+    if (p.width !== 1) {
+      const next = 1 + (p.width - 1) * widthFactor;
+      notes.push(`width ${p.width.toFixed(2)} → ${next.toFixed(2)} (${why})`);
+      p.width = next;
+    }
+    if (p.haas > 0) {
+      const next = p.haas * widthFactor;
+      notes.push(`haas ${p.haas} → ${next} (${why})`);
+      p.haas = next;
+    }
+    if (p.spread > 0) {
+      const next = p.spread * widthFactor;
+      notes.push(`spread ${p.spread} → ${next} (${why})`);
+      p.spread = next;
+    }
+    if (p.phaseRot > 0) {
+      const next = p.phaseRot * widthFactor;
+      notes.push(`phaseRot ${p.phaseRot} → ${next} (${why})`);
+      p.phaseRot = next;
+    }
+    for (const key of ['widthLow', 'widthMid', 'widthHigh']) {
+      if (p[key] !== 1) {
+        const next = 1 + (p[key] - 1) * mbFactor;
+        notes.push(`${key} ${p[key].toFixed(2)} → ${next.toFixed(2)} (${why})`);
+        p[key] = next;
       }
     }
   }

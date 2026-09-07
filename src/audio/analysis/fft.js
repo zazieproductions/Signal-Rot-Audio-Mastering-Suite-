@@ -57,6 +57,28 @@ export function fftRadix2(re, im) {
   return re;
 }
 
+/**
+ * Inverse of `fftRadix2`. Unnormalised forward + this inverse is an identity
+ * (up to floating-point noise): IFFT(FFT(x)) = x.
+ *
+ * Implemented as conj → FFT → conj / N, so it shares the forward kernels.
+ *
+ * @param {Float64Array|Float32Array} re
+ * @param {Float64Array|Float32Array} im
+ */
+export function ifftRadix2(re, im) {
+  const n = re.length;
+  if (n !== im.length) throw new Error('ifftRadix2: re/im length mismatch');
+  for (let i = 0; i < n; i++) im[i] = -im[i];
+  fftRadix2(re, im);
+  const inv = 1 / n;
+  for (let i = 0; i < n; i++) {
+    re[i] *= inv;
+    im[i] *= -inv;
+  }
+  return re;
+}
+
 const windowCache = new Map();
 
 /**

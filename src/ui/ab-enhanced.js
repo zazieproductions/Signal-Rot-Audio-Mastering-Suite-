@@ -1,89 +1,118 @@
 /**
- * A/B listening — central comparison strip enhancements.
+ * A/B/C listening strip.
  *
- * Provides: ORIGINAL / MASTERED / LOUDNESS-MATCHED toggle,
- *           blind mode, dim, and keyboard hints.
- * Wires to store.ui.abMode, store.ui.matchLoudness.
+ * Contract (owned by bootstrap `setAbMode` / `cycleAbMode` + `initShortcuts`):
+ *   A Original → B Mastered → C Matched (level-matched master) → A
+ *
+ * This module is the *view*: it paints the enhanced and transport buttons, hosts
+ * blind mode and dim, and forwards clicks. It does **not** register A/B/X/M
+ * keyboard handlers — those conflicted with the three-way cycle and with mono
+ * audition (issue #13). Blind mode intercepts X via `flipBlind`, called from
+ * the single shortcut owner.
+ *
+ * Blind comparison is A vs C (original vs loudness-matched master) so the
+ * louder-is-better bias is not part of the test. Falls back to A vs B if C
+ * cannot be formed.
  */
 
 import { $ } from './dom.js';
 
 export function initAbEnhanced(opts) {
-  const { store, pushParameters } = opts;
-  const abA = $('#abAenh') || $('#abA');
-  const abB = $('#abBenh') || $('#abB');
+  const { store, pushParameters, setAbMode, cycleAbMode } = opts;
+  const abAenh = $('#abAenh');
+  const abBenh = $('#abBenh');
+  const abCenh = $('#abCenh');
   const blindBtn = $('#abBlindenh');
-  const matchChip = $('#abMatchChip') || $('#matchLoudBtn');
+  const matchChip = $('#abMatchChip');
   const dimChip = $('#abDimChip');
   const hint = $('#abHint');
-  if (!abA || !abB) return { sync: () => {} };
-
-  // Use enhanced buttons if present, else fall back to transport seg
-  const transportA = $('#abA');
-  const transportB = $('#abB');
 
   let blind = false;
-  let blindChoices = ['A', 'B'];
+  let blindChoices = ['A', 'C'];
   let blindIndex = 0;
   let dim = false;
+
+  const allModeButtons = () =>
+    ['A', 'B', 'C'].flatMap((m) =>
+      [`#ab${m}`, `#ab${m}enh`].map((sel) => $(sel)).filter(Boolean),
+    );
 
   const sync = () => {
     const { abMode, matchLoudness } = store.getState().ui;
 
-    for (const btn of [abA, transportA]) if (btn) btn.setAttribute('aria-pressed', String(abMode === 'A'));
-    for (const btn of [abB, transportB]) if (btn) btn.setAttribute('aria-pressed', String(abMode === 'B'));
+    for (const btn of allModeButtons()) {
+      const mode = btn.dataset.ab;
+      btn.setAttribute('aria-pressed', String(!blind && abMode === mode));
+    }
     if (blindBtn) {
       blindBtn.setAttribute('aria-pressed', String(blind));
-      blindBtn.textContent = blind ? '● Blind A/B' : 'Blind';
-      blindBtn.title = blind ? 'Blind mode — labels hide which is which (press H to exit)' : 'Blind A/B — hide which is which (H)';
+      blindBtn.textContent = blind ? '● Blind A/C' : 'Blind';
+      blindBtn.title = blind
+        ? 'Blind mode — original vs loudness-matched master (press H to exit, X to flip)'
+        : 'Blind A/C — hide which is which (H)';
     }
-    if (matchChip) matchChip.setAttribute('aria-pressed', String(!!matchLoudness));
+    const matchPressed = String(!!matchLoudness || abMode === 'C');
+    matchChip?.setAttribute('aria-pressed', matchPressed);
+    $('#matchLoudBtn')?.setAttribute('aria-pressed', matchPressed);
     if (dimChip) dimChip.setAttribute('aria-pressed', String(dim));
     if (hint) {
-      if (blind) hint.textContent = `◈ Blind ${blindIndex === 0 ? 'A' : 'B'} · press X to flip, H to exit`;
-      else hint.textContent = `${abMode === 'A' ? 'A · Original' : 'B · Mastered'}${matchLoudness ? ' · matched' : ''}${dim ? ' · −12 dB dim' : ''}`;
+      if (blind) {
+        hint.textContent = `◈ Blind ${blindIndex === 0 ? '1' : '2'} · press X to flip, H to exit`;
+      } else {
+        const label =
+          abMode === 'A' ? 'A · Original' : abMode === 'C' ? 'C · Matched' : 'B · Mastered';
+        hint.textContent = `${label}${matchLoudness && abMode !== 'C' ? ' · match-loudness on' : ''}${
+          dim ? ' · −12 dB dim' : ''
+        }`;
+      }
     }
-    // Dim: reduce monitor gain by 12 dB via live graph if available
     if (opts.getLiveGraph) {
       const live = opts.getLiveGraph();
       if (live && live.monitor) live.monitor.gain.value = dim ? 0.251 : 1; // -12 dB
     }
   };
 
-  const setAb = (mode) => {
-    if (blind) {
-      // In blind mode, X flips the hidden choice but UI stays "Blind"
-      blindIndex = 1 - blindIndex;
-      // Also flip store so audio actually switches
-      const nextHidden = blindChoices[blindIndex];
-      store.setUi({ abMode: nextHidden });
+  const applyMode = (mode) => {
+    if (typeof setAbMode === 'function') setAbMode(mode);
+    else {
+      store.setUi({ abMode: mode });
       if (pushParameters) pushParameters();
-      sync();
-      return;
     }
-    store.setUi({ abMode: mode });
-    if (pushParameters) pushParameters();
     sync();
   };
 
-  abA.addEventListener('click', () => setAb('A'));
-  abB.addEventListener('click', () => setAb('B'));
-  transportA?.addEventListener('click', () => setAb('A'));
-  transportB?.addEventListener('click', () => setAb('B'));
+  const onModeClick = (mode) => {
+    if (blind) {
+      flipBlind();
+      return;
+    }
+    applyMode(mode);
+  };
+
+  abAenh?.addEventListener('click', () => onModeClick('A'));
+  abBenh?.addEventListener('click', () => onModeClick('B'));
+  abCenh?.addEventListener('click', () => onModeClick('C'));
+  // Transport A/B/C are owned by bootstrap's setAbMode listeners. Do not bind them
+  // here — a second click handler was the original double-toggle / X-skip bug.
+
+  const flipBlind = () => {
+    if (!blind) return;
+    blindIndex = 1 - blindIndex;
+    const nextHidden = blindChoices[blindIndex];
+    store.setUi({ abMode: nextHidden });
+    if (pushParameters) pushParameters();
+    sync();
+  };
 
   if (blindBtn) {
     blindBtn.addEventListener('click', () => {
       blind = !blind;
       if (blind) {
-        blindChoices = [Math.random() > 0.5 ? 'A' : 'B', Math.random() > 0.5 ? 'A' : 'B'];
-        // Ensure they differ occasionally but blind means we hide; randomize index
+        // Fair comparison: original vs loudness-matched master.
+        const first = Math.random() > 0.5 ? 'A' : 'C';
+        blindChoices = [first, first === 'A' ? 'C' : 'A'];
         blindIndex = 0;
-        // Set hidden mode randomly
-        store.setUi({ abMode: blindChoices[blindIndex] });
-        if (pushParameters) pushParameters();
-      } else {
-        // Exit blind: reveal which was which
-        store.setUi({ abMode: blindChoices[blindIndex] });
+        store.setUi({ abMode: blindChoices[0] });
         if (pushParameters) pushParameters();
       }
       sync();
@@ -91,10 +120,17 @@ export function initAbEnhanced(opts) {
   }
 
   const toggleMatch = () => {
+    // Match-loudness chip is the legacy A/B level match. C is the dedicated matched
+    // audition; flipping the chip while on C is a no-op (already matched).
+    if (store.getState().ui.abMode === 'C') {
+      if (typeof setAbMode === 'function') setAbMode('B');
+      store.setUi({ matchLoudness: true });
+      if (pushParameters) pushParameters();
+      sync();
+      return;
+    }
     const next = !store.getState().ui.matchLoudness;
     store.setUi({ matchLoudness: next });
-    const btn = $('#matchLoudBtn');
-    if (btn) btn.setAttribute('aria-pressed', String(next));
     if (pushParameters) pushParameters();
     sync();
   };
@@ -107,32 +143,11 @@ export function initAbEnhanced(opts) {
     sync();
   });
 
-  // Keyboard shortcuts for A/B
+  // H is unique to this strip (blind). A/B/C/X live in initShortcuts.
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.metaKey || e.ctrlKey) return;
-    if (e.key === 'a' || e.key === 'A') {
-      e.preventDefault();
-      setAb('A');
-    } else if (e.key === 'b' || e.key === 'B') {
-      e.preventDefault();
-      setAb('B');
-    } else if (e.key === 'x' || e.key === 'X') {
-      e.preventDefault();
-      const cur = store.getState().ui.abMode;
-      setAb(cur === 'A' ? 'B' : 'A');
-    } else if (e.key === 'm' || e.key === 'M') {
-      // Only if not typing in workspace switch — handled there too but allow match toggling
-      // Require not in spatialLab? We'll allow both; workspace also uses M
-      // Prefer match toggle when focus not on body?
-      // We'll not hijack M globally if workspace would; but match is also M — choose toggle.
-      // To avoid conflict, only toggle match when audio is loaded
-      if (store.getState().source.buffer) {
-        // Don't also switch workspace: stop propagation if audio loaded
-        e.stopImmediatePropagation?.();
-        toggleMatch();
-      }
-    } else if (e.key === 'h' || e.key === 'H') {
+    if (e.key === 'h' || e.key === 'H') {
       e.preventDefault();
       blindBtn?.click();
     }
@@ -142,5 +157,16 @@ export function initAbEnhanced(opts) {
     if (changed.has('ui')) sync();
   });
   sync();
-  return { sync, setAb, toggleMatch, get blind() { return blind; } };
+  return {
+    sync,
+    toggleMatch,
+    flipBlind,
+    get blind() {
+      return blind;
+    },
+    get isBlind() {
+      return blind;
+    },
+    cycleAbMode,
+  };
 }

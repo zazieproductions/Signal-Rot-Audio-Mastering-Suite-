@@ -33,7 +33,8 @@ import { fromAudioBuffer, samplePeak } from '../dsp/audio-data.js';
 import { analyseLoudness } from '../analysis/loudness.js';
 import { analysePeaks } from '../analysis/true-peak.js';
 import { crestFactorDb } from '../analysis/rms.js';
-import { monoCompatibility } from '../analysis/correlation.js';
+import { correlation, monoCompatibility } from '../analysis/correlation.js';
+import { TAPE_TRANSPORT_DELAY_S } from '../graph/character.js';
 import { spectralFingerprint } from '../analysis/spectral-match.js';
 import { adaptParameters, spectralSummary } from '../adaptive/source-aware.js';
 import { shapeTransients } from './transient-shaper.js';
@@ -161,6 +162,10 @@ export async function renderMaster(opts) {
   // Source-aware adaptation: the same pure function the live preview uses, fed with a
   // fresh measurement of the source. The preset defines the character; the audio decides
   // how hard the processors work. The report records exactly what was softened and why.
+  const sourceCorr =
+    source.numberOfChannels < 2
+      ? 1
+      : correlation(sourceData.channels[0], sourceData.channels[1]);
   const adaptation = adaptParameters(parameters, {
     integrated: analysisBefore.loudness.integrated,
     lra: analysisBefore.loudness.lra,
@@ -168,6 +173,7 @@ export async function renderMaster(opts) {
     truePeakDb: analysisBefore.peaks.truePeakDb,
     spectral: spectralSummary(spectralFingerprint(sourceData)),
     channels: source.numberOfChannels,
+    correlation: sourceCorr,
   });
   const effective = adaptation.parameters;
 
@@ -219,9 +225,21 @@ export async function renderMaster(opts) {
     transient,
     dither,
     latency: {
-      dryDelaySeconds: dryDelay.seconds,
+      dryDelaySeconds: (() => {
+        const engaged =
+          effective.mbLow > 0 || effective.mbMid > 0 || effective.mbHigh > 0;
+        const bypassed = !!(moduleBypass && moduleBypass.multiband);
+        return engaged && !bypassed ? dryDelay.seconds : 0;
+      })(),
       compressorLatencySeconds: dryDelay.latencySeconds,
       compressorLatencyMeasured: dryDelay.measured,
+      tapeDelaySeconds:
+        effective.tape > 0 && !(moduleBypass && moduleBypass.character)
+          ? TAPE_TRANSPORT_DELAY_S
+          : 0,
+      limiterLookaheadSeconds: 0.003,
+      note:
+        'Look-ahead limiter delay is in the gain computer (offline, centred window) and does not shift the file. Graph delays (multiband dry, tape transport) are zeroed when those stages are idle.',
     },
     adaptation: {
       sourceClass: adaptation.sourceClass,
