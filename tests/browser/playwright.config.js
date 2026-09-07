@@ -67,7 +67,12 @@ export default defineConfig({
   webServer: {
     command: 'npx vite --port 5174 --strictPort --host 0.0.0.0',
     url: 'http://127.0.0.1:5174/tests/browser/harness.html',
-    reuseExistingServer: !process.env.CI,
+    // The conformance workflow's 'Warm Vite' step leaves a dev server bound to
+    // 5174 with a fully populated on-disk transform cache. We want Playwright
+    // to reuse that server instead of spawning a second vite and racing for
+    // the port. The previous `!process.env.CI` setting was flipped so the
+    // gate reuses the warmed server even in CI.
+    reuseExistingServer: true,
     // The conformance harness pulls in the entire lab (compressor / multiband /
     // waveshaper / immersive / etc.) plus all the production DSP modules. Vite's
     // first-time cold start on a fresh ubuntu-latest runner with a cold filesystem

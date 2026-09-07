@@ -135,11 +135,24 @@ jobs:
           if ! curl -fsS -o /dev/null http://127.0.0.1:5174/tests/browser/harness.html; then
             echo "::error::vite did not serve harness.html within 180 s"
             tail -n 50 /tmp/vite.log
+            pkill -P "$VITE_PID" 2>/dev/null || true
             kill "$VITE_PID" 2>/dev/null || true
             exit 1
           fi
+          # Kill the whole process group (npx spawns a child vite process that
+          # would survive killing only the npx parent), and wait for the port
+          # to actually be released so the next Playwright webServer probe
+          # does not see "URL is already used".
+          pkill -P "$VITE_PID" 2>/dev/null || true
           kill "$VITE_PID" 2>/dev/null || true
-          wait "$VITE_PID" 2>/dev/null || true
+          for _ in $(seq 1 30); do
+            if ! curl -fsS -o /dev/null http://127.0.0.1:5174/tests/browser/harness.html 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          pkill -f 'vite --port 5174' 2>/dev/null || true
+          true
       - name: Conformance suite
         run: npx playwright test --config tests/browser/playwright.config.js --project ${{ matrix.browser }}
       - uses: actions/upload-artifact@v4
