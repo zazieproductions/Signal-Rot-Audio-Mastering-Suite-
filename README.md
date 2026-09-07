@@ -64,8 +64,9 @@ correctly and the strange things done deliberately.
 - A **true-peak limiter** whose detector is a band-limited polyphase interpolator, whose
   gain curve is continuous rather than stepped, and which **re-measures the finished file
   and tells you whether the ceiling actually held**.
-- A **multiband crossover** that reconstructs to 0.00000 dB at every parallel-mix
-  position, with an on-screen diagnostic so you can watch it do so.
+- A **multiband crossover** with phase/delay-matched paths and an analytical diagnostic.
+  The ideal filter model sums flat; the real-browser wet sum still has an
+  [open reconstruction finding](docs/FINDINGS-FOR-AGENT-A.md#measured-in-a-real-browser).
 - **Deterministic exports.** Same project, same texture seed, byte-identical file.
 - A **render report** — downloadable JSON — recording the analysis before and after, the
   normalisation gain, the maximum gain reduction, the achieved true peak, and whether
@@ -116,7 +117,7 @@ Full detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 |               | Transient shaper                        |      ✗       |   ✓    | Needs per-sample gain — offline only                                 |
 |               | Look-ahead true-peak limiter            |      ✗       |   ✓    | Monitor uses a `DynamicsCompressorNode` safety limiter               |
 | **Tone**      | 6-band EQ + tilt                        |      ✓       |   ✓    | Labels generated from the filter definitions                         |
-|               | Waveshaper saturation                   |      ✓       |   ✓    | Peak-normalised: adds harmonics, not level                           |
+|               | Waveshaper saturation                   |      ✓       |   ✓    | Unity small-signal slope; +12 dB structural headroom                 |
 | **Stereo**    | Width, M/S balance, bass mono (LR4)     |      ✓       |   ✓    |                                                                      |
 |               | Per-band width (250 Hz / 4 kHz)         |      ✓       |   ✓    | Side channel only                                                    |
 |               | Haas, crossfeed, side comb blend        |      ✓       |   ✓    | Phase warnings on all three                                          |
@@ -251,7 +252,7 @@ src/
 │   ├── render/                 render-master · transient · normalize · limiter · dither · report
 │   ├── immersive/              layouts · sonic-lab · speaker-feeds · binaural · adm
 │   └── encode/                 wav · aiff · mp3 · download
-├── presets/                    dimension · genre · cinematic · mood · color · spatial · restoration
+├── presets/                    mastering · dimension · genre · cinematic · mood · color · spatial · restoration
 ├── ui/                         dom · controls · tabs · transport · signal-flow · palette · …
 ├── visualizers/                waveform · spectrum · vectorscope · speaker-map · …
 ├── workers/                    analysis worker + client with in-thread fallback
@@ -276,7 +277,7 @@ graph LR
   SPA["SPATIAL & IMMERSIVE<br/>856 lines · up to 24-ch"]:::dom-spatial
   RUN["RUNTIME & WORKERS<br/>386 lines · contract layer"]:::dom-runtime
   EXP["EXPORT & FORMATS<br/>3,119 lines · 492 tests"]:::dom-export
-  TST["TESTING & CONFORMANCE<br/>1,068 + 37 + 7"]:::dom-testing
+  TST["TESTING & CONFORMANCE<br/>1,070 + 37 + 7"]:::dom-testing
   UII["UI & PRODUCT<br/>5,460 lines · 52 tests"]:::dom-ui
   APP["APP STATE & PRESETS<br/>5,064 lines · 72 presets"]:::dom-app
 
@@ -296,7 +297,7 @@ graph LR
 | ● RUNTIME `#c8e15c` | `src/runtime` + `src/workers` — 8 files                                |                  386 | `tests/runtime` (6)                                        |
 | ● EXPORT `#e26bd8`  | `audio/encode` + `immersive/adm.js` + export controller — 12 files     |                3,119 | `tests/format` (159) + `tests/interoperability` (333)      |
 | ● TESTING `#38bdf8` | `tests/` · `e2e/` · `tests/browser` · `ci/` · lab tooling              | 11,760 (tests + e2e) | itself — four CI gates, [docs/TESTING.md](docs/TESTING.md) |
-| ● UI `#f472b6`      | `src/ui` + `src/visualizers` + `src/styles` + `index.html`             |                5,460 | `tests/ui` (52) + a11y/responsive e2e                      |
+| ● UI `#f472b6`      | `src/ui` + `src/visualizers` + `src/styles` + `index.html`             |                5,460 | `tests/ui` (54) + a11y/responsive e2e                      |
 | ● APP `#94a3b8`     | `src/app` core + `src/presets` + entry — 18 files                      |                5,064 | `tests/app` (93)                                           |
 
 Counts are measured at this commit (104 source files / 19,403 lines total); the full
@@ -389,8 +390,8 @@ npm run dev            # http://localhost:5173
 | `npm run preview`          | Serve the production build                                                      |
 | `npm run lint`             | ESLint over `src`, `tests` and `tools`                                          |
 | `npm run format`           | Prettier, write                                                                 |
-| `npm run format:check`     | Prettier, check only (used by CI)                                               |
-| `npm run test`             | Vitest: 1,068 unit, DSP, format, interoperability and integration tests         |
+| `npm run format:check`     | Prettier, check only (separate from `check`)                                    |
+| `npm run test`             | Vitest: unit, DSP, format, interoperability, runtime and integration tests      |
 | `npm run test:watch`       | Vitest in watch mode                                                            |
 | `npm run test:coverage`    | Coverage report                                                                 |
 | `npm run test:e2e`         | Playwright browser tests (needs `npx playwright install chromium`)              |
@@ -437,7 +438,7 @@ and shows what it actually found, which is more reliable than any table.
 
 ## Presets
 
-Seventy-two presets in eight groups. Every one carries a review note recording what was
+Seventy-two presets in eight groups, led by `Reference HD` in the Mastering group. Every one carries a review note recording what was
 checked and anything you should know before reaching for it, and a risk level:
 
 - **safe** — no mono-compatibility or level hazard
@@ -449,6 +450,10 @@ The catalogue is enforced by tests, not by good intentions
 none may widen past 130 % without a bass-mono anchor, none may stack more than 6 dB of
 overlapping low shelves, and a preset whose description promises compression must actually
 compress.
+
+The `mastering` and `creative` families are independent of those groups. Mastering
+presets scrub tape, hiss, vinyl, Haas and side-comb processing; creative presets keep
+their intentional degradation. Family guardrails live in `tests/app/preset-families.test.js`.
 
 Preset files are JSON, versioned, and validated on load — a hand-edited file cannot set
 `width: 1e9`. Pre-7.0 files are migrated automatically. Format:
@@ -475,41 +480,43 @@ channel map.
 ## Testing
 
 ```bash
-npm run test              # 1,068 tests, ~165 s
-npm run test:e2e          # 37 browser tests (install Chromium first)
-npm run test:conformance  # 7 lab specs × chromium/firefox/webkit — measurements, not assertions of belief
-npm run validate:exports  # real exports, checked by parsers that are not ours
+npm run test              # Node + jsdom regression suites
+npm run test:e2e          # UI browser tests (install Chromium first)
+npm run test:conformance  # real Web Audio: Chromium / Firefox / WebKit
+npm run validate:exports  # production exports checked by independent tools
 ```
 
-Four gates stand between a change and a release — detailed, colour-coded, in
-[docs/TESTING.md §The pipeline](docs/TESTING.md#the-pipeline):
+The active export workflow validates formats and interoperability. Full application
+CI and browser conformance workflows are still templates in `ci/`, not active gates;
+see [`ci/README.md`](ci/README.md). Passing `npm run check` does **not** establish
+browser conformance: the wet multiband reconstruction finding remains open in
+[`docs/FINDINGS-FOR-AGENT-A.md`](docs/FINDINGS-FOR-AGENT-A.md).
+
+Four validation routes are detailed in
+[docs/TESTING.md §The pipeline](docs/TESTING.md#the-pipeline); only Gate 4 is active CI:
 
 ```text
-GATE 1  npm run check            format · lint · 1,068 vitest · validate:exports · build
-GATE 2  CI browser job           37 Playwright specs on real Chromium — bytes parsed
-GATE 3  CI conformance matrix    goldens (Node) + 7 specs × chromium/firefox/webkit
+GATE 1  npm run check            lint · 1,070 vitest · validate:exports · build
+                                 format:check is separate; general CI remains a template
+GATE 2  browser template         37 Playwright specs on real Chromium — bytes parsed
+GATE 3  conformance template     goldens (Node) + 7 specs × chromium/firefox/webkit
                                  measurements → lab-results JSON → Agent A's findings inbox
 GATE 4  CI export interop        production writers → independent parsers + ffprobe
                                  ≥25 fixtures · channel order from the AUDIO · no over-claims
 ```
 
-> **Note on the browser suite.** The Playwright specs are written and configured but were
-> **not executed** during the 7.0 refactor: the development sandbox had no network access
-> to the Playwright browser CDN. The Vitest suite, which includes a jsdom boot test against
-> the real `index.html`, was run in full. CI runs both.
-
-| Suite                     | Tests | What it proves                                                                                                                                                                                         |
-| ------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tests/dsp/`              | 238   | K-weighting matches the BS.1770-4 tables to 1e-12; the crossover reconstructs to 0.00000 dB; the limiter holds every ceiling on every pathological signal; dither is triangular and decorrelating      |
-| `tests/format/`           | 159   | RIFF and IFF chunk sizes, padding, endianness, channel masks, ADM ID cross-references, `chna` entry widths, RF64/BW64 `ds64` planning at the 4 GiB boundary                                            |
-| `tests/interoperability/` | 333   | Multichannel round trips through an **independent** decoder; channel order recovered from the audio itself; RF64/BW64 write path; hostile-metadata fuzzing; delivery profiles, manifests and checksums |
-| `tests/app/`              | 93    | Schema integrity, clamping, hostile preset files, catalogue safety review                                                                                                                              |
-| `tests/integration/`      | 154   | Graph topology against a recording fake context; the full post-render pipeline                                                                                                                         |
-| `tests/ui/`               | 52    | Schema-driven controls, ARIA tab pattern, DOM-injection safety, application boot against the real `index.html`                                                                                         |
-| `tests/runtime/`          | 6     | Scheduler backpressure and cancellation, RPC transfer hygiene, memory planning, pyramid levels, chunk stream                                                                                           |
-| `tests/fixtures/`         | 13    | Golden bank snapshots — a DSP change that moves measured numbers moves a test first                                                                                                                    |
-| `tests/conformance/`      | 20    | The lab's own classification and immersive catalog fixtures — the instrument is calibrated, too                                                                                                        |
-| `e2e/`                    | 37    | Real browser: import, decode, render, download, verify header bytes                                                                                                                                    |
+| Suite                     | Tests | What it proves                                                                                                                                                                                                     |
+| ------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tests/dsp/`              | 238   | K-weighting matches the BS.1770-4 tables to 1e-12; ideal crossover maths sum flat (browser A-6 remains open); the limiter holds every ceiling on every pathological signal; dither is triangular and decorrelating |
+| `tests/format/`           | 159   | RIFF and IFF chunk sizes, padding, endianness, channel masks, ADM ID cross-references, `chna` entry widths, RF64/BW64 `ds64` planning at the 4 GiB boundary                                                        |
+| `tests/interoperability/` | 333   | Multichannel round trips through an **independent** decoder; channel order recovered from the audio itself; RF64/BW64 write path; hostile-metadata fuzzing; delivery profiles, manifests and checksums             |
+| `tests/app/`              | 93    | Schema integrity, clamping, hostile preset files, catalogue safety review                                                                                                                                          |
+| `tests/integration/`      | 154   | Graph topology against a recording fake context; the full post-render pipeline                                                                                                                                     |
+| `tests/ui/`               | 54    | Schema-driven controls, ARIA tab pattern, DOM-injection safety, application boot against the real `index.html`                                                                                                     |
+| `tests/runtime/`          | 6     | Scheduler backpressure and cancellation, RPC transfer hygiene, memory planning, pyramid levels, chunk stream                                                                                                       |
+| `tests/fixtures/`         | 13    | Golden bank snapshots — a DSP change that moves measured numbers moves a test first                                                                                                                                |
+| `tests/conformance/`      | 20    | The lab's own classification and immersive catalog fixtures — the instrument is calibrated, too                                                                                                                    |
+| `e2e/`                    | 37    | Real browser: import, decode, render, download, verify header bytes                                                                                                                                                |
 
 All test signals are generated programmatically (`tests/helpers/signals.js`) — no
 copyrighted audio in the repository, and every result reproducible on any machine.

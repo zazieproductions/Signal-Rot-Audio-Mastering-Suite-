@@ -6,6 +6,15 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed — continuity maintenance
+
+- The transport **Match loudness** button had two click listeners that toggled the
+  setting twice. The enhanced strip now owns both match controls, with a real-bootstrap
+  regression test preventing duplicate wiring.
+- Added the general `documentation` matcher while preserving the merged domain Labeler rules.
+- Updated preset/schema and DSP docs to the merged transparency/gain-staging contracts;
+  clarified that general CI and browser conformance are still templates, not active gates.
+
 ### Added — visual organisation
 
 - **Domain colour system.** Seven colours (violet DSP, azure Spatial, chartreuse Runtime,
@@ -48,7 +57,8 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   time. Degradation presets (`Tape Ghost`, `Vinyl Séance`, `Rust`, …) are explicitly
   `creative` and untouched.
 - **Three-way audition: Original / Mastered / Matched (A/B/C).** The new Matched mode
-  level-matches the master to the source for honest comparison; X cycles all three.
+  level-matches the master to the source for honest comparison. The enhanced-strip
+  keyboard integration remains tracked in [#13](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/13).
 - **Preview/export consistency.** Input drive now trims to −6 dB for hot sources; the
   monitor safety limiter is gentler; preview and export share the same adaptation
   function and the same adapted parameters.

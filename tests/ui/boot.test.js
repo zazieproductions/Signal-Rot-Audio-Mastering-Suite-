@@ -152,6 +152,33 @@ describe('application boot', () => {
     expect(errors).toEqual([]);
   });
 
+  it.each([false, true])(
+    'toggles loudness matching exactly once per click (transport-only: %s)',
+    async (transportOnly) => {
+      if (transportOnly) document.getElementById('abMatchChip').remove();
+      const { bootstrap } = await import('../../src/app/bootstrap.js');
+      const { store } = bootstrap();
+      const setUi = vi.spyOn(store, 'setUi');
+      const controls = ['matchLoudBtn', 'abMatchChip']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+
+      // PR #8 wired the transport button a second time in the enhanced strip, cancelling
+      // each click. Exercise the real bootstrap so duplicate owners cannot hide in mocks.
+      for (const control of controls) {
+        for (const enabled of [true, false]) {
+          setUi.mockClear();
+          control.click();
+          expect(setUi).toHaveBeenCalledTimes(1);
+          expect(store.getState().ui.matchLoudness).toBe(enabled);
+          for (const button of controls) {
+            expect(button.getAttribute('aria-pressed')).toBe(String(enabled));
+          }
+        }
+      }
+    },
+  );
+
   it('has no duplicate element ids in the shipped markup', () => {
     const ids = [...document.querySelectorAll('[id]')].map((n) => n.id);
     const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);

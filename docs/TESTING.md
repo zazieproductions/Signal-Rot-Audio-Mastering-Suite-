@@ -1,7 +1,7 @@
 # Testing
 
 ```bash
-npm run test             # 1,068 tests in Node + jsdom, ~165 s measured
+npm run test             # 1,070 tests in Node + jsdom; duration is runner-reported
 npm run test:watch
 npm run test:coverage
 npm run test:e2e         # 37 Playwright specs — npx playwright install chromium first
@@ -29,9 +29,10 @@ Three rules follow:
 2. **Verification is independent of production.** The format tests parse files with a
    separate RIFF/IFF reader in `tests/helpers/riff.js`. If the writer and the reader shared
    code, a passing test would prove only that they agree.
-3. **Regressions get a test that reproduces the original failure.** The crossover suite
-   asserts both the −58.9 dB null the pre-7.0 topology produced _and_ the 0.00000 dB the
-   current one does. The bug cannot come back quietly.
+3. **Regressions get a test that reproduces the original failure.** The analytical
+   crossover suite models both the old partial-mix null and the ideal flat sum. That is
+   not a browser measurement: [finding A-6](FINDINGS-FOR-AGENT-A.md#measured-in-a-real-browser)
+   still fails the real wet-path reconstruction test. Keep both guardrails.
 
 ## Layout
 
@@ -52,7 +53,7 @@ tests/
 ├── runtime/            6 tests ● RUNTIME  scheduler · rpc · memory plan · pyramid · stream
 ├── fixtures/          13 tests ● DSP      golden bank snapshots
 ├── conformance/       20 tests ● TESTING  lab classification + immersive catalog fixtures
-└── ui/                52 tests ● UI       controls · tabs · signal-flow · presets · boot · UX
+└── ui/                54 tests ● UI       controls · tabs · signal-flow · presets · boot · UX
 e2e/                 37 specs   ● TESTING  Playwright · import · controls · export · responsive · a11y
 tests/browser/        7 specs   ● TESTING  OfflineAudioContext conformance lab (3 engines)
 ```
@@ -83,7 +84,7 @@ values, which lets `graph.test.js` (126 tests) assert things a browser test coul
 
 - Every declared speaker feed exists and is connected to the source, for all six layouts
 - Bypass really neutralises a module, and only that module
-- Every one of the forty catalogue presets applies without producing a non-finite parameter
+- Every catalogue preset applies without producing a non-finite parameter
 - Exactly one monitoring path is unmuted at a time
 - Every generator is started once and stopped on dispose — no leaked oscillators
 - The saturation make-up gain lives on its own node, separate from the chain output
@@ -93,7 +94,7 @@ because the fake was too forgiving.
 
 ## What each suite proves
 
-### `tests/dsp/loudness.test.js` — 32
+### `tests/dsp/loudness.test.js`
 
 - K-weighting stage 1 and stage 2 match BS.1770-4 Tables 1 and 2 to **1e-12**
 - The RLB numerator stays `[1, −2, 1]` at every rate — its +0.043 dB pass-band gain is part
@@ -110,7 +111,7 @@ because the fake was too forgiving.
 - Channel weighting: LFE at G = 0 changes nothing; surrounds at 1.41 add 1.49 dB
 - No NaN on 30 s of 1e-6 amplitude, or on a full-scale square wave
 
-### `tests/dsp/true-peak.test.js` — 13
+### `tests/dsp/true-peak.test.js`
 
 - The polyphase bank has `factor` branches of unity DC gain, and is memoised
 - fs/4 worst case: **−0.168 dB** versus cubic's **−1.072 dB**
@@ -119,7 +120,7 @@ because the fake was too forgiving.
 - Detects +1.9 dBTP of overshoot on a clipped square wave that a sample meter calls 0 dBFS
 - The real-time estimate stays within 0.5 dB and never under-reads the sample peak
 
-### `tests/dsp/limiter.test.js` — 20
+### `tests/dsp/limiter.test.js`
 
 - The sliding minimum is correct, including its window edges, and never exceeds the source
 - Hann smoothing preserves a constant and removes a step's discontinuity
@@ -134,13 +135,13 @@ because the fake was too forgiving.
 
 ### `tests/dsp/multiband-crossover.test.js` — 15
 
-- The current topology sums to **< 0.001 dB** at nine mix positions, four sample rates and
-  four crossover-frequency pairs
+- The ideal-filter model sums to **< 0.001 dB** at nine mix positions, four sample rates
+  and four crossover-frequency pairs; the browser wet-sum contract remains open (A-6)
 - Each band lands where it belongs and is −6.02 dB at its crossover
 - The pre-7.0 topology is reproduced and shown to null by 25–59 dB at partial mix
 - The amount→threshold/ratio mapping is monotonic and clamps
 
-### `tests/dsp/dither.test.js` — 13
+### `tests/dsp/dither.test.js`
 
 - TPDF adds at most ±1 LSB and has a triangular, not rectangular, density
 - Shaped dither puts **less** error energy below 4 kHz than flat TPDF
@@ -150,7 +151,7 @@ because the fake was too forgiving.
 - Deterministic for a seed, different for a different seed
 - Quantisation error is measurably less correlated with the signal than without dither
 
-### `tests/dsp/transient-shaper.test.js` — 9
+### `tests/dsp/transient-shaper.test.js`
 
 - The gain trajectory is **identical 20 dB down** — the level-independence claim
 - One gain for all channels
@@ -179,6 +180,23 @@ structure and preserved asymmetry, channel-map export.
 Download: path traversal, Windows-forbidden characters, control characters, reserved device
 names, HTML-injection filenames, truncation preserving the extension, unicode preservation.
 
+### Additional merged guardrails
+
+- `tests/dsp/saturation.test.js`: +12 dB structural headroom and unity small-signal gain.
+- `tests/dsp/dynamics-compressor-makeup.test.js`: inverse fixed compressor make-up;
+  `tests/integration/graph.test.js` checks the separate compensation nodes and dry delay.
+- `tests/dsp/source-aware.test.js`, `tests/dsp/mastering-guardrails.test.js` and
+  `tests/app/preset-families.test.js`: down-only adaptation, loudness restraint and no
+  degradation DSP in mastering presets.
+- `tests/interoperability/`: hostile metadata, independent round trips and honest
+  delivery claims. `npm run validate:exports` separately exercises ffprobe and channel ID.
+- `tests/runtime/runtime.test.js`: opt-in infrastructure contracts, not proof that the
+  existing render/analysis paths have migrated. See [runtime contracts](../src/runtime/README.md).
+- `tests/ui/boot.test.js`: a click on either loudness-match control toggles state once;
+  the real bootstrap exposes duplicate event wiring that isolated component tests miss.
+- `tests/fixtures/` and `tests/conformance/`: golden audio and comparison rules;
+  [the browser lab](CONFORMANCE.md) verifies real nodes independently of fake topology.
+
 ### `tests/app/` — 93
 
 Schema integrity (every parameter complete, defaults in range, divergences explained),
@@ -197,16 +215,16 @@ held at four values × two targets, re-verified independently; **bit-identical o
 same seed**; duration, rate and channel count preserved through WAV and AIFF; the ceiling
 surviving 16-bit quantisation; the render report's completeness and JSON-safety.
 
-### `tests/ui/` — 52
+### `tests/ui/` — 54
 
 `controls.test.js` (30) — `el()` never produces HTML from dynamic values; the ARIA tab
 pattern including arrow/Home/End and roving tabindex; schema-driven control rendering,
 label association, `aria-valuetext`, badges, cross-parameter disabling; the signal-flow view;
 the preset panel.
 
-`boot.test.js` (11) — **loads the real `index.html`**, stubs Web Audio and canvas, runs
+`boot.test.js` — **loads the real `index.html`**, stubs Web Audio and canvas, runs
 `bootstrap()`, and asserts: no console errors, every schema parameter has a control, the
-signal-flow view renders, all forty presets render, the immersive menu populates, the About
+signal-flow view renders, all catalogue presets render, the immersive menu populates, the About
 panel fills from live probing, an animation frame runs without throwing, a preset applies end
 to end through the real DOM, the transport buttons are wired, no duplicate element ids, and
 every `aria-controls` and `label[for]` resolves.
@@ -215,7 +233,7 @@ That last suite is the cheapest possible answer to "does the application actuall
 the question the audited repository answered with **no**, because `index.html` pointed at
 `./src/app.js` while the file sat at the repository root.
 
-### `e2e/` — 37
+### `e2e/`
 
 Real Chromium, real Web Audio, real downloads.
 
@@ -237,30 +255,32 @@ Real Chromium, real Web Audio, real downloads.
 - Accessibility: skip link first in the tab order, every button named, every control
   labelled, visible focus rings, live regions, `Space` not swallowed, reduced-motion honoured
 
-> **Not executed during the 7.0 refactor.** The development sandbox had no network access to
-> the Playwright browser CDN. The specs are written and configured; CI runs them on every
-> push. This document does not claim they passed.
+> UI browser tests were not executed during the 7.0 refactor. Do not infer a pass from
+> Vitest or the export CI check. General CI and conformance workflows remain uninstalled
+> templates; see [CI status](../ci/README.md) and [recorded browser findings](FINDINGS-FOR-AGENT-A.md).
 
 ## The pipeline
 
-Four gates stand between a change and a release. The colours mark the workstream whose
-domain each gate protects (ownership detail: [WORKSTREAMS.md](WORKSTREAMS.md)).
+Four validation routes are shown below. Only export interoperability (Gate 4) is active
+CI; general CI, UI browser and conformance jobs remain templates in `ci/`. Gate 1 runs
+locally via `npm run check`, with formatting checked separately. The colours mark domain
+ownership ([WORKSTREAMS.md](WORKSTREAMS.md)); they do not imply a gate is installed.
 
 ```mermaid
 flowchart LR
   SRC["change lands"]:::dom-app
 
-  subgraph GATE1["Gate 1 · every commit — local + CI 'check' job"]
-    F["prettier check · eslint"]:::dom-testing
-    V["vitest — 1,068 tests in ~165 s<br/>dsp 238 · interop 333 · format 159 · integration 154<br/>app 93 · ui 52 · fixtures 13 · conformance 20 · runtime 6"]:::dom-testing
+  subgraph GATE1["Gate 1 · local check / general CI template"]
+    F["eslint · prettier check is separate"]:::dom-testing
+    V["vitest — 1,070 tests in Node + jsdom<br/>dsp 238 · interop 333 · format 159 · integration 154<br/>app 93 · ui 54 · fixtures 13 · conformance 20 · runtime 6"]:::dom-testing
     B["vite build"]:::dom-app
   end
 
-  subgraph GATE2["Gate 2 · CI 'browser' job"]
+  subgraph GATE2["Gate 2 · browser template — not installed"]
     E2E["37 Playwright specs — real Chromium<br/>import · transport · downloaded bytes · a11y · responsive"]:::dom-ui
   end
 
-  subgraph GATE3["Gate 3 · conformance matrix — Agent B"]
+  subgraph GATE3["Gate 3 · conformance template — not installed"]
     GO["goldens + lab:compare + lab:bench (Node)"]:::dom-dsp
     BR["7 specs × chromium / firefox / webkit<br/>OfflineAudioContext measurements → lab-results/*.json"]:::dom-testing
     FI["thresholds exceeded? finding + kept test<br/>land in docs/FINDINGS-FOR-AGENT-A.md"]:::dom-testing
@@ -293,7 +313,7 @@ tests/dsp                238  ████████████████�
 tests/format             159  ████████████████████
 tests/integration        154  ███████████████████
 tests/app                 93  ████████████
-tests/ui                  52  ███████
+tests/ui                  54  ███████
 e2e (Playwright specs)    37  █████
 tests/conformance         20  ███
 tests/fixtures            13  ██

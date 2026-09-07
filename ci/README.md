@@ -1,30 +1,43 @@
 # CI configuration
 
-`github-actions-ci.yml` is the GitHub Actions workflow for this project. It runs the
-format check, the linter, the 1,068-test Vitest suite and the production build, then runs
-the Playwright browser suite in a separate job.
+## Active checks
 
-## Installing it
+`.github/workflows/export-interoperability.yml` runs format/interoperability unit tests,
+ADM structural validation, independent export validation and ffprobe/channel-order checks.
+It does **not** run the full application, DSP, runtime, UI or browser suites.
 
-It lives here rather than in `.github/workflows/` because the automation account that
-opened the initial pull request does not hold the `workflows` permission, and GitHub
-rejects any push from such an account that creates or modifies a workflow file. Moving it
-into place is a one-liner for anyone with normal write access:
+The Labeler workflow uses `.github/labeler.yml` (the v4 glob format), preserving the
+seven domain `area:*` labels alongside the general `documentation` matcher. A missing
+config previously failed every PR's label check.
+
+## Templates, not active gates
+
+Enablement is tracked in [#15](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/15).
+
+- `github-actions-ci.yml`: formatting, lint, the full Vitest suite, build and UI E2E.
+- `conformance.yml`: Node goldens/benchmarks and Chromium/Firefox/WebKit conformance.
+
+These were staged here because the original automation account could not push workflow
+changes. Their presence does not mean GitHub runs them. Before installing them:
+
+1. Resolve the existing repository-wide `npm run format:check` failures in a separate
+   formatting-only change; do not mix wholesale formatting with a DSP fix.
+2. Run UI E2E and the browser matrix. Keep the multiband A-6 contract in
+   `tests/browser/multiband.spec.js`; do not relax it just to turn a new gate green.
+3. Move the templates to `.github/workflows/ci.yml` and
+   `.github/workflows/conformance.yml`. Update the conformance workflow's own path filters
+   from `ci/conformance.yml` to its installed path, and include dependency/preset changes.
+
+No secrets are needed for those test jobs. Check results after installation, not just the
+workflow files, before claiming the full suite is protected on pull requests.
+
+## Local checks
 
 ```bash
-mkdir -p .github/workflows
-git mv ci/github-actions-ci.yml .github/workflows/ci.yml
-git commit -m "ci: install the GitHub Actions workflow"
-```
-
-Nothing in the workflow needs editing first — it uses only `actions/checkout`,
-`actions/setup-node`, `actions/upload-artifact` and `npm`, with no secrets.
-
-## Running the same checks locally
-
-```bash
-npm run check      # format check is separate: npm run format:check
-npm run test:e2e          # requires: npx playwright install chromium
-npm run test:conformance  # requires: npx playwright install chromium firefox webkit
+npm ci
+npm run check            # lint + full Vitest + independent export validation + build
+npm run format:check     # separate from check
+npm run test:e2e         # requires: npx playwright install chromium
+npm run test:conformance # requires: npx playwright install chromium firefox webkit
 npm run lab:goldens && npm run lab:bench
 ```

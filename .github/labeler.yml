@@ -1,6 +1,6 @@
 # Path → area labels, driven by the repository domain map.
 #
-# Consumed by actions/labeler@v4 (.github/workflows/label.yml). The seven labels below
+# Consumed by actions/labeler@v4 (.github/workflows/label.yml). The seven area labels below
 # carry the exact colours of docs/COLOR-SYSTEM.md so a triaged PR is literally coloured
 # by the domain it touches. Labels must exist in the repo before they can be applied —
 # create them once with the `gh label create` lines in docs/COLOR-SYSTEM.md §GitHub labels.
@@ -78,3 +78,7 @@ area:app:
   - 'docs/PRESET-SCHEMA.md'
   - 'docs/COLOR-SYSTEM.md'
   - 'docs/WORKSTREAMS.md'
+
+# General documentation triage alongside domain ownership.
+documentation:
+  - '**/*.md'
