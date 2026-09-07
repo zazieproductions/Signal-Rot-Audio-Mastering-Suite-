@@ -6,6 +6,25 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — visual organisation
+
+- **Domain colour system.** Seven colours (violet DSP, azure Spatial, chartreuse Runtime,
+  fuchsia Export, sky Testing, pink UI, slate App) now code the repository's major areas
+  consistently: `--dom-*` design tokens in `src/styles/tokens.css` (both themes, contrast
+  ≥ 4.5:1 computed), the palette of every diagram in `docs/` and the README, and the
+  `area:*` GitHub labels applied by `.github/labeler.yml`. The two signal accents
+  (`--orig`/`--proc`) are untouched and domain hues never appear in meters or controls —
+  spec in `docs/COLOR-SYSTEM.md`, sync enforced by `tests/app/visual-system.test.js`.
+- **Diagram set.** Colour-coded architecture flow (README + `docs/ARCHITECTURE.md`, with
+  measured file/line counts and the runtime island drawn honestly: contracts tested, not
+  yet consumed), signal path with stage-ownership table (`docs/DSP-SIGNAL-FLOW.md`),
+  module map (`docs/ARCHITECTURE.md`), workstream ownership and the findings loop
+  (`docs/WORKSTREAMS.md`), and the four-gate testing pipeline with real suite sizes
+  (`docs/TESTING.md`).
+- **Stale counts refreshed from the real tree:** 72 presets in 8 groups (was 68/7), and
+  1,068 Vitest tests with per-suite counts (was 971 in the README / 544 in `docs/TESTING.md`,
+  `ci/README.md`, `docs/BROWSER-COMPATIBILITY.md`).
+
 ### Changed — transparency-first mastering engine
 
 - **New flagship preset: `Reference HD`** (`-15 LUFS`, `-1 dBTP`, no saturation, no
@@ -16,7 +35,7 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   already-loud/dense sources get minimal compression, saturation and drive; dynamic
   sources keep their dynamics; bright sources get no HF lift; bass-heavy sources get
   bass control plus a centred sub. Every softening is listed in the render report.
-- **Loudness ambition guard.** Refinement passes are scored for loudness *and*
+- **Loudness ambition guard.** Refinement passes are scored for loudness _and_
   cleanliness; average limiter reduction beyond 3 dB stops the push and the engine
   delivers a quieter master instead of a crushed one (`ambitionReduced`, reported).
 - **Conservative retunes.** Multiband mapping is now −24 dB / 3:1 at full scale with a

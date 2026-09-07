@@ -4,6 +4,87 @@ The order of a mastering chain is an argument, not a convention. This document m
 argument, states what changed from the pre-7.0 chain, and records the measured
 consequences.
 
+## The chain, drawn
+
+Every node below is a stage in `SIGNAL_FLOW` (`src/app/constants.js`); the colour is the
+stage's owning domain from [COLOR-SYSTEM.md](COLOR-SYSTEM.md), the module that builds it
+sits inside the node. Everything past the dashed divider is inside `renderMaster()` —
+export-only, labelled as such in the live UI.
+
+```mermaid
+flowchart TB
+  PRESETS["presets/ — 72 presets · 8 groups"]:::dom-app
+  STORE["app/state.js — validated store<br/>+ parameter schema (clamped on every write)"]:::dom-app
+  SRC["SOURCE — drop / decode in app/bootstrap.js<br/>caps: 512 MB · 60 min · warn at 15 min"]:::dom-app
+  WORKER["analysis worker — latest-wins<br/>loudness · peaks · mono · match fingerprint"]:::dom-runtime
+
+  subgraph LIVE["live monitor path — buildMasteringChain(ctx), identical graph as the wet render"]
+    TRIM["INPUT · trim — input drive"]:::dom-dsp
+    MATCH["MATCH EQ · 8 peaking bells 60 Hz–12 kHz<br/>(build-mastering-chain.js ← spectral-match)"]:::dom-dsp
+    TONE["TONE · 6 bands + hinged tilt pair at 1 kHz<br/>(graph/tone.js)"]:::dom-dsp
+    MB["MULTIBAND · serial LR4 140 Hz / 3.2 kHz<br/>phase-matched dry · parallel mix · (graph/multiband.js)"]:::dom-dsp
+    ST["STEREO · M/S width · per-band 250 Hz / 4 kHz<br/>bass-mono LR4 · Haas · crossfeed · side comb (graph/stereo.js)"]:::dom-dsp
+    CHA["CHARACTER · tape wow/flutter/drift · head bump<br/>vinyl · seeded hiss — prng (graph/character.js)"]:::dom-dsp
+    DEP["DEPTH · two filtered early reflections (graph/depth.js)"]:::dom-dsp
+    SAT["SATURATION · waveshaper 4× · dc block · make-up<br/>on its own node (graph/tone.js)"]:::dom-dsp
+    MON["LIVE MONITOR — DynamicsCompressorNode safety limiter<br/>· est. true-peak · momentary/short-term meters"]:::dom-ui
+  end
+
+  subgraph OFF["offline render — render-master.js (export only)"]
+    TRANS["TRANSIENT · differential-envelope shaper<br/>(render/transient-shaper.js)"]:::dom-dsp
+    NORM["NORMALIZATION · iterate to target<br/>≤ 0.1 LU, 5 passes, secant step · ambition guard at 3 dB GR"]:::dom-dsp
+    LIM["LIMITER · look-ahead band-limited polyphase true-peak<br/>(render/limiter.js ← analysis/true-peak.js)"]:::dom-dsp
+    VERIFY{"verify ceiling<br/>re-measure the finished file"}:::dom-dsp
+    TRIM2["bounded corrective trim"]:::dom-dsp
+    DITH["DITHER · TPDF or shaped — integer output only<br/>(render/dither.js ← prng.js)"]:::dom-dsp
+    REPORT["render report JSON<br/>before/after · GR · achieved LUFS · verified TP"]:::dom-dsp
+  end
+
+  ENC["EXPORT · encode/wav · aiff · mp3 · RF64/BW64 · ADM BWF<br/>(audio/encode — delivery profiles · checksums)"]:::dom-export
+
+  SRC --> TRIM
+  PRESETS --> STORE
+  STORE --> TRIM & MATCH & TONE & MB & ST & CHA & DEP & SAT & TRANS & NORM & LIM & DITH
+  SRC -.-> WORKER
+  WORKER -. "match curve · loudness targets" .-> MATCH
+  WORKER -. "achieved LUFS loop" .-> NORM
+  TRIM --> MATCH --> TONE --> MB --> ST --> CHA --> DEP --> SAT
+  SAT --> MON
+  SAT -. "same constructor, offline ctx" .-> TRANS
+  TRANS --> NORM --> LIM --> VERIFY
+  VERIFY -- over --> TRIM2 --> VERIFY
+  VERIFY -- ok --> DITH --> REPORT --> ENC
+  LIM -- "ceiling + GR stats" --> REPORT
+
+  classDef dom-dsp fill:#222131,stroke:#a78bfa,color:#a78bfa
+  classDef dom-export fill:#2a1a2c,stroke:#e26bd8,color:#e26bd8
+  classDef dom-ui fill:#2d1b27,stroke:#f472b6,color:#f472b6
+  classDef dom-runtime fill:#262c19,stroke:#c8e15c,color:#c8e15c
+  classDef dom-app fill:#1f2328,stroke:#94a3b8,color:#94a3b8
+```
+
+Read it together with the text chain below; the diagram adds _who builds what_ and _who
+measures what_, the text keeps the argument for the order.
+
+### Stage ownership
+
+| Stage          | Domain   | Built by                                                | Measured by                                  |    Live     | Export |
+| -------------- | -------- | ------------------------------------------------------- | -------------------------------------------- | :---------: | :----: |
+| INPUT / trim   | ● APP    | `graph/build-mastering-chain.js`                        | —                                            |      ✓      |   ✓    |
+| MATCH EQ       | ● DSP    | `build-mastering-chain.js` (8 bells from `MATCH_FREQS`) | `analysis/spectral-match.js` → FFT           |      ✓      |   ✓    |
+| TONE           | ● DSP    | `graph/tone.js`                                         | `tests/dsp/biquad` + label-from-table        |      ✓      |   ✓    |
+| MULTIBAND      | ● DSP    | `graph/multiband.js`                                    | crossover null test, 0.00000 dB              |      ✓      |   ✓    |
+| STEREO         | ● DSP    | `graph/stereo.js`                                       | correlation / mono-compat analysis           |      ✓      |   ✓    |
+| CHARACTER      | ● DSP    | `graph/character.js`                                    | seeded-PRNG determinism tests                |      ✓      |   ✓    |
+| DEPTH          | ● DSP    | `graph/depth.js`                                        | topology tests (fake context)                |      ✓      |   ✓    |
+| SATURATION     | ● DSP    | `graph/tone.js` (`buildSaturation`)                     | waveshaper monotonicity, alias capture (lab) |      ✓      |   ✓    |
+| TRANSIENT      | ● DSP    | `render/transient-shaper.js`                            | `tests/dsp/transient-shaper`                 |      —      |   ✓    |
+| NORMALIZATION  | ● DSP    | `render/normalize.js`                                   | loudness loop + report                       |   approx.   |   ✓    |
+| LIMITER        | ● DSP    | `render/limiter.js`                                     | `tests/dsp/limiter` + verified re-measure    | safety comp |   ✓    |
+| VERIFY ceiling | ● DSP    | re-analysis in `render-master.js`                       | independent parse at export gate             |      —      |   ✓    |
+| DITHER         | ● DSP    | `render/dither.js`                                      | TPDF statistics tests                        |      —      |   ✓    |
+| ENCODE / ADM   | ● EXPORT | `audio/encode/**`, `immersive/adm.js`                   | `tests/format` + `tests/interoperability`    |      —      |   ✓    |
+
 ## The chain
 
 ```
