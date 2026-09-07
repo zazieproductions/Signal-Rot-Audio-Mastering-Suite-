@@ -24,5 +24,7 @@ Nothing in the workflow needs editing first — it uses only `actions/checkout`,
 
 ```bash
 npm run check      # format check is separate: npm run format:check
-npm run test:e2e   # requires: npx playwright install chromium
+npm run test:e2e          # requires: npx playwright install chromium
+npm run test:conformance  # requires: npx playwright install chromium firefox webkit
+npm run lab:goldens && npm run lab:bench
 ```

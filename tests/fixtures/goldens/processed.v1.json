@@ -1,0 +1,6567 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-07T00:45:53.642Z",
+  "engine": "node-offline",
+  "reference": {
+    "class": "reference",
+    "reasons": []
+  },
+  "creative": {
+    "class": "creative",
+    "reasons": [
+      "drive: 0 → 2",
+      "air: 0 → 1.2",
+      "sat: 0 → 35",
+      "mbLow: 0 → 30",
+      "mbMid: 0 → 22",
+      "mbHigh: 0 → 18",
+      "mbMix: 100 → 70",
+      "width: 1 → 1.35",
+      "bassMono: 0 → 80",
+      "depth: 0 → 30",
+      "tape: 0 → 25"
+    ]
+  },
+  "measurements": [
+    {
+      "id": "sine-sweep",
+      "reference": {
+        "id": "sine-sweep",
+        "title": "Logarithmic sine sweep",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 96000,
+        "durationSeconds": 2,
+        "channels": 2,
+        "finite": {
+          "samples": 192000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0,
+          "maxMomentary": -11.416,
+          "maxShortTerm": null,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.183075,
+          "sampleDb": -14.747,
+          "truePeak": 0.183079,
+          "truePeakDb": -14.747,
+          "perChannelTruePeakDb": [-14.747, -14.747]
+        },
+        "rms": 0.129161,
+        "rmsDb": -14.767,
+        "crestFactorDb": 3.03,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 1601.538391031355,
+          "sideEnergy": 0,
+          "midDb": -17.7773,
+          "sideDb": -180,
+          "sideToMidDb": -232.0454
+        },
+        "spectrum": {
+          "centroidHz": 633.01,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -70.5768
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -66.5744
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -43.9561
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 27.4423
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -94.7503
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -132.5751
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00056549, 0.00056549],
+          "maxAbs": 0.00056549
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1292,
+            "rmsDb": -14.767,
+            "peak": 0.1831,
+            "peakDb": -14.7474,
+            "dc": 0.00056549,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1292,
+            "rmsDb": -14.767,
+            "peak": 0.1831,
+            "peakDb": -14.7474,
+            "dc": 0.00056549,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.183075
+      },
+      "creative": {
+        "id": "sine-sweep",
+        "title": "Logarithmic sine sweep",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 96000,
+        "durationSeconds": 2,
+        "channels": 2,
+        "finite": {
+          "samples": 192000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0,
+          "maxMomentary": -9.416,
+          "maxShortTerm": null,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.230478,
+          "sampleDb": -12.747,
+          "truePeak": 0.230482,
+          "truePeakDb": -12.747,
+          "perChannelTruePeakDb": [-12.747, -12.747]
+        },
+        "rms": 0.162605,
+        "rmsDb": -12.767,
+        "crestFactorDb": 3.03,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 2538.267294673855,
+          "sideEnergy": 0,
+          "midDb": -15.7773,
+          "sideDb": -180,
+          "sideToMidDb": -234.0454
+        },
+        "spectrum": {
+          "centroidHz": 633.01,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -68.5762
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -64.5743
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -41.9561
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 29.4423
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -92.7494
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -130.8348
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00071191, 0.00071191],
+          "maxAbs": 0.00071191
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1626,
+            "rmsDb": -12.767,
+            "peak": 0.2305,
+            "peakDb": -12.7474,
+            "dc": 0.00071191,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1626,
+            "rmsDb": -12.767,
+            "peak": 0.2305,
+            "peakDb": -12.7474,
+            "dc": 0.00071191,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.230478
+      }
+    },
+    {
+      "id": "multitone",
+      "reference": {
+        "id": "multitone",
+        "title": "Multitone cluster",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.001,
+          "maxMomentary": -13.993,
+          "maxShortTerm": -14.01,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.399699,
+          "sampleDb": -7.965,
+          "truePeak": 0.407228,
+          "truePeakDb": -7.803,
+          "perChannelTruePeakDb": [-7.803, -7.803]
+        },
+        "rms": 0.120026,
+        "rmsDb": -15.404,
+        "crestFactorDb": 10.449,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 2765.985555845248,
+          "sideEnergy": 0,
+          "midDb": -18.4145,
+          "sideDb": -180,
+          "sideToMidDb": -234.4185
+        },
+        "spectrum": {
+          "centroidHz": 2968.57,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -3.6398
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 28.5965
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 24.3372
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 21.372
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 13.3678
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 11.4134
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.12,
+            "rmsDb": -15.4042,
+            "peak": 0.3997,
+            "peakDb": -7.9653,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.12,
+            "rmsDb": -15.4042,
+            "peak": 0.3997,
+            "peakDb": -7.9653,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.399699
+      },
+      "creative": {
+        "id": "multitone",
+        "title": "Multitone cluster",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.001,
+          "maxMomentary": -11.993,
+          "maxShortTerm": -12.01,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.503191,
+          "sampleDb": -5.965,
+          "truePeak": 0.512669,
+          "truePeakDb": -5.803,
+          "perChannelTruePeakDb": [-5.803, -5.803]
+        },
+        "rms": 0.151103,
+        "rmsDb": -13.404,
+        "crestFactorDb": 10.449,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 4383.791659997541,
+          "sideEnergy": 0,
+          "midDb": -16.4145,
+          "sideDb": -180,
+          "sideToMidDb": -236.4185
+        },
+        "spectrum": {
+          "centroidHz": 2968.57,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -1.6398
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 30.5965
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 26.3372
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 23.372
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 15.3678
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 13.4134
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1511,
+            "rmsDb": -13.4042,
+            "peak": 0.5032,
+            "peakDb": -5.9653,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1511,
+            "rmsDb": -13.4042,
+            "peak": 0.5032,
+            "peakDb": -5.9653,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.503191
+      }
+    },
+    {
+      "id": "bass-40",
+      "reference": {
+        "id": "bass-40",
+        "title": "40 Hz bass",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.01,
+          "maxMomentary": -13.993,
+          "maxShortTerm": -14.005,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.410451,
+          "sampleDb": -7.735,
+          "truePeak": 0.410451,
+          "truePeakDb": -7.735,
+          "perChannelTruePeakDb": [-7.735, -7.735]
+        },
+        "rms": 0.289335,
+        "rmsDb": -7.762,
+        "crestFactorDb": 3.037,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 16073.198067394533,
+          "sideEnergy": 0,
+          "midDb": -10.772,
+          "sideDb": -180,
+          "sideToMidDb": -242.061
+        },
+        "spectrum": {
+          "centroidHz": 40.01,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 46.4502
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 25.2001
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -22.3139
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -54.414
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -88.7964
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -119.221
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [6.5e-7, 6.5e-7],
+          "maxAbs": 6.5e-7
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2893,
+            "rmsDb": -7.7617,
+            "peak": 0.4105,
+            "peakDb": -7.7348,
+            "dc": 6.5e-7,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.2893,
+            "rmsDb": -7.7617,
+            "peak": 0.4105,
+            "peakDb": -7.7348,
+            "dc": 6.5e-7,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.410451
+      },
+      "creative": {
+        "id": "bass-40",
+        "title": "40 Hz bass",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.01,
+          "maxMomentary": -11.993,
+          "maxShortTerm": -12.005,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.516727,
+          "sampleDb": -5.735,
+          "truePeak": 0.516727,
+          "truePeakDb": -5.735,
+          "perChannelTruePeakDb": [-5.735, -5.735]
+        },
+        "rms": 0.364251,
+        "rmsDb": -5.762,
+        "crestFactorDb": 3.037,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 25474.302259907803,
+          "sideEnergy": 0,
+          "midDb": -8.772,
+          "sideDb": -180,
+          "sideToMidDb": -244.061
+        },
+        "spectrum": {
+          "centroidHz": 40.01,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 48.4502
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 27.2001
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -20.3139
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -52.414
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -86.796
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -117.1538
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [8.2e-7, 8.2e-7],
+          "maxAbs": 8.2e-7
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.3643,
+            "rmsDb": -5.7617,
+            "peak": 0.5167,
+            "peakDb": -5.7348,
+            "dc": 8.2e-7,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.3643,
+            "rmsDb": -5.7617,
+            "peak": 0.5167,
+            "peakDb": -5.7348,
+            "dc": 8.2e-7,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.516727
+      }
+    },
+    {
+      "id": "bass-50",
+      "reference": {
+        "id": "bass-50",
+        "title": "50 Hz bass",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.009,
+          "maxMomentary": -13.992,
+          "maxShortTerm": -14.006,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.340117,
+          "sampleDb": -9.367,
+          "truePeak": 0.340117,
+          "truePeakDb": -9.367,
+          "perChannelTruePeakDb": [-9.367, -9.367]
+        },
+        "rms": 0.239746,
+        "rmsDb": -9.395,
+        "crestFactorDb": 3.038,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 11035.79792141421,
+          "sideEnergy": 0,
+          "midDb": -12.405,
+          "sideDb": -180,
+          "sideToMidDb": -240.428
+        },
+        "spectrum": {
+          "centroidHz": 50,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 44.8172
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 38.2112
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -24.3244
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -58.0815
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -92.6665
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -122.5679
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2397,
+            "rmsDb": -9.3947,
+            "peak": 0.3401,
+            "peakDb": -9.3674,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.2397,
+            "rmsDb": -9.3947,
+            "peak": 0.3401,
+            "peakDb": -9.3674,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.340117
+      },
+      "creative": {
+        "id": "bass-50",
+        "title": "50 Hz bass",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.009,
+          "maxMomentary": -11.992,
+          "maxShortTerm": -12.006,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.428182,
+          "sampleDb": -7.367,
+          "truePeak": 0.428182,
+          "truePeakDb": -7.367,
+          "perChannelTruePeakDb": [-7.367, -7.367]
+        },
+        "rms": 0.301822,
+        "rmsDb": -7.395,
+        "crestFactorDb": 3.038,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 17490.5610372077,
+          "sideEnergy": 0,
+          "midDb": -10.405,
+          "sideDb": -180,
+          "sideToMidDb": -242.428
+        },
+        "spectrum": {
+          "centroidHz": 50,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 46.8172
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 40.2112
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -22.3245
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -56.0815
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -90.6665
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -120.7045
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.3018,
+            "rmsDb": -7.3947,
+            "peak": 0.4282,
+            "peakDb": -7.3674,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.3018,
+            "rmsDb": -7.3947,
+            "peak": 0.4282,
+            "peakDb": -7.3674,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.428182
+      }
+    },
+    {
+      "id": "bass-60",
+      "reference": {
+        "id": "bass-60",
+        "title": "60 Hz bass",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.008,
+          "maxMomentary": -13.992,
+          "maxShortTerm": -14.006,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.301918,
+          "sampleDb": -10.402,
+          "truePeak": 0.301918,
+          "truePeakDb": -10.402,
+          "perChannelTruePeakDb": [-10.402, -10.402]
+        },
+        "rms": 0.212818,
+        "rmsDb": -10.43,
+        "crestFactorDb": 3.038,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 8695.929886072961,
+          "sideEnergy": 0,
+          "midDb": -13.4399,
+          "sideDb": -180,
+          "sideToMidDb": -239.3932
+        },
+        "spectrum": {
+          "centroidHz": 60,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 43.7813
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 41.5022
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -29.1288
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -64.9517
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -99.7758
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -126.7928
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [-1.6e-7, -1.6e-7],
+          "maxAbs": 1.6e-7
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2128,
+            "rmsDb": -10.4296,
+            "peak": 0.3019,
+            "peakDb": -10.4022,
+            "dc": -1.6e-7,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.2128,
+            "rmsDb": -10.4296,
+            "peak": 0.3019,
+            "peakDb": -10.4022,
+            "dc": -1.6e-7,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.301918
+      },
+      "creative": {
+        "id": "bass-60",
+        "title": "60 Hz bass",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.008,
+          "maxMomentary": -11.992,
+          "maxShortTerm": -12.006,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.380092,
+          "sampleDb": -8.402,
+          "truePeak": 0.380092,
+          "truePeakDb": -8.402,
+          "perChannelTruePeakDb": [-8.402, -8.402]
+        },
+        "rms": 0.267921,
+        "rmsDb": -8.43,
+        "crestFactorDb": 3.038,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 13782.12013136138,
+          "sideEnergy": 0,
+          "midDb": -11.4399,
+          "sideDb": -180,
+          "sideToMidDb": -241.3932
+        },
+        "spectrum": {
+          "centroidHz": 60,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 45.7813
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 43.5022
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -27.1288
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -62.9517
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -97.7766
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -125.0166
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [-2e-7, -2e-7],
+          "maxAbs": 2e-7
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2679,
+            "rmsDb": -8.4296,
+            "peak": 0.3801,
+            "peakDb": -8.4022,
+            "dc": -2e-7,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.2679,
+            "rmsDb": -8.4296,
+            "peak": 0.3801,
+            "peakDb": -8.4022,
+            "dc": -2e-7,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.380092
+      }
+    },
+    {
+      "id": "bass-80",
+      "reference": {
+        "id": "bass-80",
+        "title": "80 Hz bass",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.006,
+          "maxMomentary": -13.993,
+          "maxShortTerm": -14.007,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.263945,
+          "sampleDb": -11.57,
+          "truePeak": 0.263945,
+          "truePeakDb": -11.57,
+          "perChannelTruePeakDb": [-11.57, -11.57]
+        },
+        "rms": 0.186052,
+        "rmsDb": -11.597,
+        "crestFactorDb": 3.038,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 6646.129691372212,
+          "sideEnergy": 0,
+          "midDb": -14.6073,
+          "sideDb": -180,
+          "sideToMidDb": -238.2257
+        },
+        "spectrum": {
+          "centroidHz": 80,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 36.8595
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 40.8546
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -21.0145
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -62.4747
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -97.9363
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -126.8331
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [4e-8, 4e-8],
+          "maxAbs": 4e-8
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1861,
+            "rmsDb": -11.597,
+            "peak": 0.2639,
+            "peakDb": -11.5697,
+            "dc": 4e-8,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1861,
+            "rmsDb": -11.597,
+            "peak": 0.2639,
+            "peakDb": -11.5697,
+            "dc": 4e-8,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.263945
+      },
+      "creative": {
+        "id": "bass-80",
+        "title": "80 Hz bass",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.006,
+          "maxMomentary": -11.993,
+          "maxShortTerm": -12.007,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.332288,
+          "sampleDb": -9.57,
+          "truePeak": 0.332288,
+          "truePeakDb": -9.57,
+          "perChannelTruePeakDb": [-9.57, -9.57]
+        },
+        "rms": 0.234225,
+        "rmsDb": -9.597,
+        "crestFactorDb": 3.038,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 10533.405815616761,
+          "sideEnergy": 0,
+          "midDb": -12.6073,
+          "sideDb": -180,
+          "sideToMidDb": -240.2257
+        },
+        "spectrum": {
+          "centroidHz": 80,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 38.8595
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 42.8546
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -19.0145
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -60.475
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -95.9363
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -125.049
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [5e-8, 5e-8],
+          "maxAbs": 5e-8
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2342,
+            "rmsDb": -9.597,
+            "peak": 0.3323,
+            "peakDb": -9.5697,
+            "dc": 5e-8,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.2342,
+            "rmsDb": -9.597,
+            "peak": 0.3323,
+            "peakDb": -9.5697,
+            "dc": 5e-8,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.332288
+      }
+    },
+    {
+      "id": "bass-100",
+      "reference": {
+        "id": "bass-100",
+        "title": "100 Hz bass",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.004,
+          "maxMomentary": -13.993,
+          "maxShortTerm": -14.008,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.246374,
+          "sampleDb": -12.168,
+          "truePeak": 0.246374,
+          "truePeakDb": -12.168,
+          "perChannelTruePeakDb": [-12.168, -12.168]
+        },
+        "rms": 0.173667,
+        "rmsDb": -12.195,
+        "crestFactorDb": 3.038,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 5790.767330885796,
+          "sideEnergy": 0,
+          "midDb": -15.2057,
+          "sideDb": -180,
+          "sideToMidDb": -237.6274
+        },
+        "spectrum": {
+          "centroidHz": 100,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 8.0497
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 40.2563
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -6.1987
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -56.5355
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -92.811
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -123.5241
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1737,
+            "rmsDb": -12.1954,
+            "peak": 0.2464,
+            "peakDb": -12.1681,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1737,
+            "rmsDb": -12.1954,
+            "peak": 0.2464,
+            "peakDb": -12.1681,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.246374
+      },
+      "creative": {
+        "id": "bass-100",
+        "title": "100 Hz bass",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.004,
+          "maxMomentary": -11.993,
+          "maxShortTerm": -12.008,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.310167,
+          "sampleDb": -10.168,
+          "truePeak": 0.310167,
+          "truePeakDb": -10.168,
+          "perChannelTruePeakDb": [-10.168, -10.168]
+        },
+        "rms": 0.218634,
+        "rmsDb": -10.195,
+        "crestFactorDb": 3.038,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 9177.747689999112,
+          "sideEnergy": 0,
+          "midDb": -13.2057,
+          "sideDb": -180,
+          "sideToMidDb": -239.6274
+        },
+        "spectrum": {
+          "centroidHz": 100,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 10.0497
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 42.2563
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -4.1987
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -54.5355
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -90.8103
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -121.3129
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2186,
+            "rmsDb": -10.1954,
+            "peak": 0.3102,
+            "peakDb": -10.1681,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.2186,
+            "rmsDb": -10.1954,
+            "peak": 0.3102,
+            "peakDb": -10.1681,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.310167
+      }
+    },
+    {
+      "id": "transient-train",
+      "reference": {
+        "id": "transient-train",
+        "title": "Transient train",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14.005,
+          "lra": 0.161,
+          "maxMomentary": -13.029,
+          "maxShortTerm": -13.9,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.879272,
+          "sampleDb": -1.118,
+          "truePeak": 0.891251,
+          "truePeakDb": -1,
+          "perChannelTruePeakDb": [-1, -1]
+        },
+        "rms": 0.186728,
+        "rmsDb": -11.565,
+        "crestFactorDb": 13.458,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 6694.562794566528,
+          "sideEnergy": 0,
+          "midDb": -14.5758,
+          "sideDb": -180,
+          "sideToMidDb": -238.2572
+        },
+        "spectrum": {
+          "centroidHz": 373.33,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 35.448
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 39.5064
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 13.4832
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 9.2014
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 14.0848
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -4.3078
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [-0.00009534, -0.00009534],
+          "maxAbs": 0.00009534
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1867,
+            "rmsDb": -11.5655,
+            "peak": 0.8793,
+            "peakDb": -1.1175,
+            "dc": -0.00009534,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1867,
+            "rmsDb": -11.5655,
+            "peak": 0.8793,
+            "peakDb": -1.1175,
+            "dc": -0.00009534,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.879272
+      },
+      "creative": {
+        "id": "transient-train",
+        "title": "Transient train",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12.006,
+          "lra": 0.209,
+          "maxMomentary": -10.779,
+          "maxShortTerm": -11.869,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.879272,
+          "sampleDb": -1.118,
+          "truePeak": 0.891251,
+          "truePeakDb": -1,
+          "perChannelTruePeakDb": [-1, -1]
+        },
+        "rms": 0.23603,
+        "rmsDb": -9.53,
+        "crestFactorDb": 11.423,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 10696.315892564558,
+          "sideEnergy": 0,
+          "midDb": -12.5407,
+          "sideDb": -180,
+          "sideToMidDb": -240.2923
+        },
+        "spectrum": {
+          "centroidHz": 282.12,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 37.2868
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 41.2616
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 16.5322
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 9.2126
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 14.0848
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -4.3078
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [-0.0002036, -0.0002036],
+          "maxAbs": 0.0002036
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.236,
+            "rmsDb": -9.5304,
+            "peak": 0.8793,
+            "peakDb": -1.1175,
+            "dc": -0.0002036,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.236,
+            "rmsDb": -9.5304,
+            "peak": 0.8793,
+            "peakDb": -1.1175,
+            "dc": -0.0002036,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.879272
+      }
+    },
+    {
+      "id": "clipped-source",
+      "reference": {
+        "id": "clipped-source",
+        "title": "Clipped source",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.001,
+          "maxMomentary": -13.998,
+          "maxShortTerm": -14.002,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.184539,
+          "sampleDb": -14.678,
+          "truePeak": 0.185071,
+          "truePeakDb": -14.653,
+          "perChannelTruePeakDb": [-14.653, -14.653]
+        },
+        "rms": 0.156195,
+        "rmsDb": -13.116,
+        "crestFactorDb": 1.448,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 4684.181521225307,
+          "sideEnergy": 0,
+          "midDb": -16.1267,
+          "sideDb": -180,
+          "sideToMidDb": -236.7063
+        },
+        "spectrum": {
+          "centroidHz": 233.21,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -38.8688
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -19.4052
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 34.934
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 13.3311
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -6.3685
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -30.452
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [-9e-8, -9e-8],
+          "maxAbs": 9e-8
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1562,
+            "rmsDb": -13.1164,
+            "peak": 0.1845,
+            "peakDb": -14.6782,
+            "dc": -9e-8,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1562,
+            "rmsDb": -13.1164,
+            "peak": 0.1845,
+            "peakDb": -14.6782,
+            "dc": -9e-8,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.184539
+      },
+      "creative": {
+        "id": "clipped-source",
+        "title": "Clipped source",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.001,
+          "maxMomentary": -11.998,
+          "maxShortTerm": -12.002,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.232321,
+          "sampleDb": -12.678,
+          "truePeak": 0.232991,
+          "truePeakDb": -12.653,
+          "perChannelTruePeakDb": [-12.653, -12.653]
+        },
+        "rms": 0.196637,
+        "rmsDb": -11.116,
+        "crestFactorDb": 1.448,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 7423.927600287985,
+          "sideEnergy": 0,
+          "midDb": -14.1267,
+          "sideDb": -180,
+          "sideToMidDb": -238.7063
+        },
+        "spectrum": {
+          "centroidHz": 233.21,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -36.8688
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -17.4052
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 36.934
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 15.3311
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -4.3685
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -28.452
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [-1.2e-7, -1.2e-7],
+          "maxAbs": 1.2e-7
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1966,
+            "rmsDb": -11.1164,
+            "peak": 0.2323,
+            "peakDb": -12.6782,
+            "dc": -1.2e-7,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1966,
+            "rmsDb": -11.1164,
+            "peak": 0.2323,
+            "peakDb": -12.6782,
+            "dc": -1.2e-7,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.232321
+      }
+    },
+    {
+      "id": "pink-noise",
+      "reference": {
+        "id": "pink-noise",
+        "title": "Pink noise",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14.003,
+          "lra": 0.01,
+          "maxMomentary": -13.932,
+          "maxShortTerm": -13.991,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.871727,
+          "sampleDb": -1.192,
+          "truePeak": 0.891251,
+          "truePeakDb": -1,
+          "perChannelTruePeakDb": [-1, -1.983]
+        },
+        "rms": 0.191763,
+        "rmsDb": -11.334,
+        "crestFactorDb": 13.152,
+        "correlation": -0.0161,
+        "mono": {
+          "overallCorrelation": -0.0161,
+          "worstBand": {
+            "label": "presence",
+            "monoLossDb": -3.067
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 0.0457,
+              "monoLossDb": -2.888
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 0.0384,
+              "monoLossDb": -2.872
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 0.0034,
+              "monoLossDb": -2.997
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 0.0036,
+              "monoLossDb": -3.053
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": -0.0093,
+              "monoLossDb": -3.067
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": -0.002,
+              "monoLossDb": -3.056
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 3473.4465043089444,
+          "sideEnergy": 3587.010765179803,
+          "midDb": -17.4254,
+          "sideDb": -17.2857,
+          "sideToMidDb": 0.1397
+        },
+        "spectrum": {
+          "centroidHz": 1263.83,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 35.9454
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 27.9663
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 21.1995
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 17.6307
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 12.4964
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 5.2672
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.01341688, 0.00365741],
+          "maxAbs": 0.01341688
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2001,
+            "rmsDb": -10.965,
+            "peak": 0.8717,
+            "peakDb": -1.1924,
+            "dc": 0.01341688,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1831,
+            "rmsDb": -11.7381,
+            "peak": 0.7959,
+            "peakDb": -1.9832,
+            "dc": 0.00365741,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.871727
+      },
+      "creative": {
+        "id": "pink-noise",
+        "title": "Pink noise",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -11.956,
+          "lra": 0.077,
+          "maxMomentary": -11.721,
+          "maxShortTerm": -11.869,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.891251,
+          "sampleDb": -1,
+          "truePeak": 0.891251,
+          "truePeakDb": -1,
+          "perChannelTruePeakDb": [-1, -1]
+        },
+        "rms": 0.240802,
+        "rmsDb": -9.356,
+        "crestFactorDb": 11.367,
+        "correlation": 0.0004,
+        "mono": {
+          "overallCorrelation": 0.0004,
+          "worstBand": {
+            "label": "presence",
+            "monoLossDb": -3.07
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 0.051,
+              "monoLossDb": -2.888
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 0.0429,
+              "monoLossDb": -2.868
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 0.0049,
+              "monoLossDb": -3.001
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 0.0032,
+              "monoLossDb": -3.054
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": -0.01,
+              "monoLossDb": -3.07
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": -0.0022,
+              "monoLossDb": -3.055
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 5568.832077845101,
+          "sideEnergy": 5564.447822865978,
+          "midDb": -15.3754,
+          "sideDb": -15.3788,
+          "sideToMidDb": -0.0034
+        },
+        "spectrum": {
+          "centroidHz": 1261.98,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 37.6954
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 29.7059
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 22.9413
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 19.3672
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 14.2335
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 7.0054
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.01449323, 0.00451787],
+          "maxAbs": 0.01449323
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2504,
+            "rmsDb": -9.0185,
+            "peak": 0.8913,
+            "peakDb": -1,
+            "dc": 0.01449323,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.2309,
+            "rmsDb": -9.723,
+            "peak": 0.8913,
+            "peakDb": -1,
+            "dc": 0.00451787,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.891251
+      }
+    },
+    {
+      "id": "correlated-stereo",
+      "reference": {
+        "id": "correlated-stereo",
+        "title": "Correlated stereo",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0,
+          "maxMomentary": -14,
+          "maxShortTerm": -14,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.215846,
+          "sampleDb": -13.317,
+          "truePeak": 0.215846,
+          "truePeakDb": -13.317,
+          "perChannelTruePeakDb": [-13.317, -13.317]
+        },
+        "rms": 0.152626,
+        "rmsDb": -13.317,
+        "crestFactorDb": 3.01,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 4472.586042471357,
+          "sideEnergy": 0,
+          "midDb": -16.3274,
+          "sideDb": -180,
+          "sideToMidDb": -236.5056
+        },
+        "spectrum": {
+          "centroidHz": 440,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -61.2064
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -51.5881
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 0.7608
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 28.8725
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -90.9336
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -124.417
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1526,
+            "rmsDb": -13.3171,
+            "peak": 0.2158,
+            "peakDb": -13.3171,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1526,
+            "rmsDb": -13.3171,
+            "peak": 0.2158,
+            "peakDb": -13.3171,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.215846
+      },
+      "creative": {
+        "id": "correlated-stereo",
+        "title": "Correlated stereo",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0,
+          "maxMomentary": -12,
+          "maxShortTerm": -12,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.271734,
+          "sampleDb": -11.317,
+          "truePeak": 0.271734,
+          "truePeakDb": -11.317,
+          "perChannelTruePeakDb": [-11.317, -11.317]
+        },
+        "rms": 0.192145,
+        "rmsDb": -11.317,
+        "crestFactorDb": 3.01,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 7088.5711614206375,
+          "sideEnergy": 0,
+          "midDb": -14.3274,
+          "sideDb": -180,
+          "sideToMidDb": -238.5056
+        },
+        "spectrum": {
+          "centroidHz": 440,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -59.2064
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -49.5881
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 2.7608
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 30.8725
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -88.9335
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -122.3515
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1921,
+            "rmsDb": -11.3171,
+            "peak": 0.2717,
+            "peakDb": -11.3171,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1921,
+            "rmsDb": -11.3171,
+            "peak": 0.2717,
+            "peakDb": -11.3171,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.271734
+      }
+    },
+    {
+      "id": "anti-correlated-stereo",
+      "reference": {
+        "id": "anti-correlated-stereo",
+        "title": "Anti-correlated stereo",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0,
+          "maxMomentary": -14,
+          "maxShortTerm": -14,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.216418,
+          "sampleDb": -13.294,
+          "truePeak": 0.216418,
+          "truePeakDb": -13.294,
+          "perChannelTruePeakDb": [-13.294, -13.294]
+        },
+        "rms": 0.15303,
+        "rmsDb": -13.294,
+        "crestFactorDb": 3.01,
+        "correlation": -1,
+        "mono": {
+          "overallCorrelation": -1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -200
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": -1,
+              "monoLossDb": -200
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 0,
+          "sideEnergy": 4496.315767260257,
+          "midDb": -180,
+          "sideDb": -16.3044,
+          "sideToMidDb": 236.5286
+        },
+        "spectrum": {
+          "centroidHz": null,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -200
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -200
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -200
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -200
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -200
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -200
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.153,
+            "rmsDb": -13.2941,
+            "peak": 0.2164,
+            "peakDb": -13.2941,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.153,
+            "rmsDb": -13.2941,
+            "peak": 0.2164,
+            "peakDb": -13.2941,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.216418
+      },
+      "creative": {
+        "id": "anti-correlated-stereo",
+        "title": "Anti-correlated stereo",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0,
+          "maxMomentary": -12,
+          "maxShortTerm": -12,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.272454,
+          "sampleDb": -11.294,
+          "truePeak": 0.272454,
+          "truePeakDb": -11.294,
+          "perChannelTruePeakDb": [-11.294, -11.294]
+        },
+        "rms": 0.192654,
+        "rmsDb": -11.294,
+        "crestFactorDb": 3.01,
+        "correlation": -1,
+        "mono": {
+          "overallCorrelation": -1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -200
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": -1,
+              "monoLossDb": -200
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": -1,
+              "monoLossDb": -200
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 0,
+          "sideEnergy": 7126.180431072875,
+          "midDb": -180,
+          "sideDb": -14.3044,
+          "sideToMidDb": 238.5286
+        },
+        "spectrum": {
+          "centroidHz": null,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -200
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -200
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -200
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -200
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -200
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -200
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1927,
+            "rmsDb": -11.2941,
+            "peak": 0.2725,
+            "peakDb": -11.2941,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1927,
+            "rmsDb": -11.2941,
+            "peak": 0.2725,
+            "peakDb": -11.2941,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.272454
+      }
+    },
+    {
+      "id": "hard-left",
+      "reference": {
+        "id": "hard-left",
+        "title": "Hard left",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0,
+          "maxMomentary": -13.993,
+          "maxShortTerm": -14.011,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.282194,
+          "sampleDb": -10.989,
+          "truePeak": 0.282194,
+          "truePeakDb": -10.989,
+          "perChannelTruePeakDb": [-10.989, -180]
+        },
+        "rms": 0.140655,
+        "rmsDb": -14.027,
+        "crestFactorDb": 6.048,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -6.021
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 1899.2426086131372,
+          "sideEnergy": 1899.2426086131372,
+          "midDb": -20.0472,
+          "sideDb": -20.0472,
+          "sideToMidDb": 0
+        },
+        "spectrum": {
+          "centroidHz": 1000,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -95.0122
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -87.0418
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -75.6492
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 25.18
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -80.8842
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -128.3568
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1989,
+            "rmsDb": -11.0163,
+            "peak": 0.2822,
+            "peakDb": -10.9891,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0,
+            "rmsDb": -180,
+            "peak": 0,
+            "peakDb": -180,
+            "dc": 0,
+            "silent": true
+          }
+        ],
+        "linearSamplePeak": 0.282194
+      },
+      "creative": {
+        "id": "hard-left",
+        "title": "Hard left",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0,
+          "maxMomentary": -11.993,
+          "maxShortTerm": -12.011,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.355261,
+          "sampleDb": -8.989,
+          "truePeak": 0.355261,
+          "truePeakDb": -8.989,
+          "perChannelTruePeakDb": [-8.989, -180]
+        },
+        "rms": 0.177074,
+        "rmsDb": -12.027,
+        "crestFactorDb": 6.048,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -6.021
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 3010.096770292887,
+          "sideEnergy": 3010.096770292887,
+          "midDb": -18.0472,
+          "sideDb": -18.0472,
+          "sideToMidDb": 0
+        },
+        "spectrum": {
+          "centroidHz": 1000,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -93.0122
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -85.0418
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -73.6492
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 27.18
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -78.8842
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -125.9418
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2504,
+            "rmsDb": -9.0163,
+            "peak": 0.3553,
+            "peakDb": -8.9891,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0,
+            "rmsDb": -180,
+            "peak": 0,
+            "peakDb": -180,
+            "dc": 0,
+            "silent": true
+          }
+        ],
+        "linearSamplePeak": 0.355261
+      }
+    },
+    {
+      "id": "hard-right",
+      "reference": {
+        "id": "hard-right",
+        "title": "Hard right",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0,
+          "maxMomentary": -13.993,
+          "maxShortTerm": -14.011,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.282194,
+          "sampleDb": -10.989,
+          "truePeak": 0.282194,
+          "truePeakDb": -10.989,
+          "perChannelTruePeakDb": [-180, -10.989]
+        },
+        "rms": 0.140655,
+        "rmsDb": -14.027,
+        "crestFactorDb": 6.048,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -6.021
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 1899.2426086131372,
+          "sideEnergy": 1899.2426086131372,
+          "midDb": -20.0472,
+          "sideDb": -20.0472,
+          "sideToMidDb": 0
+        },
+        "spectrum": {
+          "centroidHz": 1000,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -95.0122
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -87.0418
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -75.6492
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 25.18
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -80.8842
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -128.3568
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0,
+            "rmsDb": -180,
+            "peak": 0,
+            "peakDb": -180,
+            "dc": 0,
+            "silent": true
+          },
+          {
+            "index": 1,
+            "rms": 0.1989,
+            "rmsDb": -11.0163,
+            "peak": 0.2822,
+            "peakDb": -10.9891,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.282194
+      },
+      "creative": {
+        "id": "hard-right",
+        "title": "Hard right",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0,
+          "maxMomentary": -11.993,
+          "maxShortTerm": -12.011,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.355261,
+          "sampleDb": -8.989,
+          "truePeak": 0.355261,
+          "truePeakDb": -8.989,
+          "perChannelTruePeakDb": [-180, -8.989]
+        },
+        "rms": 0.177074,
+        "rmsDb": -12.027,
+        "crestFactorDb": 6.048,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -6.021
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": -6.021
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 3010.096770292887,
+          "sideEnergy": 3010.096770292887,
+          "midDb": -18.0472,
+          "sideDb": -18.0472,
+          "sideToMidDb": 0
+        },
+        "spectrum": {
+          "centroidHz": 1000,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -93.0122
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -85.0418
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": -73.6492
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 27.18
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -78.8842
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -125.9418
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0,
+            "rmsDb": -180,
+            "peak": 0,
+            "peakDb": -180,
+            "dc": 0,
+            "silent": true
+          },
+          {
+            "index": 1,
+            "rms": 0.2504,
+            "rmsDb": -9.0163,
+            "peak": 0.3553,
+            "peakDb": -8.9891,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.355261
+      }
+    },
+    {
+      "id": "wide-diffuse",
+      "reference": {
+        "id": "wide-diffuse",
+        "title": "Wide diffuse ambience",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.008,
+          "maxMomentary": -13.73,
+          "maxShortTerm": -14.016,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.738164,
+          "sampleDb": -2.637,
+          "truePeak": 0.738164,
+          "truePeakDb": -2.637,
+          "perChannelTruePeakDb": [-2.637, -3.748]
+        },
+        "rms": 0.155637,
+        "rmsDb": -13.147,
+        "crestFactorDb": 13.521,
+        "correlation": -0.0084,
+        "mono": {
+          "overallCorrelation": -0.0084,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -3.415
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": -0.0466,
+              "monoLossDb": -3.415
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": -0.0323,
+              "monoLossDb": -3.247
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 0.0028,
+              "monoLossDb": -3.016
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": -0.0007,
+              "monoLossDb": -3.088
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": -0.0087,
+              "monoLossDb": -3.064
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": -0.0011,
+              "monoLossDb": -3.061
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 2305.934743328333,
+          "sideEnergy": 2344.8337006771817,
+          "midDb": -19.2045,
+          "sideDb": -19.1319,
+          "sideToMidDb": 0.0727
+        },
+        "spectrum": {
+          "centroidHz": 806.07,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 30.4978
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 28.7788
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 27.2694
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 20.8961
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 8.8616
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -0.5543
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [-0.00026551, -0.00085739],
+          "maxAbs": 0.00085739
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1562,
+            "rmsDb": -13.118,
+            "peak": 0.7382,
+            "peakDb": -2.6369,
+            "dc": -0.00026551,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1551,
+            "rmsDb": -13.1771,
+            "peak": 0.6475,
+            "peakDb": -3.7757,
+            "dc": -0.00085739,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.738164
+      },
+      "creative": {
+        "id": "wide-diffuse",
+        "title": "Wide diffuse ambience",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12.007,
+          "lra": 0.006,
+          "maxMomentary": -11.73,
+          "maxShortTerm": -12.026,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.891251,
+          "sampleDb": -1,
+          "truePeak": 0.891251,
+          "truePeakDb": -1,
+          "perChannelTruePeakDb": [-1, -1.748]
+        },
+        "rms": 0.195661,
+        "rmsDb": -11.16,
+        "crestFactorDb": 13.17,
+        "correlation": -0.0083,
+        "mono": {
+          "overallCorrelation": -0.0083,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -3.411
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": -0.0461,
+              "monoLossDb": -3.411
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": -0.032,
+              "monoLossDb": -3.243
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 0.0027,
+              "monoLossDb": -3.015
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": -0.0007,
+              "monoLossDb": -3.089
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": -0.0088,
+              "monoLossDb": -3.064
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": -0.0011,
+              "monoLossDb": -3.061
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 3644.7753197507786,
+          "sideEnergy": 3705.6408192244603,
+          "midDb": -17.2163,
+          "sideDb": -17.1444,
+          "sideToMidDb": 0.0719
+        },
+        "spectrum": {
+          "centroidHz": 806.07,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 32.4978
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 30.7788
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 29.2693
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 22.8961
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 10.8616
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 1.4457
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [-0.00034257, -0.00109414],
+          "maxAbs": 0.00109414
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1963,
+            "rmsDb": -11.131,
+            "peak": 0.8913,
+            "peakDb": -1,
+            "dc": -0.00034257,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.195,
+            "rmsDb": -11.1884,
+            "peak": 0.8151,
+            "peakDb": -1.7757,
+            "dc": -0.00109414,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.891251
+      }
+    },
+    {
+      "id": "bright-synthetic",
+      "reference": {
+        "id": "bright-synthetic",
+        "title": "Bright synthetic",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.001,
+          "maxMomentary": -13.978,
+          "maxShortTerm": -14.006,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.351867,
+          "sampleDb": -9.072,
+          "truePeak": 0.362413,
+          "truePeakDb": -8.816,
+          "perChannelTruePeakDb": [-8.816, -9.072]
+        },
+        "rms": 0.098864,
+        "rmsDb": -17.089,
+        "crestFactorDb": 11.027,
+        "correlation": 0.9158,
+        "mono": {
+          "overallCorrelation": 0.9158,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -2.547
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 0.1291,
+              "monoLossDb": -2.547
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 0.9686,
+              "monoLossDb": -0.07
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 0.9951,
+              "monoLossDb": -0.017
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 0.3359,
+              "monoLossDb": -1.782
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 0.9133,
+              "monoLossDb": -0.209
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 0.9236,
+              "monoLossDb": -0.17
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 1797.647809500787,
+          "sideEnergy": 78.96770582362822,
+          "midDb": -20.286,
+          "sideDb": -33.8585,
+          "sideToMidDb": -13.5726
+        },
+        "spectrum": {
+          "centroidHz": 8757.82,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -5.5647
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -6.8435
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 20.6323
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -4.4834
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 12.5216
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 13.5128
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00006859, 0.00006292],
+          "maxAbs": 0.00006859
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.0989,
+            "rmsDb": -17.0873,
+            "peak": 0.3351,
+            "peakDb": -9.4973,
+            "dc": 0.00006859,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.0988,
+            "rmsDb": -17.0906,
+            "peak": 0.3519,
+            "peakDb": -9.0724,
+            "dc": 0.00006292,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.351867
+      },
+      "creative": {
+        "id": "bright-synthetic",
+        "title": "Bright synthetic",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.001,
+          "maxMomentary": -11.978,
+          "maxShortTerm": -12.006,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.442974,
+          "sampleDb": -7.072,
+          "truePeak": 0.456251,
+          "truePeakDb": -6.816,
+          "perChannelTruePeakDb": [-6.816, -7.072]
+        },
+        "rms": 0.124462,
+        "rmsDb": -15.089,
+        "crestFactorDb": 11.027,
+        "correlation": 0.9158,
+        "mono": {
+          "overallCorrelation": 0.9158,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -2.547
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 0.1291,
+              "monoLossDb": -2.547
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 0.9686,
+              "monoLossDb": -0.07
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 0.9951,
+              "monoLossDb": -0.017
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 0.3359,
+              "monoLossDb": -1.782
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 0.9133,
+              "monoLossDb": -0.209
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 0.9236,
+              "monoLossDb": -0.17
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 2849.0797744774754,
+          "sideEnergy": 125.15537932505357,
+          "midDb": -18.286,
+          "sideDb": -31.8585,
+          "sideToMidDb": -13.5726
+        },
+        "spectrum": {
+          "centroidHz": 8757.82,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": -3.5647
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": -4.8435
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 22.6323
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": -2.4834
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 14.5216
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 15.5128
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00008635, 0.00007921],
+          "maxAbs": 0.00008635
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1245,
+            "rmsDb": -15.0873,
+            "peak": 0.4218,
+            "peakDb": -7.4973,
+            "dc": 0.00008635,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1244,
+            "rmsDb": -15.0906,
+            "peak": 0.443,
+            "peakDb": -7.0724,
+            "dc": 0.00007921,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.442974
+      }
+    },
+    {
+      "id": "dense-compressed",
+      "reference": {
+        "id": "dense-compressed",
+        "title": "Dense compressed programme surrogate",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.01,
+          "maxMomentary": -13.976,
+          "maxShortTerm": -14.003,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.393423,
+          "sampleDb": -8.103,
+          "truePeak": 0.393423,
+          "truePeakDb": -8.103,
+          "perChannelTruePeakDb": [-8.214, -8.103]
+        },
+        "rms": 0.173237,
+        "rmsDb": -12.217,
+        "crestFactorDb": 7.124,
+        "correlation": 0.9721,
+        "mono": {
+          "overallCorrelation": 0.9721,
+          "worstBand": {
+            "label": "air",
+            "monoLossDb": -2.687
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 0.9997,
+              "monoLossDb": -0.008
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 0.9896,
+              "monoLossDb": -0.027
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 0.9946,
+              "monoLossDb": -0.014
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 0.9881,
+              "monoLossDb": -0.027
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 0.926,
+              "monoLossDb": -0.166
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 0.0794,
+              "monoLossDb": -2.687
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 5681.641373650813,
+          "sideEnergy": 80.4990538843799,
+          "midDb": -15.2883,
+          "sideDb": -33.7751,
+          "sideToMidDb": -18.4868
+        },
+        "spectrum": {
+          "centroidHz": 437.44,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 39.2314
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 37.5008
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 27.2262
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 18.0831
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 12.7047
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -2.4117
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00001628, 0.00039314],
+          "maxAbs": 0.00039314
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1733,
+            "rmsDb": -12.2127,
+            "peak": 0.3861,
+            "peakDb": -8.2668,
+            "dc": 0.00001628,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1732,
+            "rmsDb": -12.221,
+            "peak": 0.3934,
+            "peakDb": -8.1028,
+            "dc": 0.00039314,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.393423
+      },
+      "creative": {
+        "id": "dense-compressed",
+        "title": "Dense compressed programme surrogate",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.01,
+          "maxMomentary": -11.976,
+          "maxShortTerm": -12.003,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.495291,
+          "sampleDb": -6.103,
+          "truePeak": 0.495291,
+          "truePeakDb": -6.103,
+          "perChannelTruePeakDb": [-6.214, -6.103]
+        },
+        "rms": 0.218093,
+        "rmsDb": -10.217,
+        "crestFactorDb": 7.124,
+        "correlation": 0.9721,
+        "mono": {
+          "overallCorrelation": 0.9721,
+          "worstBand": {
+            "label": "air",
+            "monoLossDb": -2.687
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 0.9997,
+              "monoLossDb": -0.008
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 0.9896,
+              "monoLossDb": -0.027
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 0.9946,
+              "monoLossDb": -0.014
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 0.9881,
+              "monoLossDb": -0.027
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 0.926,
+              "monoLossDb": -0.166
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 0.0794,
+              "monoLossDb": -2.687
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 9004.794737415827,
+          "sideEnergy": 127.58240253603097,
+          "midDb": -13.2883,
+          "sideDb": -31.7751,
+          "sideToMidDb": -18.4868
+        },
+        "spectrum": {
+          "centroidHz": 437.44,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 41.2314
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 39.5008
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 29.2262
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 20.0831
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 14.7047
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -0.4117
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.0000205, 0.00049494],
+          "maxAbs": 0.00049494
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.2182,
+            "rmsDb": -10.2127,
+            "peak": 0.486,
+            "peakDb": -6.2668,
+            "dc": 0.0000205,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.218,
+            "rmsDb": -10.221,
+            "peak": 0.4953,
+            "peakDb": -6.1028,
+            "dc": 0.00049494,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.495291
+      }
+    },
+    {
+      "id": "highly-dynamic",
+      "reference": {
+        "id": "highly-dynamic",
+        "title": "Highly dynamic programme surrogate",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 384000,
+        "durationSeconds": 8,
+        "channels": 2,
+        "finite": {
+          "samples": 768000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 17.923,
+          "maxMomentary": -13.829,
+          "maxShortTerm": -13.833,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.298017,
+          "sampleDb": -10.515,
+          "truePeak": 0.298087,
+          "truePeakDb": -10.513,
+          "perChannelTruePeakDb": [-10.513, -10.513]
+        },
+        "rms": 0.110268,
+        "rmsDb": -16.141,
+        "crestFactorDb": 8.636,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 4669.0588986739995,
+          "sideEnergy": 0,
+          "midDb": -19.151,
+          "sideDb": -180,
+          "sideToMidDb": -236.6923
+        },
+        "spectrum": {
+          "centroidHz": 497.69,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 9.3991
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 9.765
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 14.0644
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 25.9954
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -17.6079
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -38.2341
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00000368, 0.00000368],
+          "maxAbs": 0.00000368
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1103,
+            "rmsDb": -16.1407,
+            "peak": 0.298,
+            "peakDb": -10.5152,
+            "dc": 0.00000368,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1103,
+            "rmsDb": -16.1407,
+            "peak": 0.298,
+            "peakDb": -10.5152,
+            "dc": 0.00000368,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.298017
+      },
+      "creative": {
+        "id": "highly-dynamic",
+        "title": "Highly dynamic programme surrogate",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 384000,
+        "durationSeconds": 8,
+        "channels": 2,
+        "finite": {
+          "samples": 768000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 17.923,
+          "maxMomentary": -11.829,
+          "maxShortTerm": -11.833,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.375181,
+          "sampleDb": -8.515,
+          "truePeak": 0.37527,
+          "truePeakDb": -8.513,
+          "perChannelTruePeakDb": [-8.513, -8.513]
+        },
+        "rms": 0.138819,
+        "rmsDb": -14.141,
+        "crestFactorDb": 8.636,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 7399.959632940823,
+          "sideEnergy": 0,
+          "midDb": -17.151,
+          "sideDb": -180,
+          "sideToMidDb": -238.6923
+        },
+        "spectrum": {
+          "centroidHz": 497.69,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 11.3991
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 11.765
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 16.0644
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 27.9954
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -15.6079
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -36.2341
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00000463, 0.00000463],
+          "maxAbs": 0.00000463
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1388,
+            "rmsDb": -14.1407,
+            "peak": 0.3752,
+            "peakDb": -8.5152,
+            "dc": 0.00000463,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1388,
+            "rmsDb": -14.1407,
+            "peak": 0.3752,
+            "peakDb": -8.5152,
+            "dc": 0.00000463,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.375181
+      }
+    },
+    {
+      "id": "white-noise",
+      "reference": {
+        "id": "white-noise",
+        "title": "White Gaussian noise",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 0.015,
+          "maxMomentary": -13.924,
+          "maxShortTerm": -13.989,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.497901,
+          "sampleDb": -6.057,
+          "truePeak": 0.497901,
+          "truePeakDb": -6.057,
+          "perChannelTruePeakDb": [-6.601, -6.057]
+        },
+        "rms": 0.098351,
+        "rmsDb": -17.134,
+        "crestFactorDb": 14.087,
+        "correlation": -0.0013,
+        "mono": {
+          "overallCorrelation": -0.0013,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -3.27
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": -0.0346,
+              "monoLossDb": -3.27
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": -0.0172,
+              "monoLossDb": -3.209
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": -0.0094,
+              "monoLossDb": -3.144
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 0.0055,
+              "monoLossDb": -2.987
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": -0.0128,
+              "monoLossDb": -3.077
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 0.0007,
+              "monoLossDb": -3.011
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 927.379529787461,
+          "sideEnergy": 929.8253410754581,
+          "midDb": -23.1604,
+          "sideDb": -23.149,
+          "sideToMidDb": 0.0114
+        },
+        "spectrum": {
+          "centroidHz": 12349.01,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 7.8566
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 7.1464
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 7.3124
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 8.9016
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 8.4167
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 8.4151
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00005557, 0.00026918],
+          "maxAbs": 0.00026918
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.0983,
+            "rmsDb": -17.1374,
+            "peak": 0.452,
+            "peakDb": -6.8979,
+            "dc": 0.00005557,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.0984,
+            "rmsDb": -17.1308,
+            "peak": 0.4979,
+            "peakDb": -6.0571,
+            "dc": 0.00026918,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.497901
+      },
+      "creative": {
+        "id": "white-noise",
+        "title": "White Gaussian noise",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 192000,
+        "durationSeconds": 4,
+        "channels": 2,
+        "finite": {
+          "samples": 384000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 0.015,
+          "maxMomentary": -11.924,
+          "maxShortTerm": -11.989,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.62682,
+          "sampleDb": -4.057,
+          "truePeak": 0.62682,
+          "truePeakDb": -4.057,
+          "perChannelTruePeakDb": [-4.601, -4.057]
+        },
+        "rms": 0.123817,
+        "rmsDb": -15.134,
+        "crestFactorDb": 14.087,
+        "correlation": -0.0013,
+        "mono": {
+          "overallCorrelation": -0.0013,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": -3.27
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": -0.0346,
+              "monoLossDb": -3.27
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": -0.0172,
+              "monoLossDb": -3.209
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": -0.0094,
+              "monoLossDb": -3.144
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 0.0055,
+              "monoLossDb": -2.987
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": -0.0128,
+              "monoLossDb": -3.077
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 0.0007,
+              "monoLossDb": -3.011
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 1469.7975040712613,
+          "sideEnergy": 1473.6738541215589,
+          "midDb": -21.1604,
+          "sideDb": -21.149,
+          "sideToMidDb": 0.0114
+        },
+        "spectrum": {
+          "centroidHz": 12349.01,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 9.8566
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 9.1464
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 9.3124
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 10.9016
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": 10.4167
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": 10.4151
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0.00006996, 0.00033888],
+          "maxAbs": 0.00033888
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1238,
+            "rmsDb": -15.1374,
+            "peak": 0.569,
+            "peakDb": -4.8979,
+            "dc": 0.00006996,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1239,
+            "rmsDb": -15.1308,
+            "peak": 0.6268,
+            "peakDb": -4.0571,
+            "dc": 0.00033888,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.62682
+      }
+    },
+    {
+      "id": "extreme-dynamics",
+      "reference": {
+        "id": "extreme-dynamics",
+        "title": "Extreme 60 dB dynamics",
+        "class": "reference",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 384000,
+        "durationSeconds": 8,
+        "channels": 2,
+        "finite": {
+          "samples": 768000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -14,
+          "lra": 3.868,
+          "maxMomentary": -13.834,
+          "maxShortTerm": -13.834,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.219142,
+          "sampleDb": -13.185,
+          "truePeak": 0.219142,
+          "truePeakDb": -13.185,
+          "perChannelTruePeakDb": [-13.185, -13.185]
+        },
+        "rms": 0.109571,
+        "rmsDb": -16.196,
+        "crestFactorDb": 6.021,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 4610.233533541449,
+          "sideEnergy": 0,
+          "midDb": -19.2061,
+          "sideDb": -180,
+          "sideToMidDb": -236.6372
+        },
+        "spectrum": {
+          "centroidHz": 496.93,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 10.5603
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 10.9263
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 15.2257
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 25.9068
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -16.4467
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -37.0729
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1096,
+            "rmsDb": -16.1958,
+            "peak": 0.2191,
+            "peakDb": -13.1855,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1096,
+            "rmsDb": -16.1958,
+            "peak": 0.2191,
+            "peakDb": -13.1855,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.219142
+      },
+      "creative": {
+        "id": "extreme-dynamics",
+        "title": "Extreme 60 dB dynamics",
+        "class": "creative",
+        "browser": null,
+        "engine": "node-offline",
+        "sampleRate": 48000,
+        "length": 384000,
+        "durationSeconds": 8,
+        "channels": 2,
+        "finite": {
+          "samples": 768000,
+          "nan": 0,
+          "inf": 0,
+          "ok": true
+        },
+        "loudness": {
+          "integrated": -12,
+          "lra": 3.868,
+          "maxMomentary": -11.834,
+          "maxShortTerm": -11.834,
+          "tooShort": false,
+          "silent": false
+        },
+        "peak": {
+          "sample": 0.275883,
+          "sampleDb": -11.185,
+          "truePeak": 0.275883,
+          "truePeakDb": -11.185,
+          "perChannelTruePeakDb": [-11.185, -11.185]
+        },
+        "rms": 0.137942,
+        "rmsDb": -14.196,
+        "crestFactorDb": 6.021,
+        "correlation": 1,
+        "mono": {
+          "overallCorrelation": 1,
+          "worstBand": {
+            "label": "sub",
+            "monoLossDb": 0
+          },
+          "bands": [
+            {
+              "label": "sub",
+              "lo": 20,
+              "hi": 60,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "bass",
+              "lo": 60,
+              "hi": 150,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "correlation": 1,
+              "monoLossDb": 0
+            },
+            {
+              "label": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "correlation": 1,
+              "monoLossDb": 0
+            }
+          ]
+        },
+        "ms": {
+          "midEnergy": 7306.727666191902,
+          "sideEnergy": 0,
+          "midDb": -17.2061,
+          "sideDb": -180,
+          "sideToMidDb": -238.6372
+        },
+        "spectrum": {
+          "centroidHz": 496.93,
+          "bandsDb": [
+            {
+              "id": "sub",
+              "lo": 20,
+              "hi": 60,
+              "db": 12.5603
+            },
+            {
+              "id": "bass",
+              "lo": 60,
+              "hi": 150,
+              "db": 12.9263
+            },
+            {
+              "id": "low-mid",
+              "lo": 150,
+              "hi": 400,
+              "db": 17.2257
+            },
+            {
+              "id": "mid",
+              "lo": 400,
+              "hi": 1500,
+              "db": 27.9068
+            },
+            {
+              "id": "presence",
+              "lo": 1500,
+              "hi": 5000,
+              "db": -14.4467
+            },
+            {
+              "id": "air",
+              "lo": 5000,
+              "hi": 16000,
+              "db": -35.0729
+            }
+          ],
+          "tooShort": false,
+          "fftSize": 4096
+        },
+        "dc": {
+          "perChannel": [0, 0],
+          "maxAbs": 0
+        },
+        "perChannel": [
+          {
+            "index": 0,
+            "rms": 0.1379,
+            "rmsDb": -14.1958,
+            "peak": 0.2759,
+            "peakDb": -11.1855,
+            "dc": 0,
+            "silent": false
+          },
+          {
+            "index": 1,
+            "rms": 0.1379,
+            "rmsDb": -14.1958,
+            "peak": 0.2759,
+            "peakDb": -11.1855,
+            "dc": 0,
+            "silent": false
+          }
+        ],
+        "linearSamplePeak": 0.275883
+      }
+    }
+  ]
+}

@@ -8,15 +8,23 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Browser conformance + golden audio regression lab.** Real-`OfflineAudioContext`
+  measurements of `DynamicsCompressorNode`, `WaveShaperNode`, the multiband wet/dry
+  path, sample-rate support (44.1–192 kHz including 176.4), preview/export graph
+  parity, immersive speaker feeds (5.1 through Sonic Lab 20.4) and render-time
+  benches, plus a synthesised fixture bank and a baseline-vs-candidate comparer
+  that distinguishes REFERENCE / CLEAN behaviour from CREATIVE / SIGNAL ROT.
+  Production DSP is not modified. See `docs/CONFORMANCE.md` and
+  `docs/AUDIO-REGRESSION.md`.
 - **Twenty-eight new presets, with a seventh `restoration` group.** The catalogue grows
   from 40 to 68 presets across 7 groups. Four new signature presets per existing group
   (Dimension: `Ferric Bloom`, `Ray Field`, `Magnetic Memory`, `Aperture`; Genre: `Modern
-  Country`, `Drum & Bass`, `Reggae / Dub`, `Jazz Trio`; Cinematic: `Trailer Impact`,
+Country`, `Drum & Bass`, `Reggae / Dub`, `Jazz Trio`; Cinematic: `Trailer Impact`,
   `Documentary`, `Game Loop`, `Dialogue Under Score`; Mood: `Bittersweet Glow`, `Uneasy
-  Calm`, `Suspended`, `Hiraeth`; Colour: `Amber`, `Slate`, `Iris`, `Chartreuse`; Spatial:
+Calm`, `Suspended`, `Hiraeth`; Colour: `Amber`, `Slate`, `Iris`, `Chartreuse`; Spatial:
   `Depth Lens`, `Wide Awake`, `Binaural Stage`, `Polar Maze`), plus four corrective
   restoration presets (`Dull Mix Rescue`, `Harsh / Sibilance Tamer`, `Boomy Room
-  Corrective`, `Broadcast Mono First`).
+Corrective`, `Broadcast Mono First`).
 - **Catalogue tests tightened.** The gate now expects seven groups, asserts that
   restoration presets stay safe and conservative, anchors high-band width above 150% with
   bass-mono, and requires an explicit spread whenever binaural processing is enabled. The
