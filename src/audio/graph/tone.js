@@ -15,20 +15,31 @@
  *   · Drive scales 1…1.8 — gentle enough to stay in the "density" region rather than
  *     the "crunch" region. Clean mastering presets leave this at or near zero; the
  *     control exists for colour, not for loudness.
- *   · Asymmetry is introduced as `x + a·(x² − x⁴)`, whose integral over [−1, 1] is
- *     approximately zero, so even harmonics appear without a DC shift.
+ *   · Asymmetry is introduced as `x + a·(x² − x⁴)`, whose integral over a symmetric
+ *     domain is approximately zero, so even harmonics appear without a DC shift.
  *   · Any residual DC is measured and subtracted from the curve.
- *   · The curve is peak-normalised, so turning up saturation adds harmonics but not level.
- *     Gain and character stay independent controls, which is the whole point.
- *   · 4096 points to keep the WaveShaper's internal interpolation error below the
- *     harmonic content it is generating.
+ *   · The curve is **small-signal-slope-normalised**, so its gain at low level is
+ *     exactly 0 dB and turning up saturation changes harmonics and peak rounding — never
+ *     level. Gain and character stay independent controls, which is the whole point.
+ *
+ * ── Headroom — why the stage can no longer hard-clip ─────────────────────────────────
+ * `WaveShaperNode` clamps its input to [−1, +1] before the curve lookup, so a curve
+ * generated over [−1, 1] is a **hard clipper at 0 dBFS** the moment anything upstream
+ * exceeds full scale — and `docs/GAIN-STRUCTURE-AUDIT.md` §2.1 measured that happening
+ * on 1–3 % of samples (every transient) with ordinary settings. The fix is structural:
+ * the *curve domain* is extended to ±`SATURATION_HEADROOM` (12 dB) and the input gain
+ * divides by the same factor, so the shaper implements the identical transfer on the
+ * full-scale signal while the clamp cannot engage until +12 dBFS. At `sat = 0` the curve
+ * is a straight line across that whole domain — a genuinely transparent path with 12 dB
+ * of headroom instead of an identity curve that clipped at ±1.
  *
  * ── Aliasing ─────────────────────────────────────────────────────────────────────────
  * `WaveShaperNode.oversample = '4x'` is set, but the specification does not define the
  * quality of that oversampling and implementations differ. A tanh-family curve generates
  * harmonics without limit, so 4× is not enough at high drive. Two mitigations:
  *   · A pre-shaper gain reduction (up to −3.1 dB at full drive) keeps the signal in the
- *     gentler part of the curve, with matching make-up after.
+ *     gentler part of the curve; the make-up after it is exactly `1/preGain`, so the
+ *     attenuation is never heard as a level change.
  *   · A post-shaper low-pass tightens from 22 kHz to 17.5 kHz as drive rises, removing
  *     the top of the aliased region.
  * These reduce audible aliasing; they do not eliminate it. `docs/LIMITATIONS.md` says so.
@@ -80,61 +91,102 @@ export const TONE_BANDS = Object.freeze([
 /** Tilt pivot frequency — one shelf up, one down, hinged here. */
 export const TILT_PIVOT_HZ = 1000;
 
-/** Identity transfer curve: a straight line from −1 to +1. */
+/**
+ * Shaper headroom above full scale, as a linear multiple. The curve table spans
+ * ±`SATURATION_HEADROOM` and the input to the shaper is divided by it, so the
+ * `WaveShaperNode`'s ±1 input clamp cannot engage until the signal reaches
+ * +20·log10(4) ≈ +12 dBFS — the clipper that destroyed transients before the limiter
+ * (see `docs/GAIN-STRUCTURE-AUDIT.md` §2.1) is structurally gone.
+ */
+export const SATURATION_HEADROOM = 4;
+
+/**
+ * Identity transfer curve over the headroom domain: a straight line from
+ * −`SATURATION_HEADROOM` to +`SATURATION_HEADROOM`. With the input gain at
+ * 1/`SATURATION_HEADROOM` this is exactly transparent up to +12 dBFS and, unlike the
+ * old ±1 identity, cannot hard-clip a hot signal.
+ */
 export const IDENTITY_CURVE = (() => {
   const n = 1024;
   const c = new Float32Array(n);
-  for (let i = 0; i < n; i++) c[i] = (i / (n - 1)) * 2 - 1;
+  for (let i = 0; i < n; i++) {
+    const u = (i / (n - 1)) * 2 - 1;
+    c[i] = u * SATURATION_HEADROOM;
+  }
   return c;
 })();
 
+/** Table points for an engaged curve — 8192 keeps interpolation error inaudible
+ *  even though the interesting ±1 region now occupies a quarter of the domain. */
+const SATURATION_CURVE_POINTS = 8192;
+
 /**
- * Generate a saturation transfer curve.
+ * Generate a saturation transfer curve over the headroom domain.
+ *
+ * The returned array is indexed by the shaper input `u ∈ [−1, 1]` and stores
+ * `S(u · SATURATION_HEADROOM)`, so the shaper implements the designed transfer `S` on
+ * the *full-scale* signal while its input never needs to exceed ±1 until +12 dBFS.
+ * `S` is DC-free and normalised to unity small-signal slope, which makes the whole
+ * stage 0 dB for small signals (see `saturationGainStaging`).
  *
  * @param {number} amount 0..1
- * @returns {Float32Array} 4096-point curve, peak-normalised, DC-free
+ * @returns {Float32Array} DC-free, slope-normalised curve; identity for amount ≤ 0
  */
 export function makeSaturationCurve(amount) {
   if (amount <= 0) return IDENTITY_CURVE;
-  const n = 4096;
+  const n = SATURATION_CURVE_POINTS;
   const c = new Float32Array(n);
-  const k = 1 + amount * 0.8; // drive 1 … 1.8
+  const k = 1 + amount * 0.8; // drive 1 … 1.8 — density, not crunch
   const asym = amount * 0.04; // even-harmonic asymmetry
+  const blend = 1 - (1 - amount) * (1 - amount); // accelerating wet blend
+  const D = SATURATION_HEADROOM;
 
   for (let i = 0; i < n; i++) {
-    const x = (i / (n - 1)) * 2 - 1;
-    // Bias-free asymmetric pre-distortion: ∫(x² − x⁴)dx over [−1,1] ≈ 0.
-    const xs = x + asym * (x * x - x * x * x * x);
+    const u = (i / (n - 1)) * 2 - 1;
+    const y = u * D; // input to the design transfer, in full-scale units
+    // Bias-free asymmetric pre-distortion: ∫(y² − y⁴)dy over a symmetric domain ≈ 0.
+    // The distortion is confined to |y| ≤ 1 — its derivative flips sign beyond ~1.6,
+    // which would fold the curve back on itself inside the new headroom region.
+    const xs = Math.abs(y) > 1 ? y : y + asym * (y * y - y * y * y * y);
     const t = Math.tanh(k * xs);
-    // Accelerating wet blend: small amounts stay nearly linear, so the control has
-    // usable resolution at the bottom of its range.
-    const blend = 1 - (1 - amount) * (1 - amount);
-    c[i] = (1 - blend) * x + blend * t;
+    // Small amounts stay nearly linear, so the control has usable resolution at the
+    // bottom of its range.
+    c[i] = (1 - blend) * y + blend * t;
   }
 
-  // Remove DC introduced by the asymmetry.
+  // Remove DC introduced by the asymmetry (mean over the table).
   let sum = 0;
   for (let i = 0; i < n; i++) sum += c[i];
   const dc = sum / n;
   for (let i = 0; i < n; i++) c[i] -= dc;
 
-  // Peak-normalise so saturation is character, never level.
-  let peak = 0;
-  for (let i = 0; i < n; i++) if (Math.abs(c[i]) > peak) peak = Math.abs(c[i]);
-  if (peak > 0 && peak !== 1) for (let i = 0; i < n; i++) c[i] /= peak;
+  // Normalise to unity *small-signal slope*: raw'(0) = (1 − blend) + blend·k (the
+  // asymmetry has zero derivative at 0). The curve's dc/du at the origin then equals
+  // SATURATION_HEADROOM exactly, so with the input scaled by 1/HEADROOM and make-up
+  // `1/preGain`, small signals pass at 0 dB regardless of `amount`.
+  const slope = 1 - blend + blend * k;
+  if (slope > 0 && slope !== 1) for (let i = 0; i < n; i++) c[i] /= slope;
 
   return c;
 }
 
 /**
- * Pre-shaper attenuation and post-shaper make-up for a given drive amount.
- * Exported so the render report can state the exact gain staging used.
+ * Gain staging for a given drive amount. Returned values are what the nodes receive:
+ * the pre-shaper gain carries both the drive attenuation (`p`, up to −3.1 dB — an
+ * aliasing control, so loud material stays in the gentler part of the curve) and the
+ * headroom division; the make-up is exactly `1/p`, so the pair is level-neutral for
+ * small signals at every setting. The old `1 + 0.25·amount` make-up sat on top of a
+ * curve whose small-signal slope already exceeded 1, silently raising level by up to
+ * +5.2 dB (`docs/GAIN-STRUCTURE-AUDIT.md` §2.3).
  */
 export function saturationGainStaging(amount) {
+  const p = 1 - amount * 0.35; // up to −3.1 dB drive attenuation
   return {
-    preGain: 1 - amount * 0.35, // up to −3.1 dB into the shaper
-    postGain: 1 + amount * 0.12, // restrained make-up; saturation is character, not level
-    postLowpassHz: 22000 - amount * 6000,
+    preGain: p / SATURATION_HEADROOM, // + headroom division (see module header)
+    postGain: 1 / p, // exact inverse of the drive attenuation
+    postLowpassHz: 22000 - amount * 4500,
+    attenuationDb: -20 * Math.log10(Math.max(1e-9, p)),
+    makeupDb: 20 * Math.log10(1 / Math.max(1e-9, p)),
   };
 }
 

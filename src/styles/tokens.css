@@ -1,69 +1,149 @@
 /* ============================================================================
-   Design tokens — the Signal Rot palette.
+   Design tokens — Signal Rot laboratory system.
 
-   The identity is fixed and deliberate:
+   Identity is fixed and deliberate:
      --orig  cyan    the ORIGINAL, unprocessed signal
      --proc  orange  the PROCESSED signal
-   Those two colours mean the same thing in every meter, every scope, every
-   waveform and every button in the application. Do not reuse them for anything
-   else, and do not introduce a third accent.
+   Those two colours mean the same thing in every meter, scope, waveform
+   and button. Do not reuse them decoratively and do not introduce a third
+   accent.
+
+   The system below establishes reusable tokens for spacing, typography,
+   surfaces, borders, radius and states — prefer these over one-off values.
    ============================================================================ */
 
 :root {
+  /* ---- Palette — dark (default) ---- */
   --bg: #0a0c0e;
   --panel: #0f1318;
   --panel2: #141a21;
+  --panel3: #1a212b;
   --rack: #11161c;
   --line: #222b34;
   --line2: #2c3742;
+  --line3: #35414f;
   --text: #e7eef4;
   --muted: #8a97a4;
   --faint: #5d6b78;
+  --fainter: #47525e;
 
   --orig: #36d1c4;
+  --orig-dim: #1e9e94;
   --proc: #f5a623;
+  --proc-dim: #c88714;
   --hot: #ff4d57;
+  --hot-dim: #c73a42;
   --ok: #6ee7a8;
+  --ok-dim: #3d9d6b;
   --warn: #ffc861;
   --grid: #1a222a;
 
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 12px 30px -18px rgba(0, 0, 0, 0.8);
+  /* ---- Workspace accents (related but distinct) ---- */
+  --master-accent: var(--proc);
+  --spatial-accent: var(--orig);
+  --spatial-accent-soft: #1b4a48;
+
+  /* ---- Surfaces ---- */
+  --surface-1: var(--panel);
+  --surface-2: var(--panel2);
+  --surface-3: var(--panel3);
+  --surface-elevated: #171e26;
+  --surface-hover: rgba(245, 166, 35, 0.06);
+  --surface-active: rgba(245, 166, 35, 0.12);
+
+  /* ---- Spacing scale ---- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* ---- Radius ---- */
+  --r-xs: 4px;
   --r: 7px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
 
+  /* ---- Typography ---- */
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
-  --ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --display: var(--mono);
+  --text-xs: 10px;
+  --text-sm: 11px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --leading-tight: 1.1;
+  --leading-normal: 1.5;
+  --tracking-wide: 0.12em;
+  --tracking-wider: 0.14em;
 
+  /* ---- Elevation ---- */
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 12px 30px -18px rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 1px 0 rgba(255,255,255,0.03), 0 18px 40px -16px rgba(0,0,0,0.85);
+  --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.04);
+
+  /* ---- Focus ---- */
   --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--proc);
-  --motion: 0.12s;
+  --focus-spatial: 0 0 0 2px var(--bg), 0 0 0 4px var(--orig);
+  --focus-ring: var(--proc);
+
+  /* ---- Motion ---- */
+  --motion: 0.14s;
+  --motion-slow: 0.22s;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-theme='light'] {
   --bg: #eceae3;
   --panel: #f7f5ef;
   --panel2: #fbfaf6;
+  --panel3: #efece4;
   --rack: #f2efe8;
   --line: #d8d3c7;
   --line2: #c8c2b4;
+  --line3: #b8b0a0;
   --text: #1c2127;
   --muted: #5f6873;
   --faint: #7a8390;
+  --fainter: #9aa3ae;
 
   --orig: #0a8f86;
+  --orig-dim: #076b64;
   --proc: #b3690f;
+  --proc-dim: #8f530c;
   --hot: #c4272f;
   --ok: #14794b;
   --warn: #96650a;
   --grid: #ddd8cc;
 
+  --surface-1: var(--panel);
+  --surface-2: var(--panel2);
+  --surface-3: var(--panel3);
+  --surface-elevated: #ffffff;
+  --surface-hover: rgba(179, 105, 15, 0.06);
+  --surface-active: rgba(179, 105, 15, 0.1);
+
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 14px 30px -20px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 32px -12px rgba(0,0,0,0.18);
+  --spatial-accent-soft: #d6f0ee;
 }
 
-/* High-contrast preference: strengthen every border and text colour rather than
-   switching palette, so the laboratory look survives. */
+[data-workspace='spatial'] {
+  --focus-ring: var(--orig);
+}
+
+/* ---- High contrast ---- */
 @media (prefers-contrast: more) {
   :root {
     --line: #465561;
     --line2: #5d6f7e;
+    --line3: #6b7f8f;
     --muted: #b6c2cd;
     --faint: #8f9daa;
   }
@@ -78,10 +158,9 @@
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion: 0.001s;
+    --motion-slow: 0.001s;
   }
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;

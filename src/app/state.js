@@ -43,15 +43,19 @@ function defaultUi() {
   return {
     theme: 'dark',
     tab: 'presets',
+    workspace: 'master',
     abMode: 'B',
     audition: 'stereo',
     matchLoudness: false,
+    blindAb: false,
+    listenerYaw: 0,
     presetName: 'Transparent',
     moduleBypass: {},
     rendering: false,
     exportFormat: 'wav24',
     exportSampleRate: 0,
     signalFlowOpen: true,
+    macroAdvancedOpen: false,
   };
 }
 
@@ -127,6 +131,7 @@ export function createStore() {
             ui: {
               theme: state.ui.theme,
               tab: state.ui.tab,
+              workspace: state.ui.workspace,
               presetName: state.ui.presetName,
               moduleBypass: state.ui.moduleBypass,
               exportFormat: state.ui.exportFormat,

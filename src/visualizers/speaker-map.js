@@ -35,6 +35,7 @@ export function drawSpeakerMap(canvas, opts) {
   const cx = width / 2;
   const cy = height / 2 - 6;
   const R = Math.min(width, height) * 0.38;
+  const solo = opts.solo instanceof Set ? opts.solo : null;
 
   ctx.strokeStyle = cssVar('--line2');
   ctx.lineWidth = 1;
@@ -112,27 +113,36 @@ export function drawSpeakerMap(canvas, opts) {
     const y = cy - Math.cos(az) * radius * 0.84;
     const level = Math.min(1, levelFor(sp) * 6);
     const color = sp.elevation > 5 ? heightColor : bedColor;
+    const isSolo = solo ? solo.has(key) : false;
+    const isDimmed = solo && solo.size > 0 && !isSolo;
+    const alphaBase = isDimmed ? 0.12 : 0.22 + level * 0.78;
 
-    ctx.globalAlpha = 0.22 + level * 0.78;
+    ctx.globalAlpha = alphaBase;
     ctx.fillStyle = color;
     if (sp.lfe) {
       ctx.fillRect(x - 4.5, y - 4.5, 9, 9);
     } else {
       ctx.beginPath();
-      ctx.arc(x, y, 6, 0, TAU);
+      ctx.arc(x, y, isSolo ? 7 : 6, 0, TAU);
       ctx.fill();
     }
-    ctx.globalAlpha = 0.55;
-    ctx.strokeStyle = color;
+    ctx.globalAlpha = isDimmed ? 0.22 : 0.55;
+    ctx.strokeStyle = isSolo ? '#ffffff' : color;
+    ctx.lineWidth = isSolo ? 1.6 : 1;
     ctx.beginPath();
-    ctx.arc(x, y, 7, 0, TAU);
+    ctx.arc(x, y, isSolo ? 9 : 7, 0, TAU);
     ctx.stroke();
+    ctx.lineWidth = 1;
     ctx.globalAlpha = 1;
 
-    ctx.fillStyle = cssVar('--muted');
-    ctx.font = '8px monospace';
+    ctx.fillStyle = isSolo ? '#ffffff' : isDimmed ? cssVar('--faint') : cssVar('--muted');
+    ctx.font = `${isSolo ? '700 ' : ''}8px monospace`;
     const label = sp.id;
     ctx.fillText(label, x - ctx.measureText(label).width / 2, y + 16);
+    if (isSolo) {
+      ctx.fillStyle = withAlpha(color, 0.18);
+      ctx.beginPath(); ctx.arc(x, y, 12, 0, TAU); ctx.fill();
+    }
   }
 
   ctx.fillStyle = cssVar('--faint');

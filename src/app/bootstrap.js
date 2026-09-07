@@ -27,6 +27,7 @@ import {
   readGainReduction,
 } from '../audio/graph/build-mastering-chain.js';
 import { bandAmountToSettings } from '../audio/graph/multiband.js';
+import { dynamicsCompressorMakeupCompensation } from '../audio/dsp/dynamics-compressor.js';
 import { dbToGain, gainToDb, clamp } from '../audio/dsp/math.js';
 import { truePeakEstimate } from '../audio/analysis/true-peak.js';
 import { phaseRiskFromParameters } from '../audio/analysis/correlation.js';
@@ -61,6 +62,17 @@ import { getScratch, invalidateCssCache } from '../visualizers/canvas-util.js';
 
 import { createExportController } from './export-controller.js';
 import { createImmersiveController } from './immersive-controller.js';
+import { initExportSummary } from '../ui/export-summary.js';
+import { initHeavyWarning } from '../ui/heavy-warning.js';
+
+import { initWorkspace } from '../ui/workspace.js';
+import { initSourceHero } from '../ui/source-analysis.js';
+import { initMasterStatus } from '../ui/master-status.js';
+import { initSonicSummary } from '../ui/sonic-summary.js';
+import { initMacroControls } from '../ui/macro-controls.js';
+import { initAbEnhanced } from '../ui/ab-enhanced.js';
+import { initPresetBrowserEnhanced } from '../ui/preset-browser-enhanced.js';
+import { initSpatialLab } from '../ui/spatial-lab.js';
 
 export function bootstrap() {
   const store = createStore();
@@ -98,10 +110,19 @@ export function bootstrap() {
     safety.attack.value = 0.003;
     safety.release.value = 0.2;
 
+    // `DynamicsCompressorNode` applies a fixed, non-configurable make-up gain of
+    // pow(1/Saturate(1,k), 0.6) — here +0.68 dB at −1.2 dB / 20:1. Without an exact
+    // inverse, the safety itself pushes the monitor above the ceiling it is meant to
+    // protect and the preview level lies by that much. `pushParameters` keeps this node
+    // in exact inverse whenever it moves `safety.threshold`.
+    const safetyMakeup = ctx.createGain();
+    safetyMakeup.gain.value = 1;
+
     const post = ctx.createGain();
     const monitor = ctx.createGain();
     chain.output.connect(safety);
-    safety.connect(post);
+    safety.connect(safetyMakeup);
+    safetyMakeup.connect(post);
     post.connect(monitor);
     monitor.connect(ctx.destination);
 
@@ -138,7 +159,7 @@ export function bootstrap() {
     kHigh.connect(kAnalyser);
 
     chain.start(0);
-    live = { ctx, chain, safety, post, monitor, spectrumAnalyser, analyserL, analyserR, kAnalyser };
+    live = { ctx, chain, safety, safetyMakeup, post, monitor, spectrumAnalyser, analyserL, analyserR, kAnalyser };
     pushParameters();
     return live;
   }
@@ -183,6 +204,14 @@ export function bootstrap() {
     });
 
     live.safety.threshold.value = bypassAll ? 0 : Math.min(-0.2, eff.ceiling - 0.2);
+    // Exact inverse of the safety's fixed spec make-up at the threshold just set (knee 0,
+    // ratio 20 stay fixed at build time). At threshold 0 (A/B audition of the source) the
+    // make-up is 0 dB and this node is transparent.
+    live.safetyMakeup.gain.value = dynamicsCompressorMakeupCompensation(
+      live.safety.threshold.value,
+      0,
+      20,
+    );
 
     // ── Monitor level ────────────────────────────────────────────────────────────────
     // Three audition modes, switchable instantly for genuine comparison:
@@ -473,6 +502,7 @@ export function bootstrap() {
     updateLiveMeters(dt);
     updateGainReductionMeters();
 
+    // Immersive legacy map (kept for compatibility)
     if (state.ui.tab === 'immersive' && state.immersive.layout !== 'off') {
       drawSpeakerMap($('#spkmap'), {
         layoutId: state.immersive.layout,
@@ -482,6 +512,23 @@ export function bootstrap() {
         params: state.immersive,
       });
     }
+
+    // Spatial Lab tick — runs when lab is visible or when spatial energy is displayed
+    try {
+      const labCard = document.querySelector('#spatialLabCard');
+      if (labCard && !labCard.hidden) spatialLab.tick();
+      // Keep master status in sync with live loudness for crest display
+      masterStatus.sync();
+    } catch { void 0; }
+
+    // Keep limiter reduction in UI state for status card (cheap poll)
+    try {
+      const reduction = readGainReduction(live.chain);
+      const worst = Math.min(reduction.low ?? 0, reduction.mid ?? 0, reduction.high ?? 0);
+      if (Number.isFinite(worst) && Math.abs((store.getState().ui.limiterReduction ?? 0) - worst) > 0.08) {
+        store.setUi({ limiterReduction: worst });
+      }
+    } catch { void 0; }
   }
 
   function updateLiveMeters(dt) {
@@ -607,7 +654,19 @@ export function bootstrap() {
 
   /* ────────────────────────────── UI wiring ──────────────────────────────── */
 
+  initWorkspace({ store });
+
   const tabs = initTabs({ onChange: (tab) => store.setUi({ tab }) });
+  initSourceHero({ store });
+  const masterStatus = initMasterStatus({ store });
+  initSonicSummary({ store });
+  initAbEnhanced({ store, pushParameters, getLiveGraph: () => live });
+  initMacroControls({ store, pushParameters });
+  initPresetBrowserEnhanced({ store });
+  const spatialLab = initSpatialLab({ store, getLiveGraph: () => live });
+  initExportSummary({ store });
+  initHeavyWarning({ store });
+
   const controls = initControls({
     store,
     onChange: (key) => {
