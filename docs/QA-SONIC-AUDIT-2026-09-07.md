@@ -72,13 +72,23 @@ already bright)`, `tilt +6 → 0 dB`, `input drive 4 → 0 dB (already at master
 
 ## GITHUB ACTIONS
 
-**Nothing was filed — the sandbox's GitHub token is rejected** (`gh auth status`: _the github.com
-token in GH_TOKEN is no longer valid_, HTTP 401 on the API; `git push` also fails to authenticate).
-The work is committed on this session branch and every finding is written as a ready-to-post body in
-`qa/findings/`, each in the SONIC ISSUE / MATERIAL / SETTINGS / REPRO / MEASUREMENTS / EXPECTED /
-ACTUAL / SEVERITY format, so they can be pasted straight into issues once the connection is
-repaired. Six issues, not twenty: SON-1, SON-2, SON-3, SON-4, SON-5, SON-6, with SON-4 explicitly
-cross-referenced to `A-6` as a symptom of SON-3 rather than a separate defect.
+At the time of the audit run the sandbox's GitHub token was rejected (`gh auth status`: _the github.com
+token in GH_TOKEN is no longer valid_, HTTP 401 on the API; `git push` also failed to authenticate), so
+every finding was written as a ready-to-post body in `qa/findings/`, in the SONIC ISSUE / MATERIAL /
+SETTINGS / REPRO / MEASUREMENTS / EXPECTED / ACTUAL / SEVERITY format. Six issues, not twenty: SON-4 is
+recorded explicitly as a symptom of SON-3 rather than a separate defect.
+
+**Update (2026-09-07, same day): the connection was repaired and all six were filed** —
+[SON-3 → #19](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/19) (the root
+cause; it also explains the open `A-6` / #12 wet-sum violation, which should close with it),
+[SON-1 → #20](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/20),
+[SON-2 → #21](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/21),
+[SON-4 → #22](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/22),
+[SON-5 → #23](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/23),
+[SON-6 → #24](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/24).
+The `qa/findings/` bodies remain the source of record; the GitHub App token in this sandbox can create
+issues but not comment on or edit existing ones, so the SON-3 ↔ #12 cross-reference is documented here
+rather than in the tracker.
 
 ## REGRESSIONS
 
