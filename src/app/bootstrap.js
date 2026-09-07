@@ -61,6 +61,7 @@ import { getScratch, invalidateCssCache } from '../visualizers/canvas-util.js';
 import { createExportController } from './export-controller.js';
 import { createImmersiveController } from './immersive-controller.js';
 import { initExportSummary } from '../ui/export-summary.js';
+import { initHeavyWarning } from '../ui/heavy-warning.js';
 
 import { initWorkspace } from '../ui/workspace.js';
 import { initSourceHero } from '../ui/source-analysis.js';
@@ -586,7 +587,8 @@ export function bootstrap() {
   initMacroControls({ store, pushParameters });
   initPresetBrowserEnhanced({ store });
   const spatialLab = initSpatialLab({ store, getLiveGraph: () => live });
-   initExportSummary({ store });
+  initExportSummary({ store });
+  initHeavyWarning({ store });
 
   const controls = initControls({
     store,
