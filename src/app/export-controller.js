@@ -152,6 +152,20 @@ export function createExportController(opts) {
 
     setBusy(true, 'starting');
     renderNotice($('#exportNotice'), null);
+    // Honesty guard: sliders are NOT locked while a render runs (the engineer should be
+    // able to set up the next pass), but `parameters` above is a snapshot. If something
+    // moves mid-render, say so — one time — instead of letting the next toast imply the
+    // finished file matches the screen.
+    let snapshotWarned = false;
+    const offSnapshotWatch = store.subscribe((_s, changed) => {
+      if (snapshotWarned || !changed.has('parameters')) return;
+      snapshotWarned = true;
+      toast(
+        'Parameters changed mid-render — this export uses the settings captured when it started. Re-render to apply.',
+        { level: 'error' },
+      );
+      offSnapshotWatch();
+    });
     try {
       const { data, report } = await renderMaster({
         source,
@@ -227,6 +241,7 @@ export function createExportController(opts) {
       });
       toast(`Export failed: ${error.message ?? error}`, { level: 'error' });
     } finally {
+      offSnapshotWatch();
       setBusy(false);
       clearProgress();
     }
@@ -350,9 +365,21 @@ export function createExportController(opts) {
     $('#exportBtn')?.addEventListener('click', () => exportMaster());
     for (const button of $$('.expbtn')) {
       button.addEventListener('click', () => {
-        $('#fmtSelect').value = button.dataset.fmt;
-        $('#srSelect').value = button.dataset.sr;
-        exportMaster({ formatKey: button.dataset.fmt, sampleRate: Number(button.dataset.sr) });
+        // Route quick-export through the selects so the store, the dropdowns and the
+        // export all move together. Assigning `.value` alone does not fire `change`,
+        // which used to leave the summary describing one format while the button
+        // exported another.
+        const fmt = $('#fmtSelect');
+        const sr = $('#srSelect');
+        if (fmt) {
+          fmt.value = button.dataset.fmt;
+          fmt.dispatchEvent(new Event('change'));
+        }
+        if (sr) {
+          sr.value = button.dataset.sr;
+          sr.dispatchEvent(new Event('change'));
+        }
+        exportMaster();
       });
     }
     $('#batchAddBtn')?.addEventListener('click', () => $('#batchInput').click());
@@ -374,6 +401,20 @@ export function createExportController(opts) {
     exportMaster,
     runBatch,
     addFiles,
+    /**
+     * Cross-controller render lock. The immersive workspace takes this so a stereo
+     * export, a batch run and an immersive bed render can never interleave — the
+     * disabled button set and the render state have ONE owner.
+     * @returns {boolean} true when the caller acquired the lock.
+     */
+    tryLock(stage = 'rendering') {
+      if (busy) return false;
+      setBusy(true, stage);
+      return true;
+    },
+    unlock() {
+      setBusy(false);
+    },
     get queue() {
       return queue;
     },

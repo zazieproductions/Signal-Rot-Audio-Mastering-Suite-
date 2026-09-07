@@ -162,20 +162,49 @@ export function bootstrap() {
     kHigh.connect(kAnalyser);
 
     chain.start(0);
-    live = { ctx, chain, safety, safetyMakeup, post, monitor, spectrumAnalyser, analyserL, analyserR, kAnalyser };
+    live = {
+      ctx,
+      chain,
+      safety,
+      safetyMakeup,
+      post,
+      monitor,
+      spectrumAnalyser,
+      analyserL,
+      analyserR,
+      kAnalyser,
+    };
     // Match the multiband dry path to this engine's measured compressor latency. In
     // browsers this resolves to the 6 ms the graph was built with (a no-op assignment);
     // on engines that differ it corrects the alignment without rebuilding the graph.
     // Fire-and-forget: a failed probe keeps the documented default, never silence.
     resolveDryDelay(ctx.sampleRate)
       .then((dry) => {
-        if (dry.measured && Math.abs(dry.seconds - chain.multiband.dryDelay.delayTime.value) > 1e-9) {
+        if (
+          dry.measured &&
+          Math.abs(dry.seconds - chain.multiband.dryDelay.delayTime.value) > 1e-9
+        ) {
           chain.multiband.dryDelay.delayTime.value = dry.seconds;
         }
       })
       .catch(() => {});
     pushParameters();
+    applyMonitorGain();
     return live;
+  }
+
+  /**
+   * Monitor gain has exactly two inputs — the binaural preview (which mutes the stereo
+   * path because binaural is fed directly to the destination) and the −12 dB dim. Both
+   * used to write `live.monitor.gain` from their own modules; whoever ran last silently
+   * un-muted or un-dimmed the other. Now both states live in the store and this is the
+   * only place that touches the node.
+   */
+  function applyMonitorGain() {
+    if (!live) return;
+    const s = store.getState();
+    const binaural = s.immersive.binauralPreview && s.immersive.layout !== 'off';
+    live.monitor.gain.value = binaural ? 0 : s.ui.abDim ? dbToGain(-12) : 1;
   }
 
   /** Source stats for the live graph, or null before the first analysis lands. */
@@ -240,23 +269,13 @@ export function bootstrap() {
     const proc = analysis.processed;
     let gain = 1;
     if (mode === 'C') {
-      if (
-        orig &&
-        proc &&
-        Number.isFinite(orig.integrated) &&
-        Number.isFinite(proc.integrated)
-      ) {
+      if (orig && proc && Number.isFinite(orig.integrated) && Number.isFinite(proc.integrated)) {
         gain = dbToGain(clamp(orig.integrated - proc.integrated, -24, 24));
       } else if (eff.normalize && proc && Number.isFinite(proc.integrated)) {
         gain = dbToGain(clamp(eff.targetLUFS - proc.integrated, -24, 24));
       }
     } else {
-      if (
-        eff.normalize &&
-        !bypassAll &&
-        proc &&
-        Number.isFinite(proc.integrated)
-      ) {
+      if (eff.normalize && !bypassAll && proc && Number.isFinite(proc.integrated)) {
         gain = dbToGain(clamp(eff.targetLUFS - proc.integrated, -24, 24));
       }
       if (state.ui.matchLoudness && orig && proc) {
@@ -323,6 +342,30 @@ export function bootstrap() {
       );
     }
 
+    // ── Staleness barrier ───────────────────────────────────────────────────────────
+    // Any result in flight belongs to the PREVIOUS file and must never touch state after
+    // this point: cancel the scheduler, drop the measurements, and disarm anything that
+    // was computed from them (loudness-matched monitor gain, spectral-match curve).
+    // Otherwise meters, the export summary and the C-mode level silently describe the old
+    // file for as long as the new render takes.
+    scheduler.cancel();
+    store.setAnalysis({ original: null, processed: null, match: null, running: false });
+    sourceStatsCache = { token: null, stats: null };
+    currentAdaptation = { adaptations: [], sourceClass: 'unmeasured' };
+    renderNotice($('#adaptNotice'), null);
+    if (store.getParameters().matchStrength !== 0) {
+      store.setParameter('matchStrength', 0);
+      renderNotice($('#matchNotice'), {
+        level: 'caution',
+        title: 'Match curve is from the previous source',
+        messages: [
+          'The curve is kept, but its strength was zeroed: a correction measured on ' +
+            'another track is not a correction for this one. Press Match to re-measure.',
+        ],
+      });
+      toast('Match curve kept but disarmed — it measured the previous source.');
+    }
+
     ensureLiveGraph();
     transport.stop();
     bufferToken = {};
@@ -336,6 +379,10 @@ export function bootstrap() {
       sampleRate: buffer.sampleRate,
       channels: buffer.numberOfChannels,
     });
+    // Re-derive the monitor gain now that the source changed (the old figure was a
+    // loudness match against the previous file's numbers).
+    pushParameters();
+    updateAnalysisUi();
 
     $('#transportEmpty').hidden = true;
     $('#transportFull').hidden = false;
@@ -349,7 +396,7 @@ export function bootstrap() {
     $('#fileName').title = file.name;
 
     populateSampleRates(buffer.sampleRate);
-    toast('Loaded — analysing loudness…');
+    toast('Loaded — measuring and preview-rendering this takes a moment…');
     runAnalysis({ immediate: true });
   }
 
@@ -359,42 +406,65 @@ export function bootstrap() {
     const source = store.getState().source.buffer;
     if (!source) return;
     store.setAnalysis({ running: true });
+    updateAnalysisUi();
     const token = bufferToken;
 
-    const result = await scheduler.request(
-      async () => {
-        const parameters = store.getParameters();
-        // The source never changes for a loaded file: measure it once (loudness, peaks,
-        // crest factor, tonal shape) and reuse the result on every later slider move.
-        if (sourceStatsCache.token !== token || !sourceStatsCache.stats) {
-          sourceStatsCache = {
-            token,
-            stats: await analyseBuffer(source, ['loudness', 'peaks', 'rms', 'fingerprint']),
+    let result = null;
+    let failure = null;
+    try {
+      result = await scheduler.request(
+        async () => {
+          const parameters = store.getParameters();
+          // The source never changes for a loaded file: measure it once (loudness, peaks,
+          // crest factor, tonal shape) and reuse the result on every later slider move.
+          if (sourceStatsCache.token !== token || !sourceStatsCache.stats) {
+            sourceStatsCache = {
+              token,
+              stats: await analyseBuffer(source, ['loudness', 'peaks', 'rms', 'fingerprint']),
+            };
+          }
+          const srcStats = sourceStatsCache.stats;
+          const adaptation = adaptParameters(parameters, {
+            integrated: srcStats.loudness?.integrated,
+            lra: srcStats.loudness?.lra,
+            crestDb: srcStats.crestFactorDb,
+            truePeakDb: srcStats.peaks?.truePeakDb,
+            spectral: spectralSummary(srcStats.fingerprint ?? null),
+            channels: source.numberOfChannels,
+          });
+          currentAdaptation = {
+            adaptations: adaptation.adaptations,
+            sourceClass: adaptation.sourceClass,
           };
-        }
-        const srcStats = sourceStatsCache.stats;
-        const adaptation = adaptParameters(parameters, {
-          integrated: srcStats.loudness?.integrated,
-          lra: srcStats.loudness?.lra,
-          crestDb: srcStats.crestFactorDb,
-          truePeakDb: srcStats.peaks?.truePeakDb,
-          spectral: spectralSummary(srcStats.fingerprint ?? null),
-          channels: source.numberOfChannels,
-        });
-        currentAdaptation = {
-          adaptations: adaptation.adaptations,
-          sourceClass: adaptation.sourceClass,
-        };
-        const processed = await renderChain(source, adaptation.parameters, {
-          moduleBypass: store.getState().ui.moduleBypass,
-        });
-        const processedStats = await analyseBuffer(processed, ['loudness', 'peaks', 'mono']);
-        return { source: srcStats, processed: processedStats };
-      },
-      { immediate },
-    );
+          const processed = await renderChain(source, adaptation.parameters, {
+            moduleBypass: store.getState().ui.moduleBypass,
+          });
+          const processedStats = await analyseBuffer(processed, ['loudness', 'peaks', 'mono']);
+          return { source: srcStats, processed: processedStats };
+        },
+        { immediate },
+      );
+    } catch (error) {
+      failure = error;
+    }
 
-    if (!result) return; // superseded by a newer request
+    // Either outcome below must be attributed to THIS file: the staleness barrier in
+    // loadFile owns the decision, and this guard covers a swap that started mid-render.
+    if (token !== bufferToken) return;
+    if (failure) {
+      // No zombie spinner: whatever went wrong, `running` must go back to false so the
+      // status pill stops saying "analysing…" and the user can retry from Re-analyse.
+      store.setAnalysis({ running: false });
+      console.error('[signal-rot] analysis failed:', failure);
+      toast(
+        `Analysis failed: ${failure.message ?? failure} — the figures shown are from the ` +
+          'previous pass; press Re-analyse to retry.',
+        { level: 'error' },
+      );
+      updateAnalysisUi();
+      return;
+    }
+    if (!result) return; // superseded by a newer request — that one owns `running`
     store.setAnalysis({
       running: false,
       original: { ...result.source.loudness, peaks: result.source.peaks },
@@ -422,6 +492,14 @@ export function bootstrap() {
       if (node) node.style.width = `${clamp(fraction * 100, 0, 100)}%`;
     };
 
+    // Honest running indicator: without it, "what is the app doing right now?" is only
+    // answerable by guessing whether the numbers on screen have settled.
+    const statePill = $('#analysisState');
+    if (statePill) {
+      statePill.hidden = !state.analysis.running;
+      statePill.textContent = state.analysis.running ? 'analysing…' : '';
+    }
+
     if (stats) {
       setText('#mLUFS', Number.isFinite(stats.integrated) ? stats.integrated.toFixed(1) : '—');
       setText('#mLRA', Number.isFinite(stats.lra) ? stats.lra.toFixed(1) : '—');
@@ -436,6 +514,23 @@ export function bootstrap() {
         integrated: stats.integrated,
         target: p.normalize ? p.targetLUFS : NaN,
         abMode: state.ui.abMode,
+      });
+    } else if (!state.analysis.running) {
+      // No measurement for THIS file yet — blank the figures instead of leaving the
+      // previous file's numbers on screen looking like current truth.
+      setText('#mLUFS', '—');
+      setText('#mLRA', '—');
+      setBar('#barLUFS', 0);
+      setBar('#barLRA', 0);
+      const lufsNode = $('#mLUFS');
+      if (lufsNode) lufsNode.style.color = '';
+      drawLoudnessGraph($('#loudnessGraph'), {
+        shortTerm: [],
+        hopSeconds: 1,
+        integrated: NaN,
+        target: NaN,
+        abMode: state.ui.abMode,
+        emptyLabel: 'No measurement for this source yet.',
       });
     }
 
@@ -526,25 +621,38 @@ export function bootstrap() {
         analyserL: live.analyserL,
         analyserR: live.analyserR,
         params: state.immersive,
+        yaw: state.ui.listenerYaw || 0,
       });
     }
 
-    // Spatial Lab tick — runs when lab is visible or when spatial energy is displayed
+    // Spatial Lab tick — runs when lab is visible or when spatial energy is displayed.
+    // The mastering status card deliberately does NOT sync here: it renders store data
+    // only, and rebuilding its DOM ~40×/s during playback was pure jank. Its own store
+    // subscription repaints it whenever the underlying numbers actually change.
     try {
       const labCard = document.querySelector('#spatialLabCard');
       if (labCard && !labCard.hidden) spatialLab.tick();
-      // Keep master status in sync with live loudness for crest display
-      masterStatus.sync();
-    } catch { void 0; }
+    } catch {
+      void 0;
+    }
 
-    // Keep limiter reduction in UI state for status card (cheap poll)
+    // Keep limiter reduction in UI state for the status card. QUANTISED on purpose: the
+    // store notifies every subscribed panel on every write, and an unquantised poll wrote
+    // ~40 times per second during playback, rebuilding the status/summary DOM continuously
+    // — measurable jank that pulled attention from listening. The card shows one decimal,
+    // so 0.5 dB steps are the honest display resolution.
     try {
       const reduction = readGainReduction(live.chain);
       const worst = Math.min(reduction.low ?? 0, reduction.mid ?? 0, reduction.high ?? 0);
-      if (Number.isFinite(worst) && Math.abs((store.getState().ui.limiterReduction ?? 0) - worst) > 0.08) {
-        store.setUi({ limiterReduction: worst });
+      if (Number.isFinite(worst)) {
+        const quantised = Math.round(worst * 2) / 2;
+        if (quantised !== (store.getState().ui.limiterReduction ?? 0)) {
+          store.setUi({ limiterReduction: quantised });
+        }
       }
-    } catch { void 0; }
+    } catch {
+      void 0;
+    }
   }
 
   function updateLiveMeters(dt) {
@@ -670,13 +778,15 @@ export function bootstrap() {
 
   /* ────────────────────────────── UI wiring ──────────────────────────────── */
 
-  initWorkspace({ store });
+  const workspace = initWorkspace({ store });
 
   const tabs = initTabs({ onChange: (tab) => store.setUi({ tab }) });
   initSourceHero({ store });
-  const masterStatus = initMasterStatus({ store });
+  initMasterStatus({ store });
   initSonicSummary({ store });
-  initAbEnhanced({ store, pushParameters, getLiveGraph: () => live });
+  // Single owner of A/B/C mode, loudness-match and dim state (buttons + methods; global
+  // keys arrive through initShortcuts below, which calls into `abEnh`).
+  const abEnh = initAbEnhanced({ store });
   initMacroControls({ store, pushParameters });
   initPresetBrowserEnhanced({ store });
   const spatialLab = initSpatialLab({ store, getLiveGraph: () => live });
@@ -749,6 +859,10 @@ export function bootstrap() {
     const wasPlaying = transport.playing;
     const position = transport.position();
     transport.stop();
+    // Tear the binaural tap down with the graph it hangs off, then rebuild it on the new
+    // graph — otherwise a texture-seed change silently strands the preview on dead nodes
+    // while the toggle keeps claiming it is on.
+    immersiveController.teardownPreview();
     try {
       live.chain.dispose();
       live.monitor.disconnect();
@@ -757,40 +871,24 @@ export function bootstrap() {
     }
     live = null;
     ensureLiveGraph();
+    immersiveController.buildPreview();
     if (wasPlaying) transport.play(position);
   }
 
   /* ---- transport controls ---- */
   $('#playBtn').addEventListener('click', () => transport.toggle());
   $('#stopBtn').addEventListener('click', () => transport.stop());
-  $('#abA').addEventListener('click', () => setAbMode('A'));
-  $('#abB').addEventListener('click', () => setAbMode('B'));
-  $('#abC').addEventListener('click', () => setAbMode('C'));
+  // A/B/C buttons are owned by `abEnh` (single set of listeners, blind-mode aware); the
+  // graph/meter reaction is centralised in the store subscription below. A second set of
+  // listeners here used to fight ab-enhanced for `abMode` ownership.
   $('#auditionSelect').addEventListener('change', (event) => {
     store.setUi({ audition: event.target.value });
-    pushParameters();
   });
-  // initAbEnhanced owns both loudness-match controls; a second listener cancels the toggle.
   $('#reanalyzeBtn').addEventListener('click', () => {
     toast('Re-analysing…');
     runAnalysis({ immediate: true });
   });
   $('#clearLoopBtn').addEventListener('click', () => transport.setLoopRegion(null));
-
-  function setAbMode(mode) {
-    store.setUi({ abMode: mode });
-    for (const m of ['A', 'B', 'C']) {
-      $(`#ab${m}`)?.setAttribute('aria-pressed', String(mode === m));
-    }
-    pushParameters();
-    updateAnalysisUi();
-  }
-
-  /** Cycle Original → Mastered → loudness-Matched, for the X key and the palette. */
-  function cycleAbMode() {
-    const cur = store.getState().ui.abMode;
-    setAbMode(cur === 'A' ? 'B' : cur === 'B' ? 'C' : 'A');
-  }
 
   /* ---- waveform interaction (pointer events: mouse, touch and pen) ---- */
   const wave = $('#wave');
@@ -993,10 +1091,29 @@ export function bootstrap() {
     if (!state.source.buffer) return toast('Load your track first', { level: 'error' });
     if (!state.source.referenceBuffer) return toast('Load a reference first', { level: 'error' });
     toast('Analysing both tracks…');
-    const [source, reference] = await Promise.all([
-      analyseBuffer(state.source.buffer, ['fingerprint']),
-      analyseBuffer(state.source.referenceBuffer, ['fingerprint']),
-    ]);
+    // Capture what we are measuring: if the user swaps either file while this runs, the
+    // curve must not be applied to different audio (old work never mutates new state).
+    const sourceToken = bufferToken;
+    const measuredSource = state.source.buffer;
+    const measuredReference = state.source.referenceBuffer;
+    let source;
+    let reference;
+    try {
+      [source, reference] = await Promise.all([
+        analyseBuffer(measuredSource, ['fingerprint']),
+        analyseBuffer(measuredReference, ['fingerprint']),
+      ]);
+    } catch (error) {
+      console.error('[signal-rot] reference analysis failed:', error);
+      return toast(`Reference analysis failed: ${error.message ?? error}`, { level: 'error' });
+    }
+    if (
+      sourceToken !== bufferToken ||
+      store.getState().source.buffer !== measuredSource ||
+      store.getState().source.referenceBuffer !== measuredReference
+    ) {
+      return toast('Match aborted — the source or reference changed mid-analysis.');
+    }
     if (!source.fingerprint || !reference.fingerprint) {
       return toast('Analysis failed — is one of the tracks shorter than 8192 samples?', {
         level: 'error',
@@ -1046,11 +1163,17 @@ export function bootstrap() {
   }
   $('#showLegacyXover')?.addEventListener('change', redrawCrossover);
 
-  /* ---- sample-rate menu, probed against this browser ---- */
+  /* ---- export settings: the store is the single source of truth ----
+   * `ui.exportFormat` / `ui.exportSampleRate` are what the exporter, the export summary
+   * and the autosaved session all read. The two <select>s are *views* of that state:
+   * they write to it on change and are re-synced from it whenever their option list is
+   * rebuilt. (They used to be independent DOM truth that the summary read from a stale
+   * store field, so the summary could promise WAV 24-bit while the exporter produced
+   * whatever the dropdown was left showing.)
+   */
   function populateSampleRates(sourceRate) {
     const select = $('#srSelect');
     if (!select) return;
-    const current = select.value;
     const options = [
       el('option', { value: '0', text: `Preserve source rate (${sourceRate || '—'} Hz)` }),
     ];
@@ -1066,8 +1189,28 @@ export function bootstrap() {
       );
     }
     replaceChildren(select, ...options);
-    select.value = current || '0';
+    const preferred = String(store.getState().ui.exportSampleRate || select.value || '0');
+    const wanted = [...select.options].find((o) => o.value === preferred);
+    const chosen = wanted && !wanted.disabled ? preferred : '0';
+    select.value = chosen;
+    if ((Number(chosen) || 0) !== (store.getState().ui.exportSampleRate || 0)) {
+      store.setUi({ exportSampleRate: Number(chosen) || 0 });
+    }
   }
+
+  const fmtSelect = $('#fmtSelect');
+  if (fmtSelect) {
+    const wantedFormat = store.getState().ui.exportFormat;
+    if (wantedFormat && [...fmtSelect.options].some((o) => o.value === wantedFormat)) {
+      fmtSelect.value = wantedFormat;
+    }
+    fmtSelect.addEventListener('change', (event) => {
+      store.setUi({ exportFormat: event.target.value });
+    });
+  }
+  $('#srSelect')?.addEventListener('change', (event) => {
+    store.setUi({ exportSampleRate: Number(event.target.value) || 0 });
+  });
 
   /* ---- export and immersive controllers ---- */
   const exportController = createExportController({ store, toast, announce });
@@ -1075,6 +1218,12 @@ export function bootstrap() {
     store,
     toast,
     getLiveGraph: () => live,
+    // One render lock for the whole app: the immersive workspace shares the export
+    // controller's busy state, so a stereo/batch render and an immersive render can
+    // never interleave, and the disabled-button set has a single owner.
+    lock: (stage) => exportController.tryLock(stage),
+    unlock: () => exportController.unlock(),
+    applyMonitorGain,
     onLayoutChange: () => {
       if (store.getState().immersive.layout !== 'off') tabs.select('immersive');
     },
@@ -1121,7 +1270,10 @@ export function bootstrap() {
     );
   }
 
-  /* ---- command palette + shortcuts ---- */
+  /* ---- command palette + shortcuts ----
+   * One keyboard map, one owner per key. Space, X, A/B/C, H (blind), M (loudness match),
+   * S (side), L (workspace toggle), ⌘K, ⌘Z/⌘⇧Z, ⌘E.
+   */
   const palette = initCommandPalette({
     getCommands: () => [
       { id: 'play', label: 'Play / pause', hint: 'Space', run: () => transport.toggle() },
@@ -1129,16 +1281,35 @@ export function bootstrap() {
         id: 'ab',
         label: 'Cycle audition: original / mastered / loudness-matched',
         hint: 'X',
-        run: () => cycleAbMode(),
+        run: () => abEnh.cycle(),
       },
-      { id: 'ab-original', label: 'Audition: original', run: () => setAbMode('A') },
-      { id: 'ab-mastered', label: 'Audition: mastered', run: () => setAbMode('B') },
+      { id: 'ab-original', label: 'Audition: original', hint: 'A', run: () => abEnh.setAb('A') },
+      { id: 'ab-mastered', label: 'Audition: mastered', hint: 'B', run: () => abEnh.setAb('B') },
       {
         id: 'ab-matched',
         label: 'Audition: loudness-matched master',
-        run: () => setAbMode('C'),
+        hint: 'C',
+        run: () => abEnh.setAb('C'),
       },
-      { id: 'mono', label: 'Monitor: mono sum', hint: 'M', run: () => setAudition('mono') },
+      {
+        id: 'match',
+        label: 'Level-match the A/B comparison',
+        hint: 'M',
+        run: () => abEnh.toggleMatch(),
+      },
+      {
+        id: 'blind',
+        label: 'Blind A/B mode',
+        hint: 'H',
+        run: () => abEnh.toggleBlind(),
+      },
+      {
+        id: 'workspace',
+        label: 'Toggle workspace: Master ⇄ Spatial Lab',
+        hint: 'L',
+        run: () => toggleWorkspace(),
+      },
+      { id: 'mono', label: 'Monitor: mono sum', run: () => setAudition('mono') },
       { id: 'side', label: 'Monitor: side only', hint: 'S', run: () => setAudition('side') },
       { id: 'stereo', label: 'Monitor: stereo', run: () => setAudition('stereo') },
       {
@@ -1181,17 +1352,25 @@ export function bootstrap() {
     store.setUi({ audition: mode });
     const select = $('#auditionSelect');
     if (select) select.value = mode;
-    pushParameters();
     announce(`Monitoring ${mode}`);
+  }
+
+  function toggleWorkspace() {
+    workspace.set(store.getState().ui.workspace === 'spatial' ? 'master' : 'spatial');
   }
 
   $('#paletteBtn').addEventListener('click', () => palette.open());
   initShortcuts({
     palette: () => (palette.isOpen() ? palette.close() : palette.open()),
     playPause: () => transport.toggle(),
-    toggleAb: () => cycleAbMode(),
-    monoAudition: () => setAudition(store.getState().ui.audition === 'mono' ? 'stereo' : 'mono'),
+    toggleAb: () => abEnh.cycle(),
+    auditionOriginal: () => abEnh.setAb('A'),
+    auditionMastered: () => abEnh.setAb('B'),
+    auditionMatched: () => abEnh.setAb('C'),
+    toggleBlind: () => abEnh.toggleBlind(),
+    toggleMatch: () => abEnh.toggleMatch(),
     sideAudition: () => setAudition(store.getState().ui.audition === 'side' ? 'stereo' : 'side'),
+    toggleWorkspace,
     undo: () => {
       if (store.undo()) afterHistoryChange();
     },
@@ -1202,12 +1381,29 @@ export function bootstrap() {
   });
 
   /* ---- store-driven UI sync ---- */
+  // The ONE reaction point for listening-mode state: whatever changed abMode, the match
+  // flag, the dim or the audition path (button, chip, select, keyboard, palette), the
+  // graph push + meter repaint happen here and nowhere else. Duplicate per-listener
+  // pushParameters calls used to race each other on every A/B click.
+  let auditionSignature = null;
+  const auditionSig = (state) =>
+    `${state.ui.abMode}|${state.ui.matchLoudness ? 1 : 0}|${state.ui.audition}|${state.ui.abDim ? 1 : 0}`;
+  auditionSignature = auditionSig(store.getState());
   store.subscribe((state, changed) => {
     if (changed.has('parameters') || changed.has('ui')) {
       $('#undoBtn').disabled = !store.canUndo();
       $('#redoBtn').disabled = !store.canRedo();
     }
     if (changed.has('ui')) signalFlow.sync();
+    if (
+      (changed.has('ui') || changed.has('immersive')) &&
+      (auditionSig(state) !== auditionSignature || changed.has('immersive'))
+    ) {
+      auditionSignature = auditionSig(state);
+      pushParameters();
+      updateAnalysisUi();
+      applyMonitorGain();
+    }
   });
 
   /* ---- global error surface ---- */

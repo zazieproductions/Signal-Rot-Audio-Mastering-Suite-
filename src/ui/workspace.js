@@ -55,7 +55,8 @@ export function initWorkspace(opts) {
       tab.style.opacity = '';
       if (isSpatial && masterTabs.has(id)) tab.style.opacity = '0.7';
       if (!isSpatial && spatialTabs.has(id)) tab.style.opacity = '0.75';
-      tab.style.fontWeight = (isSpatial && id === 'immersive') || (!isSpatial && id === 'presets') ? '800' : '';
+      tab.style.fontWeight =
+        (isSpatial && id === 'immersive') || (!isSpatial && id === 'presets') ? '800' : '';
     }
 
     if (persist) store.setUi({ [WORKSPACE_KEY]: next });
@@ -64,7 +65,10 @@ export function initWorkspace(opts) {
 
   const announceWorkspace = (ws) => {
     const hint = $('#wsHint');
-    if (hint) hint.textContent = ws === 'spatial' ? 'Spatial Lab · immersive · 7.1.4 · 20.4' : 'M → Master · L → Lab';
+    if (hint) {
+      hint.textContent =
+        ws === 'spatial' ? 'Spatial Lab · immersive · 7.1.4 · 20.4' : 'L ⇄ Spatial Lab';
+    }
   };
 
   sw.addEventListener('click', (e) => {
@@ -73,22 +77,19 @@ export function initWorkspace(opts) {
     apply(btn.dataset.ws);
   });
 
-  // Keyboard: M and L from anywhere except inputs
-  window.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (e.key === 'm' || e.key === 'M') {
-      apply('master');
-    } else if (e.key === 'l' || e.key === 'L') {
-      apply('spatial');
-    }
-  });
+  // Keyboard ownership: global keys are bound once in `command-palette.js` initShortcuts
+  // (L toggles the workspace). A second window listener here used to steal `M` from the
+  // mono-audition and loudness-match bindings and fire alongside them.
 
   // Initialize from store or default
   const initial = store.getState().ui[WORKSPACE_KEY] || 'master';
   apply(initial, { persist: false });
   store.subscribe((state, changed) => {
-    if (changed.has('ui') && state.ui[WORKSPACE_KEY] && state.ui[WORKSPACE_KEY] !== document.body.getAttribute('data-workspace')) {
+    if (
+      changed.has('ui') &&
+      state.ui[WORKSPACE_KEY] &&
+      state.ui[WORKSPACE_KEY] !== document.body.getAttribute('data-workspace')
+    ) {
       apply(state.ui[WORKSPACE_KEY], { persist: false });
     }
   });

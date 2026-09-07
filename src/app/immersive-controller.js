@@ -112,6 +112,10 @@ const IMMERSIVE_CONTROLS = [
  */
 export function createImmersiveController(opts) {
   const { store, toast, getLiveGraph } = opts;
+  /** Monitor gain is owned by bootstrap (shared with the A/B dim); request a re-apply. */
+  const applyMonitor = () => {
+    if (opts.applyMonitorGain) opts.applyMonitorGain();
+  };
   /** @type {AudioNode[]|null} */
   let previewNodes = null;
   let busy = false;
@@ -128,7 +132,7 @@ export function createImmersiveController(opts) {
       }
       previewNodes = null;
     }
-    if (live && live.monitor) live.monitor.gain.value = 1;
+    if (live && live.monitor) applyMonitor();
   }
 
   function buildPreview() {
@@ -147,7 +151,9 @@ export function createImmersiveController(opts) {
     );
     output.connect(live.ctx.destination);
     previewNodes = [tap, ...nodes];
-    live.monitor.gain.value = 0; // mute the direct stereo path
+    // Mute the direct stereo path (gain ownership is in bootstrap so the A/B dim and
+    // this never fight over the same node).
+    applyMonitor();
   }
 
   const toUpmixParams = (im) => ({
@@ -171,11 +177,18 @@ export function createImmersiveController(opts) {
     const layoutId = state.immersive.layout;
     if (layoutId === 'off') return toast('Choose an output layout first', { level: 'error' });
 
+    // One render lock across the whole app (owned by the export controller): an
+    // immersive bed render and a stereo/batch render used to run concurrently, each
+    // with its own flag, fighting over the tab's memory and over the shared format
+    // selects mid-flight.
+    if (opts.lock && !opts.lock('immersive render')) {
+      return toast('Another render is in progress — wait for it to finish.', { level: 'error' });
+    }
+
     busy = true;
     const bar = $('#imProg');
     const text = $('#imProgText');
     bar?.classList.add('on');
-    $('#imExportBtn').disabled = true;
     renderNotice($('#imNotice'), null);
 
     const setProgress = (fraction, stage) => {
@@ -362,7 +375,8 @@ export function createImmersiveController(opts) {
       toast(`Immersive render failed: ${error.message ?? error}`, { level: 'error' });
     } finally {
       busy = false;
-      $('#imExportBtn').disabled = false;
+      if (opts.unlock) opts.unlock();
+      else $('#imExportBtn').disabled = false;
       setTimeout(() => {
         bar?.classList.remove('on');
         if (text) text.textContent = '';
@@ -572,5 +586,5 @@ export function createImmersiveController(opts) {
     return undefined;
   }
 
-  return { init, teardownPreview, renderImmersive, exportChannelIdentification };
+  return { init, teardownPreview, buildPreview, renderImmersive, exportChannelIdentification };
 }

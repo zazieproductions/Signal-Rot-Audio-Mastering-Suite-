@@ -173,15 +173,43 @@ export function initShortcuts(handlers) {
         break;
       case 'x':
       case 'X':
+        event.preventDefault();
         handlers.toggleAb?.(event);
+        break;
+      case 'a':
+      case 'A':
+        event.preventDefault();
+        handlers.auditionOriginal?.(event);
+        break;
+      case 'b':
+      case 'B':
+        event.preventDefault();
+        handlers.auditionMastered?.(event);
+        break;
+      case 'c':
+      case 'C':
+        event.preventDefault();
+        handlers.auditionMatched?.(event);
+        break;
+      case 'h':
+      case 'H':
+        event.preventDefault();
+        handlers.toggleBlind?.(event);
         break;
       case 'm':
       case 'M':
-        handlers.monoAudition?.(event);
+        event.preventDefault();
+        handlers.toggleMatch?.(event);
         break;
       case 's':
       case 'S':
+        event.preventDefault();
         handlers.sideAudition?.(event);
+        break;
+      case 'l':
+      case 'L':
+        event.preventDefault();
+        handlers.toggleWorkspace?.(event);
         break;
       case '?':
         handlers.help?.(event);
