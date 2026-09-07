@@ -25,6 +25,7 @@ import {
   readGainReduction,
 } from '../audio/graph/build-mastering-chain.js';
 import { bandAmountToSettings } from '../audio/graph/multiband.js';
+import { dynamicsCompressorMakeupCompensation } from '../audio/dsp/dynamics-compressor.js';
 import { dbToGain, gainToDb, clamp } from '../audio/dsp/math.js';
 import { truePeakEstimate } from '../audio/analysis/true-peak.js';
 import { phaseRiskFromParameters } from '../audio/analysis/correlation.js';
@@ -92,10 +93,19 @@ export function bootstrap() {
     safety.attack.value = 0.002;
     safety.release.value = 0.12;
 
+    // `DynamicsCompressorNode` applies a fixed, non-configurable make-up gain of
+    // pow(1/Saturate(1,k), 0.6) — here +0.68 dB at −1.2 dB / 20:1. Without an exact
+    // inverse, the safety itself pushes the monitor above the ceiling it is meant to
+    // protect and the preview level lies by that much. `pushParameters` keeps this node
+    // in exact inverse whenever it moves `safety.threshold`.
+    const safetyMakeup = ctx.createGain();
+    safetyMakeup.gain.value = 1;
+
     const post = ctx.createGain();
     const monitor = ctx.createGain();
     chain.output.connect(safety);
-    safety.connect(post);
+    safety.connect(safetyMakeup);
+    safetyMakeup.connect(post);
     post.connect(monitor);
     monitor.connect(ctx.destination);
 
@@ -132,7 +142,7 @@ export function bootstrap() {
     kHigh.connect(kAnalyser);
 
     chain.start(0);
-    live = { ctx, chain, safety, post, monitor, spectrumAnalyser, analyserL, analyserR, kAnalyser };
+    live = { ctx, chain, safety, safetyMakeup, post, monitor, spectrumAnalyser, analyserL, analyserR, kAnalyser };
     pushParameters();
     return live;
   }
@@ -151,6 +161,14 @@ export function bootstrap() {
     });
 
     live.safety.threshold.value = bypassAll ? 0 : Math.min(-0.2, p.ceiling - 0.2);
+    // Exact inverse of the safety's fixed spec make-up at the threshold just set (knee 0,
+    // ratio 20 stay fixed at build time). At threshold 0 (A/B audition of the source) the
+    // make-up is 0 dB and this node is transparent.
+    live.safetyMakeup.gain.value = dynamicsCompressorMakeupCompensation(
+      live.safety.threshold.value,
+      0,
+      20,
+    );
 
     // ── Monitor level ────────────────────────────────────────────────────────────────
     // One reference level, applied consistently. The audited build set the normalisation

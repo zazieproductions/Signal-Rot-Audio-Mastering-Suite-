@@ -14,6 +14,38 @@ three places the code believes are level-neutral but are not — an undocumented
 clipper, an undocumented make-up gain, and a "peak-normalised" saturator that raises
 level — and then the limiter is asked to finish a signal that has already been flattened.
 
+## Status — implemented (2026-09-06, branch `arena/01a07908`)
+
+The structural fixes below have landed on top of 7.0.0, each with regression tests
+(see the section body for the code and tests):
+
+- **§2.1 — fixed.** The shaper's curve domain is now ±`SATURATION_HEADROOM` (12 dB) with
+  the input divided by the same factor, so the spec input clamp cannot engage until
+  +12 dBFS, and `sat = 0` is a straight line over that whole domain (`tone.js`,
+  `tests/dsp/saturation.test.js`).
+- **§2.2 — fixed.** The node's fixed make-up `pow(1/Saturate(1,k), 0.6)` is modelled
+  engine-exactly (`src/audio/dsp/dynamics-compressor.js`; the table in this audit used
+  the knee-0 straight-line estimate, so it reads ~1–1.7 dB higher than the knee-9 engine
+  values the tests pin) and cancelled by an exact inverse-gain node after each band
+  compressor. `mbAutoMakeup` is the only make-up left (`multiband.js`,
+  `tests/dsp/dynamics-compressor-makeup.test.js`, graph topology tests).
+- **§2.3 — fixed.** Unity small-signal slope, make-up exactly `1/preGain`, stage 0 dB for
+  small signals at every drive; DC-free monotonic curve over the headroom domain
+  (`tone.js`, `tests/dsp/saturation.test.js`).
+- **§2.4 — fixed.** The dry path carries the same 6 ms (`MB_COMPRESSOR_LOOKAHEAD_S`) as
+  the compressor look-ahead (`multiband.js`, graph topology tests).
+- **§2.6 — fixed.** Final exports enforce a crest-aware gain-reduction budget (avg ≤ 2 dB,
+  peak ≤ 6 dB) and deliver/report the loudest clean result at or below the target when the
+  requested one would brickwall the record (`normalize.js`, `render-master.js`, report
+  `loudness.crestAware`, `tests/integration/render-pipeline.test.js`).
+- **§2.9 (preview parity) — fixed.** The live safety compressor's own fixed make-up is
+  compensated exactly, tracking the threshold (`bootstrap.js`).
+
+Still open: §2.5 (transient-shaping placement — see the note in the section body), §2.7
+(equaliser-before-saturation stacking in presets), §2.8 (native-rate decode + single
+windowed-sinc SRC), and the remaining §2.9 items (stereo width / crossfeed / depth level
+bounds, limiter low-frequency release).
+
 ---
 
 ## 1. The signal path as it actually is
@@ -205,6 +237,18 @@ transAttack +30: crest 8.36 dB, limiter max GR −7.6 dB   ← +1.7 dB of peaks,
 The control is effectively inert at competitive loudness and just adds gain reduction.
 It should run **first** in the offline stage (before the chain, or at least before any
 nonlinear stage), and the limiter should be the only thing between it and the file.
+
+> **Resolution note (2026-09-06).** Two of the three erasers this defect names are gone
+> or handled structurally rather than by relocating the shaper: the hard clip of §2.1 is
+> removed, so the shaper no longer runs on already-squared transients; and the remaining
+> erasure at competitive loudness is the *limiter* itself, which shaves whatever peaks are
+> above the ceiling no matter where they were created — so moving the shaper earlier
+> cannot make its peaks survive a −9 LUFS target, and it would make the shaper respond to
+> the uncoloured envelope instead of the finished tone. The measured "inert control" is
+> therefore addressed by the §2.6 crest-aware budget (deliver a target the limiter can
+> meet honestly), keeping the shaper where it can act on the finished tone and directly
+> before normalise + limit. Revisit this section if a measurable benefit for a pre-colour
+> placement is demonstrated.
 
 ### 2.6 Loudness is asked for before the chain is capable of delivering it
 
