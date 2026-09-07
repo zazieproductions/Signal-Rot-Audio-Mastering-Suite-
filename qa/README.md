@@ -22,6 +22,10 @@ The standing question: **at matched loudness, would I choose the Signal Rot mast
   product cannot grade its own homework. When the two disagree, that is a finding.
 - `scripts/probe.mjs` taps the chain stage by stage (where does the level/tone go?), `isolate.mjs`
   feeds a known signal through one section, `immersive.mjs` renders real 5.1 → 9.1.6 / Sonic Lab beds.
+- `scripts/crossover-check.mjs` asserts crossover conformance headlessly (multiband wet path at
+  every mix, stereo side-path unity, bass-mono LR4 shape, dry/wet alignment) at 44.1/48/96/192 kHz —
+  the same contracts as the browser lab, runnable without a browser. `--strict` gates the ±0.1 dB
+  design goal instead of the 1.5 dB contract.
 - `scripts/gen_materials.py` synthesises the fixtures: 10 musical (dynamic acoustic, dense rock,
   bass-heavy, bright/harsh, dark/dull, transient-heavy, already-mastered, mono, extremely wide/phasey,
   lo-fi) and 13 deterministic (impulse, log sweep, multitone, 40/50/60/80/100 Hz tones, hard L/R,
@@ -63,6 +67,11 @@ sample rate, bit depth, determinism), `jobs-attrib` (one module bypassed at a ti
   flushed just before `startRendering()`; a rejected write aborts the run rather than silently
   rendering without saturation. (Without this, the whole chain reads 12 dB low and every number is
   wrong — the harness was wrong before the product was, which is the reason for the assertion.)
+- A second engine divergence is handled in production, not the harness: this engine's
+  `DynamicsCompressorNode` latency is 8.7/8.0/6.7/6.0 ms at 44.1/48/96/192 kHz (block-processing
+  latency in the reimplementation), not the 6.000 ms browsers share. Production matches the
+  multiband dry path to the *measured* latency (`resolveDryDelaySeconds`), so renders align on
+  every engine; the render report records which value was used (`report.latency`).
 - `LD_LIBRARY_PATH=<dir with libasound.so.2>` may be needed to load the native module in a bare
   container. No audio device is ever opened; only `OfflineAudioContext` is used.
 

@@ -194,7 +194,7 @@ by default; at zero strength the section is bit-transparent.
 | Harshness | peaking           | 2 800 Hz  | 1.2    | ±12 dB |
 | Clarity   | peaking           | 5 000 Hz  | 0.8    | ±12 dB |
 | Air       | high shelf        | 12 000 Hz | 0.7071 | ±12 dB |
-| Tilt      | hinged shelf pair | 1 000 Hz  | 0.7071 | ±6 dB  |
+| Tilt      | hinged shelf pair | 1 000 Hz  | 1.0 (default, unset in code) | ±6 dB  |
 
 These frequencies are declared once, in `TONE_BANDS`, and both the filters and the UI
 labels are generated from that table. The pre-7.0 UI claimed 170 Hz, 700 Hz and 3 kHz for
@@ -238,8 +238,8 @@ fourth-order pairing is what produces the cancellation. Cascading two all-pass s
 the dry path (an easy mistake, and one made and caught during this refactor) doubles the
 phase rotation and reintroduces the comb.
 
-**Ideal-filter reconstruction**, `tests/dsp/multiband-crossover.test.js` (Node maths,
-not a real Web Audio render):
+**Node-convention reconstruction**, `tests/dsp/multiband-crossover.test.js` (Node maths
+modelling the nodes' Q convention via `designNodeBiquad`, not a real Web Audio render):
 
 | Parallel mix | Pre-7.0 topology      | Current topology |
 | ------------ | --------------------- | ---------------- |
@@ -248,10 +248,16 @@ not a real Web Audio render):
 | 50 %         | **−58.9 dB @ 137 Hz** | **0.00000 dB**   |
 | 25 %         | −6.01 dB @ 137 Hz     | **0.00000 dB**   |
 
-The browser lab does **not** confirm a flat wet sum: Chromium measured about +7.39 dB
-at the crossovers with inactive compressors. Keep the 1.5 dB browser contract intact;
-see [finding A-6](FINDINGS-FOR-AGENT-A.md#measured-in-a-real-browser). The analytical
-results above are not evidence that this remaining DSP defect is resolved.
+**Q units (issue #19).** `BiquadFilterNode.Q` is resonance in **dB** for `lowpass` /
+`highpass` (a Butterworth section is `BUTTERWORTH_Q_DB` ≈ −3.0103, never 0.7071), linear
+for `allpass` / `peaking` / `bandpass`, and ignored for shelves. Assigning linear Q to a
+lowpass/highpass node peaked every "LR4" in the graph +0.71 dB per section and summed
++7.4 dB at the crossover corners — the Chromium A-6 capture (+7.38/+7.39 dB) and the
+flagship's tonal tilt were this one bug. Fixed in the graph and the model together; the
+browser contract tightened from 1.5 dB to 0.5 dB hard (see
+`tests/browser/multiband.spec.js` and the new `tests/browser/stereo-section.spec.js`).
+A-6 stays open until a real browser re-captures the fixed graph; the headless rig
+(`qa/scripts/crossover-check.mjs`) reads ±0.00 dB at every mix on 44.1/48/96/192 kHz.
 
 The pre-7.0 build mixed the all-pass band sum against an unfiltered dry wire. At the 50 %
 mix its own UI called "the audiophile move", that is a complete null at both crossover
@@ -272,8 +278,9 @@ audio.
 `MB_BALLISTICS` in `src/audio/graph/multiband.js`; use that table rather than old preset-era timings.
 
 **The compressors are `DynamicsCompressorNode`s.** Fixed topology, implementation-defined
-internals. The dry path carries `MB_COMPRESSOR_LOOKAHEAD_S` (6 ms) to match the
-compressors' latency. Each compressor's fixed make-up is cancelled by its own
+internals. The dry path carries the running engine's *measured* compressor latency
+(`resolveDryDelaySeconds`, 6.000 ms in browsers; `MB_COMPRESSOR_LOOKAHEAD_S` is the
+fallback when the probe cannot run) to match the compressors' latency. Each compressor's fixed make-up is cancelled by its own
 `specMakeup*` node; optional `mbAutoMakeup` remains separate. They are used because they are the
 only per-sample dynamics processor available without an `AudioWorklet`. Per-band gain
 reduction is metered so you can see exactly how much is happening.
@@ -446,7 +453,7 @@ to all of them. Per-channel detection would move the image on every snare hit.
 | Stage                   | Phase                                                    | Mono-compatible    |
 | ----------------------- | -------------------------------------------------------- | ------------------ |
 | Match EQ, Tone          | minimum phase (IIR)                                      | yes                |
-| Multiband (ideal model) | all-pass; real wet reconstruction still tracked as A-6   | yes in model       |
+| Multiband (node model)  | all-pass; #19/#12 fixed, A-6 re-capture pending          | yes                |
 | Bass mono               | minimum phase on the side only                           | improves it        |
 | Per-band width          | LR4 split, all-pass reconstruction                       | yes at unity gains |
 | Side comb blend         | **comb filter**                                          | no, by design      |

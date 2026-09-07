@@ -10,6 +10,7 @@ import {
   buildMultiband,
   MB_COMPRESSOR_LOOKAHEAD_S,
   bandAmountToSettings,
+  resolveDryDelay,
 } from '../../../src/audio/graph/multiband.js';
 import { dynamicsCompressorMakeupCompensation } from '../../../src/audio/dsp/dynamics-compressor.js';
 import { MB_CROSSOVER_LOW, MB_CROSSOVER_HIGH } from '../../../src/app/constants.js';
@@ -36,9 +37,16 @@ function applyBand(comp, specMakeup, makeup, amount) {
   return s;
 }
 
-function wire(ctx, { mix = 1, amounts = [0, 0, 0], fill, seconds = 0.5 }) {
+async function dryDelayFor() {
+  // The same resolution production renders use: the measured compressor latency of
+  // this engine (6.000 ms in Chromium), with the documented constant as fallback.
+  return (await resolveDryDelay(SR)).seconds;
+}
+
+function wire(ctx, { mix = 1, amounts = [0, 0, 0], fill, seconds = 0.5, dryDelaySeconds }) {
   const length = Math.round(seconds * SR);
-  const mb = buildMultiband(ctx);
+  const mb =
+    dryDelaySeconds == null ? buildMultiband(ctx) : buildMultiband(ctx, { dryDelaySeconds });
   applyBand(mb.compLow, mb.specMakeupLow, mb.lowMakeup, amounts[0]);
   applyBand(mb.compMid, mb.specMakeupMid, mb.midMakeup, amounts[1]);
   applyBand(mb.compHigh, mb.specMakeupHigh, mb.highMakeup, amounts[2]);
@@ -55,19 +63,34 @@ function wire(ctx, { mix = 1, amounts = [0, 0, 0], fill, seconds = 0.5 }) {
 export async function measureDryWetAlignment() {
   const at = 128;
   const seconds = 0.08;
+  const dry = await resolveDryDelay(SR);
   const wet = await renderOffline(1, Math.round(seconds * SR), SR, (ctx) => {
-    wire(ctx, { mix: 1, amounts: [0, 0, 0], fill: impulseFill(at, 1), seconds });
+    wire(ctx, {
+      mix: 1,
+      amounts: [0, 0, 0],
+      fill: impulseFill(at, 1),
+      seconds,
+      dryDelaySeconds: dry.seconds,
+    });
   });
-  const dry = await renderOffline(1, Math.round(seconds * SR), SR, (ctx) => {
-    wire(ctx, { mix: 0, amounts: [0, 0, 0], fill: impulseFill(at, 1), seconds });
+  const dryBuf = await renderOffline(1, Math.round(seconds * SR), SR, (ctx) => {
+    wire(ctx, {
+      mix: 0,
+      amounts: [0, 0, 0],
+      fill: impulseFill(at, 1),
+      seconds,
+      dryDelaySeconds: dry.seconds,
+    });
   });
   const wetPeak = peakIndex(wet.getChannelData(0));
-  const dryPeak = peakIndex(dry.getChannelData(0));
+  const dryPeak = peakIndex(dryBuf.getChannelData(0));
   const deltaSamples = wetPeak.index - dryPeak.index;
   const deltaMs = (deltaSamples / SR) * 1000;
   return {
     browser: ua(),
     documentedLookaheadMs: MB_COMPRESSOR_LOOKAHEAD_S * 1000,
+    resolvedDryDelayMs: dry.seconds * 1000,
+    dryDelayMeasured: dry.measured,
     wetPeakIndex: wetPeak.index,
     dryPeakIndex: dryPeak.index,
     deltaSamples,
@@ -80,6 +103,7 @@ export async function measureDryWetAlignment() {
 export async function measureReconstruction() {
   const mixes = [0, 0.25, 0.5, 0.75, 1];
   const freqs = [50, 140, 400, 1000, 3200, 8000];
+  const dryDelaySeconds = await dryDelayFor();
   const rows = [];
   for (const mix of mixes) {
     const byFreq = [];
@@ -92,6 +116,7 @@ export async function measureReconstruction() {
           amounts: [0, 0, 0],
           fill: sineFill(SR, freq, 0.4),
           seconds,
+          dryDelaySeconds,
         });
       });
       const ch = rendered.getChannelData(0);
@@ -108,6 +133,7 @@ export async function measureReconstruction() {
   return {
     browser: ua(),
     crossovers: { low: MB_CROSSOVER_LOW, high: MB_CROSSOVER_HIGH },
+    dryDelayMs: dryDelaySeconds * 1000,
     rows,
   };
 }
@@ -116,6 +142,7 @@ export async function measurePartialMixWithCompression() {
   // Amounts engaged, mix at 50 % — the historical comb-filter case.
   const mixes = [0.5, 0.7];
   const freqs = [83, 140, 250, 1000, 3200];
+  const dryDelaySeconds = await dryDelayFor();
   const rows = [];
   for (const mix of mixes) {
     const byFreq = [];
@@ -127,6 +154,7 @@ export async function measurePartialMixWithCompression() {
           amounts: [30, 25, 20],
           fill: sineFill(SR, freq, 0.35),
           seconds,
+          dryDelaySeconds,
         });
       });
       const ch = rendered.getChannelData(0);

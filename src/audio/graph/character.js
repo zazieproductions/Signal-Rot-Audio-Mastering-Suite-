@@ -37,6 +37,7 @@
 
 import { clamp } from '../dsp/math.js';
 import { mulberry32, gaussian, deriveSeed } from '../dsp/prng.js';
+import { BUTTERWORTH_Q_DB } from '../dsp/biquad.js';
 
 /** Noise bed length in seconds. Long enough that the loop is not a rhythmic event. */
 export const NOISE_BED_SECONDS = 12;
@@ -165,7 +166,7 @@ export function buildCharacter(ctx, seed) {
   const hfRolloff = ctx.createBiquadFilter();
   hfRolloff.type = 'lowpass';
   hfRolloff.frequency.value = 22000;
-  hfRolloff.Q.value = 0.7071;
+  hfRolloff.Q.value = BUTTERWORTH_Q_DB; // node Q in dB — a roll-off, not a peak at 15 kHz
 
   input.connect(tapeDelay);
   tapeDelay.connect(headBump);
@@ -187,7 +188,7 @@ export function buildCharacter(ctx, seed) {
   const hissHp = ctx.createBiquadFilter();
   hissHp.type = 'highpass';
   hissHp.frequency.value = 2500;
-  hissHp.Q.value = 0.7071;
+  hissHp.Q.value = BUTTERWORTH_Q_DB;
   const hissGain = ctx.createGain();
   hissGain.gain.value = 0;
   hissSrc.connect(hissHp).connect(hissGain).connect(output);
@@ -205,12 +206,12 @@ export function buildCharacter(ctx, seed) {
   const rumbleLp = ctx.createBiquadFilter();
   rumbleLp.type = 'lowpass';
   rumbleLp.frequency.value = 45;
-  rumbleLp.Q.value = 0.7071;
+  rumbleLp.Q.value = BUTTERWORTH_Q_DB;
   const rumbleHp = ctx.createBiquadFilter();
   // Keep rumble above the DC region: below ~15 Hz it is inaudible and only eats headroom.
   rumbleHp.type = 'highpass';
   rumbleHp.frequency.value = 15;
-  rumbleHp.Q.value = 0.7071;
+  rumbleHp.Q.value = BUTTERWORTH_Q_DB;
   const rumbleGain = ctx.createGain();
   rumbleGain.gain.value = 0;
   rumbleSrc.connect(rumbleLp).connect(rumbleHp).connect(rumbleGain).connect(output);

@@ -1,10 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   designBiquad,
+  designNodeBiquad,
   biquadResponse,
   cascadeResponse,
   processBiquadCascade,
   cabs,
+  BUTTERWORTH_Q_DB,
+  linearQToDb,
+  dbQToLinear,
 } from '../../src/audio/dsp/biquad.js';
 
 const SR = 48000;
@@ -118,6 +122,39 @@ describe('time-domain processing', () => {
       const rms = Math.sqrt(sum / (n / 2));
       // A unit sine has RMS 1/√2, so the gain is rms·√2.
       expect(20 * Math.log10(rms * Math.SQRT2)).toBeCloseTo(dbAt(coeffs, f), 2);
+    }
+  });
+});
+
+describe('node Q convention (issue #19)', () => {
+  it('defines the Butterworth node Q as 20·log10(1/√2)', () => {
+    expect(BUTTERWORTH_Q_DB).toBeCloseTo(-3.0103, 4);
+    expect(BUTTERWORTH_Q_DB).toBe(20 * Math.log10(Math.SQRT1_2));
+  });
+
+  it('round-trips linear Q through node dB', () => {
+    for (const q of [0.5, Math.SQRT1_2, 1, 2]) {
+      expect(dbQToLinear(linearQToDb(q))).toBeCloseTo(q, 12);
+    }
+  });
+
+  it('models a Butterworth section from the node Q the graph assigns', () => {
+    // The regression that hid #19: modelling with linear 0.7071 while the node reads dB.
+    // A node Q of 0.7071 must model as +0.71 dB resonant, and BUTTERWORTH_Q_DB as −3.01.
+    const resonant = designNodeBiquad('lowpass', 1000, 0.7071, 0, SR);
+    expect(dbAt(resonant, 1000)).toBeCloseTo(0.71, 1);
+    const butterworth = designNodeBiquad('lowpass', 1000, BUTTERWORTH_Q_DB, 0, SR);
+    expect(dbAt(butterworth, 1000)).toBeCloseTo(-3.01, 2);
+    const hp = designNodeBiquad('highpass', 1000, BUTTERWORTH_Q_DB, 0, SR);
+    expect(dbAt(hp, 1000)).toBeCloseTo(-3.01, 2);
+  });
+
+  it('passes allpass/peaking/bandpass Q through linearly', () => {
+    // These types take linear Q in the node — the same value must design the same filter.
+    for (const [type, gain] of [['allpass', 0], ['peaking', 6], ['bandpass', 0]]) {
+      const viaNode = designNodeBiquad(type, 1000, 1.4, gain, SR);
+      const viaLinear = designBiquad(type, 1000, 1.4, gain, SR);
+      expect(viaNode).toEqual(viaLinear);
     }
   });
 });

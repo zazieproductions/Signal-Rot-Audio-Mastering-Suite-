@@ -26,8 +26,9 @@ import {
   applyParameters,
   readGainReduction,
 } from '../audio/graph/build-mastering-chain.js';
-import { bandAmountToSettings } from '../audio/graph/multiband.js';
+import { bandAmountToSettings, resolveDryDelay } from '../audio/graph/multiband.js';
 import { dynamicsCompressorMakeupCompensation } from '../audio/dsp/dynamics-compressor.js';
+import { linearQToDb } from '../audio/dsp/biquad.js';
 import { dbToGain, gainToDb, clamp } from '../audio/dsp/math.js';
 import { truePeakEstimate } from '../audio/analysis/true-peak.js';
 import { phaseRiskFromParameters } from '../audio/analysis/correlation.js';
@@ -145,7 +146,9 @@ export function bootstrap() {
     const kHigh = ctx.createBiquadFilter();
     kHigh.type = 'highpass';
     kHigh.frequency.value = 38.13;
-    kHigh.Q.value = 0.5;
+    // BS.1770 pre-filter high-pass, linear Q = 0.5 — but node Q is resonance in dB
+    // for highpass, so convert (bare 0.5 would read as +0.5 dB of resonance).
+    kHigh.Q.value = linearQToDb(0.5);
     const kAnalyser = ctx.createAnalyser();
     kAnalyser.fftSize = 8192;
     kAnalyser.smoothingTimeConstant = 0;
@@ -160,6 +163,17 @@ export function bootstrap() {
 
     chain.start(0);
     live = { ctx, chain, safety, safetyMakeup, post, monitor, spectrumAnalyser, analyserL, analyserR, kAnalyser };
+    // Match the multiband dry path to this engine's measured compressor latency. In
+    // browsers this resolves to the 6 ms the graph was built with (a no-op assignment);
+    // on engines that differ it corrects the alignment without rebuilding the graph.
+    // Fire-and-forget: a failed probe keeps the documented default, never silence.
+    resolveDryDelay(ctx.sampleRate)
+      .then((dry) => {
+        if (dry.measured && Math.abs(dry.seconds - chain.multiband.dryDelay.delayTime.value) > 1e-9) {
+          chain.multiband.dryDelay.delayTime.value = dry.seconds;
+        }
+      })
+      .catch(() => {});
     pushParameters();
     return live;
   }
@@ -174,6 +188,7 @@ export function bootstrap() {
       crestDb: s.crestFactorDb,
       truePeakDb: s.peaks?.truePeakDb,
       spectral: spectralSummary(s.fingerprint ?? null),
+      channels: store.getState().source.buffer?.numberOfChannels,
     };
   }
 
@@ -364,6 +379,7 @@ export function bootstrap() {
           crestDb: srcStats.crestFactorDb,
           truePeakDb: srcStats.peaks?.truePeakDb,
           spectral: spectralSummary(srcStats.fingerprint ?? null),
+          channels: source.numberOfChannels,
         });
         currentAdaptation = {
           adaptations: adaptation.adaptations,

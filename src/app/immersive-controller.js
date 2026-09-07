@@ -8,6 +8,7 @@
  */
 
 import { createOfflineContext } from '../audio/context.js';
+import { monoSafeSource } from '../audio/graph/build-mastering-chain.js';
 import {
   LAYOUTS,
   LAYOUT_IDS,
@@ -214,7 +215,10 @@ export function createImmersiveController(opts) {
         const ctx = createOfflineContext(2, length, sr);
         const src = ctx.createBufferSource();
         src.buffer = stereoBuffer;
-        const { output } = buildBinauralFold(ctx, src, layoutId, params);
+        // A mono master up-mixes to dual mono before the feed matrix, which splits
+        // M/S exactly like the mastering chain (issue #20).
+        const head = stereoBuffer.numberOfChannels === 1 ? monoSafeSource(src) : src;
+        const { output } = buildBinauralFold(ctx, head, layoutId, params);
         output.connect(ctx.destination);
         src.start(0);
         const rendered = await ctx.startRendering();
@@ -239,7 +243,10 @@ export function createImmersiveController(opts) {
         const ctx = createOfflineContext(channelCount, length, sr);
         const src = ctx.createBufferSource();
         src.buffer = stereoBuffer;
-        const { feeds } = buildSpeakerFeeds(ctx, src, layoutId, params);
+        // A mono master up-mixes to dual mono before the feed matrix, whose splitter
+        // would otherwise read the missing channel as silence (issue #20).
+        const head = stereoBuffer.numberOfChannels === 1 ? monoSafeSource(src) : src;
+        const { feeds } = buildSpeakerFeeds(ctx, head, layoutId, params);
         const merger = ctx.createChannelMerger(channelCount);
         order.forEach((key, index) => {
           if (feeds[key]) feeds[key].connect(merger, 0, index);

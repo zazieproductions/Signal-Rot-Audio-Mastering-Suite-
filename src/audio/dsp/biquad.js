@@ -8,6 +8,24 @@
  * `BiquadFilterNode` the live graph actually instantiates — that is what makes the
  * crossover-reconstruction diagnostic meaningful rather than decorative.
  *
+ * ── Q units: read this before touching any filter ────────────────────────────────
+ * `designBiquad` takes a **linear** Q (the RBJ cookbook convention: a Butterworth
+ * section is Q = 1/√2 ≈ 0.7071). `BiquadFilterNode.Q`, however, is **not** linear for
+ * every type. Measured in the headless engine (and corroborated by the Chromium A-6
+ * capture for lowpass/highpass):
+ *
+ *   lowpass / highpass   Q is resonance in **dB**: gain at fc equals Q exactly, so a
+ *                        Butterworth section needs Q = 20·log10(1/√2) = −3.0103, and
+ *                        Q = 0.7071 builds a section that peaks +0.71 dB (issue #19).
+ *   allpass / peaking / bandpass   Q is **linear**, matching `designBiquad` exactly.
+ *   lowshelf / highshelf           Q is **ignored** (fixed S = 1 slope, which coincides
+ *                        with RBJ-linear Q = 0.7071 — the value every tone shelf uses).
+ *
+ * `designNodeBiquad` below models *what the node builds* from a node Q value; anything
+ * that claims to predict graph behaviour must use it, not `designBiquad` directly.
+ * Pure-offline analysis with no node counterpart (e.g. the mono-compatibility band
+ * split) keeps using `designBiquad` with linear Q.
+ *
  * Coefficients are stored normalised by a0 as `{b0, b1, b2, a1, a2}` and the difference
  * equation is the Direct Form I:
  *
@@ -18,6 +36,20 @@
  * @typedef {{b0:number,b1:number,b2:number,a1:number,a2:number}} BiquadCoeffs
  * @typedef {'lowpass'|'highpass'|'bandpass'|'peaking'|'lowshelf'|'highshelf'|'allpass'|'notch'} BiquadType
  */
+
+/**
+ * The `BiquadFilterNode.Q` value of a Butterworth (maximally flat) lowpass/highpass
+ * section: 20·log10(1/√2) ≈ −3.0103. Every `lr4`-style helper and every flat-intent
+ * lowpass/highpass in the graph uses this — never a bare 0.7071, which the node reads
+ * as +0.71 dB of resonance (issue #19).
+ */
+export const BUTTERWORTH_Q_DB = 20 * Math.log10(Math.SQRT1_2);
+
+/** Linear Q → node Q (dB) for lowpass/highpass. */
+export const linearQToDb = (qLinear) => 20 * Math.log10(Math.max(1e-9, qLinear));
+
+/** Node Q (dB) → linear Q for lowpass/highpass. */
+export const dbQToLinear = (qDb) => Math.pow(10, qDb / 20);
 
 /**
  * Design a biquad.
@@ -119,6 +151,31 @@ export function designBiquad(type, freq, Q, gainDb, sampleRate) {
   }
 
   return { b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0 };
+}
+
+/**
+ * Design the biquad a `BiquadFilterNode` actually builds from a node Q value.
+ *
+ * This is `designBiquad` with the node's Q convention applied: dB→linear conversion
+ * for `lowpass`/`highpass`, linear pass-through otherwise (see the module header for
+ * the per-type semantics table). Use this — not `designBiquad` — for anything that
+ * models graph behaviour, and pass the same Q constant the graph assigns to the node.
+ *
+ * Shelf caveat: the headless engine ignores shelf Q (fixed S = 1); this function passes
+ * shelf Q through to the RBJ formulae, which matches the node exactly at Q = 0.7071
+ * (the value every production shelf uses) and is unverified against Chromium elsewhere.
+ *
+ * @param {BiquadType} type
+ * @param {number} freq corner / centre frequency in Hz
+ * @param {number} nodeQ the value assigned to `BiquadFilterNode.Q`
+ * @param {number} gainDb peaking/shelf gain in dB (ignored by other types)
+ * @param {number} sampleRate
+ * @returns {BiquadCoeffs}
+ */
+export function designNodeBiquad(type, freq, nodeQ, gainDb, sampleRate) {
+  const q =
+    type === 'lowpass' || type === 'highpass' ? dbQToLinear(nodeQ) : nodeQ;
+  return designBiquad(type, freq, q, gainDb, sampleRate);
 }
 
 /**

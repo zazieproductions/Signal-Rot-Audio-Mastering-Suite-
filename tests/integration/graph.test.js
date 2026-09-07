@@ -4,7 +4,9 @@ import {
   buildMasteringChain,
   applyParameters,
   readGainReduction,
+  monoSafeSource,
 } from '../../src/audio/graph/build-mastering-chain.js';
+import { buildMultiband } from '../../src/audio/graph/multiband.js';
 import { buildSpeakerFeeds } from '../../src/audio/immersive/speaker-feeds.js';
 import { buildBinauralFold, placePanner } from '../../src/audio/immersive/binaural.js';
 import { LAYOUTS, LAYOUT_IDS, SPEAKERS } from '../../src/audio/immersive/layouts.js';
@@ -13,6 +15,7 @@ import { MATCH_FREQS } from '../../src/app/constants.js';
 import { expandCatalogPreset } from '../../src/app/presets-io.js';
 import { ALL_PRESETS } from '../../src/presets/index.js';
 import { dynamicsCompressorMakeupCompensation } from '../../src/audio/dsp/dynamics-compressor.js';
+import { BUTTERWORTH_Q_DB } from '../../src/audio/dsp/biquad.js';
 
 const params = (patch = {}) => ({ ...defaultParameters(), ...patch });
 
@@ -95,6 +98,42 @@ describe('mastering chain construction', () => {
     const chain = buildMasteringChain(ctx);
     chain.start(0);
     expect(() => chain.start(0)).not.toThrow();
+  });
+});
+
+describe('monoSafeSource (issue #20)', () => {
+  it('duplicates a mono source to dual mono through a 2-input merger', () => {
+    const ctx = new FakeAudioContext();
+    const src = ctx.createBufferSource();
+    src.buffer = { numberOfChannels: 1 };
+    const head = monoSafeSource(src);
+    expect(head.type).toBe('merger');
+    expect(head.numberOfInputs).toBe(2);
+    expect(head.context).toBe(src.context);
+    // Output 0 of the source fans out to merger inputs 0 AND 1: both downstream
+    // channels carry L, so the M/S splitter reads L + R instead of L + silence.
+    expect(src.outputs).toHaveLength(2);
+    expect(src.outputs[0]).toMatchObject({ destination: head, output: 0, input: 0 });
+    expect(src.outputs[1]).toMatchObject({ destination: head, output: 0, input: 1 });
+  });
+
+  it('feeds the mastering chain input from the merger, not the bare source', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    const src = ctx.createBufferSource();
+    src.buffer = { numberOfChannels: 1 };
+    monoSafeSource(src).connect(chain.input);
+    expect(isConnected(src, chain.input)).toBe(true);
+    // The bare source has no direct edge into the chain: everything flows via dual mono.
+    expect(src.outputs.every((e) => e.destination.type === 'merger')).toBe(true);
+  });
+
+  it('passes stereo sources through untouched (never collapses to dual-L)', () => {
+    const ctx = new FakeAudioContext();
+    const src = ctx.createBufferSource();
+    src.buffer = { numberOfChannels: 2 };
+    expect(monoSafeSource(src)).toBe(src);
+    expect(src.outputs).toHaveLength(0);
   });
 });
 
@@ -213,13 +252,39 @@ describe('parameter application', () => {
     expect(wetInputSources.every((s) => s.nodeType === 'gain')).toBe(true);
   });
 
+  it('assigns Butterworth Q in node units to every crossover section', () => {
+    // Regression for issue #19: lowpass/highpass node Q is resonance in dB, so a
+    // Butterworth section is −3.0103. Allpass Q stays linear (it is linear in the node
+    // and the LR4-sum identity needs the same linear Q throughout).
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    for (const node of chain.multiband.crossoverNodes) {
+      if (node.type === 'lowpass' || node.type === 'highpass') {
+        expect(node.Q.value).toBeCloseTo(BUTTERWORTH_Q_DB, 6);
+      } else if (node.type === 'allpass') {
+        expect(node.Q.value).toBeCloseTo(Math.SQRT1_2, 6);
+      }
+    }
+  });
+
+  it('honours an engine-measured dry-path delay while defaulting to 6 ms', () => {
+    const ctx = new FakeAudioContext();
+    expect(buildMultiband(ctx).dryDelay.delayTime.value).toBeCloseTo(0.006, 9);
+    expect(buildMultiband(ctx, { dryDelaySeconds: 0.008 }).dryDelay.delayTime.value).toBeCloseTo(
+      0.008,
+      9,
+    );
+  });
+
   it('uses a 4th-order Linkwitz-Riley high-pass for bass mono', () => {
     const ctx = new FakeAudioContext();
     const chain = buildMasteringChain(ctx);
     applyParameters(chain, params({ bassMono: 120 }));
     expect(chain.stereo.bassHp.in.frequency.value).toBe(120);
     expect(chain.stereo.bassHp.out.frequency.value).toBe(120);
-    expect(chain.stereo.bassHp.in.Q.value).toBeCloseTo(Math.SQRT1_2, 6);
+    // Node Q is resonance in dB for highpass: Butterworth is −3.0103, not 0.7071
+    // (issue #19 — the old value peaked +0.71 dB per section).
+    expect(chain.stereo.bassHp.in.Q.value).toBeCloseTo(BUTTERWORTH_Q_DB, 6);
     // "Off" parks the corner at 8 Hz rather than rewiring the graph.
     applyParameters(chain, params({ bassMono: 0 }));
     expect(chain.stereo.bassHp.in.frequency.value).toBe(8);

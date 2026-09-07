@@ -108,11 +108,22 @@ applyDither(data, parameters.dither, 32, parameters.textureSeed);
 line(data, '4 dither32f');
 
 if (argv.includes('--tap')) {
+  const { resolveDryDelaySeconds } = await import(
+    '/home/user/Signal-Rot-Audio-Mastering-Suite-/src/audio/graph/multiband.js'
+  );
+  const { monoSafeSource } = await import(
+    '/home/user/Signal-Rot-Audio-Mastering-Suite-/src/audio/graph/build-mastering-chain.js'
+  );
+  // Same alignment production renders use.
+  const dryDelaySeconds = await resolveDryDelaySeconds(source.sampleRate);
   for (let k = 0; k < 10; k++) {
     const ctx = createOfflineContext(2, source.length, source.sampleRate);
     const src = ctx.createBufferSource();
     src.buffer = source;
-    const chain = buildMasteringChain(ctx, { textureSeed: parameters.textureSeed });
+    const chain = buildMasteringChain(ctx, {
+      textureSeed: parameters.textureSeed,
+      dryDelaySeconds,
+    });
     applyParameters(chain, parameters, { bypassAll, moduleBypass });
     const list = [
       ['input', chain.input],
@@ -126,7 +137,9 @@ if (argv.includes('--tap')) {
       ['satur', chain.saturation.output],
       ['out', chain.output],
     ];
-    src.connect(chain.input);
+    // Taps render stereo: same dual-mono guard production uses.
+    const head = source.numberOfChannels === 1 ? monoSafeSource(src) : src;
+    head.connect(chain.input);
     list[k][1].connect(ctx.destination);
     chain.start(0);
     src.start(0);

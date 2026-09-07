@@ -33,13 +33,23 @@ test.describe('Multiband (real Web Audio render)', () => {
 
     // Inactive compressors, any mix: 7.0.0 claimed 0.000 dB reconstruction at every
     // mix. Chromium 149 measured +7.39 dB at 140 Hz and 3.2 kHz on the wet path
-    // (FINDINGS A-6). Keep the contract; do not retune DSP here.
+    // (FINDINGS A-6) because the crossover assigned linear Q to nodes that take dB
+    // (issues #19/#12). The nodes now get BUTTERWORTH_Q_DB and the dry path is
+    // matched to this engine's measured compressor latency, so the wet path must be
+    // near unity at every mix: hard gate 0.5 dB (3× tighter than the 1.5 dB contract
+    // it replaces — never widen), with the ±0.1 dB design goal recorded per row.
+    testInfo.annotations.push({
+      type: 'dry-delay',
+      description: `${result.browser}: dry delay ${reconstruction.dryDelayMs.toFixed(3)} ms (alignment Δ ${alignment.deltaMs.toFixed(3)} ms)`,
+    });
     for (const row of reconstruction.rows) {
+      const goalMet = Math.abs(row.worstDb) < 0.1;
       testInfo.annotations.push({
         type: 'reconstruction',
-        description: `mix ${row.mix}: worst ${row.worstDb.toFixed(3)} dB @ ${row.worstFreq} Hz`,
+        description: `mix ${row.mix}: worst ${row.worstDb.toFixed(3)} dB @ ${row.worstFreq} Hz ${goalMet ? '(±0.1 dB goal met)' : '(±0.1 dB goal MISSED)'}`,
       });
-      expect.soft(Math.abs(row.worstDb), `mix ${row.mix} @ ${row.worstFreq} Hz`).toBeLessThan(1.5);
+      const gate = row.mix === 0 ? 0.35 : 0.5;
+      expect(Math.abs(row.worstDb), `mix ${row.mix} @ ${row.worstFreq} Hz`).toBeLessThan(gate);
     }
 
     // Partial mix *with* compression will not be perfectly flat (dynamics), but a

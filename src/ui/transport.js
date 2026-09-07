@@ -7,6 +7,7 @@
  */
 
 import { formatTime, $ } from './dom.js';
+import { monoSafeSource } from '../audio/graph/build-mastering-chain.js';
 
 /**
  * @param {object} opts
@@ -68,7 +69,10 @@ export function createTransport(opts) {
       stopSource();
       source = ctx.createBufferSource();
       source.buffer = buffer;
-      source.connect(destination);
+      // The live chain is always stereo: duplicate a mono file to dual mono so the
+      // M/S matrix sees L + R, not L + silence (issue #20).
+      const head = buffer.numberOfChannels === 1 ? monoSafeSource(source) : source;
+      head.connect(destination);
       const pos = Math.min(Math.max(at ?? offset, 0), buffer.duration);
       startedAt = ctx.currentTime - pos;
       const node = source;

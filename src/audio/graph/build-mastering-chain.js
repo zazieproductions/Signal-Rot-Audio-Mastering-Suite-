@@ -90,10 +90,13 @@ import { dynamicsCompressorMakeupCompensation } from '../dsp/dynamics-compressor
  * @param {BaseAudioContext} ctx
  * @param {object} [opts]
  * @param {number} [opts.textureSeed] seed for the character engines' noise beds
+ * @param {number} [opts.dryDelaySeconds] multiband dry-path delay; production renders
+ *   pass the engine-measured value (`resolveDryDelaySeconds`), default is 6 ms
  * @returns {MasteringChain}
  */
 export function buildMasteringChain(ctx, opts = {}) {
   const seed = opts.textureSeed ?? 0x5164a17;
+  const dryDelaySeconds = opts.dryDelaySeconds;
 
   const input = ctx.createGain();
   const trim = ctx.createGain();
@@ -114,7 +117,10 @@ export function buildMasteringChain(ctx, opts = {}) {
   trim.connect(matchBands[0]);
 
   const tone = buildTone(ctx);
-  const multiband = buildMultiband(ctx);
+  const multiband = buildMultiband(
+    ctx,
+    dryDelaySeconds == null ? undefined : { dryDelaySeconds },
+  );
   const stereo = buildStereo(ctx);
   const character = buildCharacter(ctx, seed);
   const depth = buildDepth(ctx);
@@ -152,6 +158,34 @@ export function buildMasteringChain(ctx, opts = {}) {
       }
     },
   };
+}
+
+/**
+ * Return the node to connect to a stereo chain input for a buffer source: the source
+ * itself for stereo buffers, or an explicit dual-mono up-mix for mono buffers.
+ *
+ * A 1-channel signal connected straight into the graph reaches the M/S
+ * `ChannelSplitterNode` as L + *silence* (missing splitter outputs are zero, not
+ * duplicates — the 1-channel-ness propagates through every gain/filter/delay node
+ * under `channelCountMode: 'max'`), so the matrix computes mid = side = 0.5·L. The
+ * side path's group delay then decorrelates the pair into half-energy pseudo-stereo
+ * with a −6 dB mono fold-down (issue #20). Duplicating channel 0 into both inputs of
+ * a `ChannelMergerNode` before the graph makes mono pass through at unity with
+ * side = 0, regardless of engine up-mix rules. Callers rendering mono (not stereo)
+ * from a mono source should connect the source directly instead.
+ *
+ * @param {AudioBufferSourceNode} src with `.buffer` already assigned
+ * @returns {AudioNode} `src`, or a merger fed twice by `src`
+ */
+export function monoSafeSource(src) {
+  const buffer = src.buffer;
+  if (buffer && buffer.numberOfChannels === 1) {
+    const merger = src.context.createChannelMerger(2);
+    src.connect(merger, 0, 0);
+    src.connect(merger, 0, 1);
+    return merger;
+  }
+  return src;
 }
 
 /**

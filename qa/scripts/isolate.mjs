@@ -19,9 +19,45 @@ installWebAudio();
 const { buildStereo, applyStereo, setAudition } = await import(
   join(repoRoot, 'src/audio/graph/stereo.js')
 );
-const { buildMultiband, applyMultibandForTest } = await import(
-  join(repoRoot, 'src/audio/graph/multiband.js')
+const {
+  buildMultiband,
+  bandAmountToSettings,
+  MB_BALLISTICS,
+  resolveDryDelaySeconds,
+} = await import(join(repoRoot, 'src/audio/graph/multiband.js'));
+const { dynamicsCompressorMakeupCompensation } = await import(
+  join(repoRoot, 'src/audio/dsp/dynamics-compressor.js')
 );
+// Section-level applier mirroring build-mastering-chain's applyMultiband (which is not
+// exported — the chain applies it internally). Kept in lock-step by construction: same
+// mapping functions, same makeup compensation, same mix semantics.
+function applyMultibandSection(n, p) {
+  const ballistics = MB_BALLISTICS[p.mbSpeed] ?? MB_BALLISTICS.med;
+  const setBand = (comp, specMakeup, makeup, solo, amount) => {
+    const s = bandAmountToSettings(amount);
+    comp.threshold.value = s.thresholdDb;
+    comp.ratio.value = s.ratio;
+    comp.knee.value = s.kneeDb;
+    comp.attack.value = ballistics.attack;
+    comp.release.value = ballistics.release;
+    specMakeup.gain.value = dynamicsCompressorMakeupCompensation(
+      s.thresholdDb,
+      s.kneeDb,
+      s.ratio,
+    );
+    const autoDb = p.mbAutoMakeup ? (1 - 1 / s.ratio) * 6 * 0.5 : 0;
+    makeup.gain.value = Math.pow(10, autoDb / 20);
+    solo.gain.value = 1;
+  };
+  setBand(n.compLow, n.specMakeupLow, n.lowMakeup, n.lowSolo, p.mbLow);
+  setBand(n.compMid, n.specMakeupMid, n.midMakeup, n.midSolo, p.mbMid);
+  setBand(n.compHigh, n.specMakeupHigh, n.highMakeup, n.highSolo, p.mbHigh);
+  const engaged = p.mbLow > 0 || p.mbMid > 0 || p.mbHigh > 0;
+  const mix = engaged ? p.mbMix / 100 : 0;
+  n.wet.gain.value = mix;
+  n.dry.gain.value = 1 - mix;
+}
+const applyMultibandForTest = applyMultibandSection;
 const { buildDepth, applyDepth } = await import(join(repoRoot, 'src/audio/graph/depth.js'));
 const { buildTone, buildSaturation, applyTone, applySaturation } = await import(
   join(repoRoot, 'src/audio/graph/tone.js')
@@ -52,6 +88,10 @@ params = validateParameters(params).parameters;
 const sr = 48000;
 const secs = 1.0;
 const n = sr * secs;
+
+// Production alignment for section isolation (multiband partial-mix is meaningless
+// against a mismatched dry delay).
+const isoDryDelay = section === 'multiband' ? await resolveDryDelaySeconds(sr) : undefined;
 
 /** test signals, generated at full scale-ish */
 function signal(kind, ch) {
@@ -138,7 +178,11 @@ for (const kind of cases) {
   };
   const builders = {
     stereo: [(c) => buildStereo(c), (x, p) => applyStereo(x, { ...p, bypass: false }), true],
-    multiband: [(c) => buildMultiband(c), (x, p) => applyMultibandForTest(x, p), false],
+    multiband: [
+      (c) => buildMultiband(c, isoDryDelay == null ? undefined : { dryDelaySeconds: isoDryDelay }),
+      (x, p) => applyMultibandForTest(x, p),
+      false,
+    ],
     depth: [(c) => buildDepth(c), (x, p) => applyDepth(x, { ...p, bypass: false }), false],
     tone: [(c) => buildTone(c), (x, p) => applyTone(x, { ...p, bypass: false }), false],
     saturation: [

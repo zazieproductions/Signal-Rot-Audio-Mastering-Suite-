@@ -6,6 +6,7 @@
 import { runCompressorSuite } from './lab/compressor.js';
 import { runWaveShaperSuite } from './lab/waveshaper.js';
 import { runMultibandSuite } from './lab/multiband.js';
+import { runStereoSectionSuite } from './lab/stereo-section.js';
 import { probeAllRates } from './lab/sample-rates.js';
 import { measurePreviewExportParity } from './lab/preview-export.js';
 import { runImmersiveSuite } from './lab/immersive.js';
@@ -22,6 +23,7 @@ const lab = {
   compressor: runCompressorSuite,
   waveshaper: runWaveShaperSuite,
   multiband: runMultibandSuite,
+  stereoSection: runStereoSectionSuite,
   previewExport: measurePreviewExportParity,
   immersive: runImmersiveSuite,
   benchmarks: runBenchmarks,

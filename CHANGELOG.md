@@ -6,6 +6,48 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed — crossover root cause (issues #19, #12, #22)
+
+- **Biquad Q units.** `BiquadFilterNode.Q` is resonance in dB for `lowpass`/`highpass`;
+  every "LR4" in the graph assigned linear 0.7071 and peaked +0.71 dB per section
+  (+7.4 dB at each crossover corner). All crossover and flat-intent lowpass/highpass
+  nodes (multiband, stereo width split + bass-mono + crossfeed, saturation DC block +
+  post low-pass, character filters, depth taps, immersive LFE/subs, K-weighting monitor)
+  now use `BUTTERWORTH_Q_DB` (≈ −3.0103). Allpass/peaking/bandpass Q was verified linear
+  and is untouched.
+- **Honest filter model.** New `designNodeBiquad` models what the node builds from a
+  node Q value; the crossover diagnostics use it, so the Node model can no longer agree
+  with itself while disagreeing with the browser.
+- **Engine-measured dry-path alignment.** The multiband dry delay is matched to the
+  running engine's measured `DynamicsCompressorNode` latency (6.000 ms in browsers;
+  the headless engine measures 8.7/8.0/6.7/6.0 ms at 44.1/48/96/192 kHz), with the
+  documented 6 ms constant as fallback. The render report records the value used
+  (`report.latency`).
+- **Conformance.** `tests/browser/multiband.spec.js` tightened 1.5 dB → 0.5 dB hard with
+  a recorded ±0.1 dB goal; new `tests/browser/stereo-section.spec.js` covers the side
+  path (previously untested); new `qa/scripts/crossover-check.mjs` asserts the same
+  contracts headlessly at four sample rates. A-6 re-capture in a real browser is still
+  required before closing #12.
+- Measured (headless): crossover sum +7.43 dB → ±0.00 dB at every mix; Reference-HD
+  parallel-mix tilt ±5–7 dB → ±0.1 dB; wet/dry alignment 2.000 ms → 0.000 ms.
+
+### Fixed — mono fold-down root cause (issue #20)
+
+- **Dual-mono source guard.** A 1-channel source reaching the stereo `ChannelSplitter(2)`
+  under `channelCountMode: 'max'` propagated as L + silence, so mid and side both
+  collapsed to 0.5·L and the side-path group delay decorrelated it into half-energy
+  pseudo-stereo (corr ≈ 0.0, −6 dB mono fold). New `monoSafeSource()` duplicates mono
+  sources to dual mono through an explicit `ChannelMerger(2)` before the graph; wired
+  into the offline render, live transport, immersive speaker-feeds/binaural fold, and
+  QA section taps. Stereo sources pass through untouched.
+- **Mono-aware adaptation.** The source-aware adapter no longer raises `bassMono`
+  0 → 90 Hz on bass-heavy mono sources (a mono sub is already centred; the raise only
+  forced a stereo render). Stereo and unknown-channel-count behaviour is unchanged, and
+  the report notes the skip.
+- Measured (headless, `qa/jobs-mono.json`): corr 0.02–0.28 → 1.00 on all five jobs;
+  true fold-down ±0.000 dB; mono-in/mono-out preserved when no stereo processing is
+  engaged.
+
 ### Fixed — continuity maintenance
 
 - The transport **Match loudness** button had two click listeners that toggled the
