@@ -108,6 +108,38 @@ jobs:
       - run: npm ci
       - name: Install ${{ matrix.browser }}
         run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Warm Vite (pre-transform modules + probe harness URL)
+        # Cold-starting Vite against the full lab + production DSP graph on a
+        # fresh runner can exceed the 60 s webServer probe budget that
+        # Playwright ships with. We start the dev server in the background,
+        # poll the harness URL until it answers 200, and shut it back down so
+        # Playwright can take over. This both pre-warms Vite's on-disk
+        # transform cache and surfaces a clearer failure if the harness can
+        # not be served at all.
+        run: |
+          set -euo pipefail
+          npx vite --port 5174 --strictPort --host 0.0.0.0 >/tmp/vite.log 2>&1 &
+          VITE_PID=$!
+          for i in $(seq 1 180); do
+            if curl -fsS -o /dev/null http://127.0.0.1:5174/tests/browser/harness.html; then
+              echo "vite ready after ${i}s"
+              break
+            fi
+            if ! kill -0 "$VITE_PID" 2>/dev/null; then
+              echo "::error::vite exited before serving harness.html"
+              tail -n 50 /tmp/vite.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if ! curl -fsS -o /dev/null http://127.0.0.1:5174/tests/browser/harness.html; then
+            echo "::error::vite did not serve harness.html within 180 s"
+            tail -n 50 /tmp/vite.log
+            kill "$VITE_PID" 2>/dev/null || true
+            exit 1
+          fi
+          kill "$VITE_PID" 2>/dev/null || true
+          wait "$VITE_PID" 2>/dev/null || true
       - name: Conformance suite
         run: npx playwright test --config tests/browser/playwright.config.js --project ${{ matrix.browser }}
       - uses: actions/upload-artifact@v4

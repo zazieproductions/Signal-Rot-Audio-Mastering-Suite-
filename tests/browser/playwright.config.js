@@ -68,6 +68,12 @@ export default defineConfig({
     command: 'npx vite --port 5174 --strictPort --host 0.0.0.0',
     url: 'http://127.0.0.1:5174/tests/browser/harness.html',
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
+    // The conformance harness pulls in the entire lab (compressor / multiband /
+    // waveshaper / immersive / etc.) plus all the production DSP modules. Vite's
+    // first-time cold start on a fresh ubuntu-latest runner with a cold filesystem
+    // cache regularly exceeds 60 s, which surfaces as Playwright reporting
+    // "Timed out waiting 60000ms from config.webServer" and skipping every test.
+    // 180 s leaves margin for the cold start without masking a real hang.
+    timeout: 180_000,
   },
 });
