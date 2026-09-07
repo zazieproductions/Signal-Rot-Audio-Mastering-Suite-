@@ -70,6 +70,16 @@ already bright)`, `tilt +6 → 0 dB`, `input drive 4 → 0 dB (already at master
 | small                                                                  | **LOW**                     | `mbAutoMakeup` changes every render by ≤0.1 dB — at the flagship's ratio it computes 0.58 dB, so the control is cosmetic in the exact situation it exists for.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | not a bug                                                              | —                           | 9.1.6 / Sonic Lab get `mask 0x0, standard: false` (no WAVE speaker mask exists for those orders) and ship a channel map alongside; correct behaviour, just worth knowing for receivers. `A-8`'s "no routing defect" conclusion holds in my renders too.                                                                                                                                                                                                                                                                                                                                                 |
 
+## GITHUB ACTIONS
+
+**Nothing was filed — the sandbox's GitHub token is rejected** (`gh auth status`: _the github.com
+token in GH_TOKEN is no longer valid_, HTTP 401 on the API; `git push` also fails to authenticate).
+The work is committed on this session branch and every finding is written as a ready-to-post body in
+`qa/findings/`, each in the SONIC ISSUE / MATERIAL / SETTINGS / REPRO / MEASUREMENTS / EXPECTED /
+ACTUAL / SEVERITY format, so they can be pasted straight into issues once the connection is
+repaired. Six issues, not twenty: SON-1, SON-2, SON-3, SON-4, SON-5, SON-6, with SON-4 explicitly
+cross-referenced to `A-6` as a symptom of SON-3 rather than a separate defect.
+
 ## REGRESSIONS
 
 None: this is the first commit I have measured, so there is no older build to be worse than. The
