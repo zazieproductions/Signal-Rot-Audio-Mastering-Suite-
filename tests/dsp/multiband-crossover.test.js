@@ -131,14 +131,22 @@ describe('crossover reconstruction — pre-7.0 topology (the bug)', () => {
 });
 
 describe('band amount mapping', () => {
-  it('is inert at 0 and deep at 100', () => {
+  it('is inert at 0 and firm-but-mastering-grade at 100', () => {
     const zero = bandAmountToSettings(0);
     expect(zero.thresholdDb).toBe(0);
     expect(zero.ratio).toBe(1);
-    expect(zero.kneeDb).toBe(9);
+    expect(zero.kneeDb).toBe(12);
     const full = bandAmountToSettings(100);
-    expect(full.thresholdDb).toBeCloseTo(-36, 6);
-    expect(full.ratio).toBeCloseTo(5, 6);
+    expect(full.thresholdDb).toBeCloseTo(-24, 6);
+    expect(full.ratio).toBeCloseTo(3, 6);
+  });
+
+  it('keeps mid positions in glue territory — low ratio, gentle threshold', () => {
+    // Clean mastering compression should sit at roughly 0–2 dB of gain reduction on
+    // ordinary material. The mapping earns that by keeping mid amounts subtle.
+    const mid = bandAmountToSettings(40);
+    expect(mid.thresholdDb).toBeGreaterThan(-12);
+    expect(mid.ratio).toBeLessThanOrEqual(2);
   });
 
   it('is monotonic and clamps out-of-range input', () => {

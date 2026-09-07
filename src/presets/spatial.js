@@ -20,13 +20,13 @@ export const SPATIAL_PRESETS = [
     parameters: {
       targetLUFS: -15,
       ceiling: -1.0,
-      width: 1.3,
-      ms: 0.18,
-      air: 2.0,
-      warm: 0.6,
+      width: 1.25,
+      ms: 0.15,
+      air: 1.5,
+      warm: 0.5,
       bassMono: 80,
-      sat: 3,
-      depth: 25,
+      sat: 0,
+      depth: 20,
       depthSize: 'large',
     },
     audit:
@@ -55,6 +55,7 @@ export const SPATIAL_PRESETS = [
   }),
   preset({
     name: 'Inverse Phase',
+    family: 'creative',
     tag: 'spatial',
     description: 'Creative side comb filtering — surreal imaging.',
     risk: 'destructive',
@@ -93,6 +94,7 @@ export const SPATIAL_PRESETS = [
   }),
   preset({
     name: 'Tunnel Vision',
+    family: 'creative',
     tag: 'spatial',
     description: 'Focused mono centre, atmospheric wide edges.',
     risk: 'caution',
@@ -112,6 +114,7 @@ export const SPATIAL_PRESETS = [
   }),
   preset({
     name: 'Panoramic',
+    family: 'creative',
     tag: 'spatial',
     description: '180° → 360° widefield — Haas plus decorrelated sides.',
     risk: 'destructive',
@@ -136,15 +139,15 @@ export const SPATIAL_PRESETS = [
     parameters: {
       targetLUFS: -15,
       ceiling: -1.0,
-      depth: 60,
+      depth: 50,
       depthSize: 'large',
-      width: 1.3,
+      width: 1.25,
       bassMono: 90,
-      ms: 0.15,
-      warm: 0.6,
-      air: 1.5,
+      ms: 0.12,
+      warm: 0.5,
+      air: 1.2,
       crossfeed: 0.2,
-      sat: 5,
+      sat: 2,
     },
     audit:
       'Depth 60 is near maximum; the taps at 27/47 ms and their low-passed, cross-fed returns ' +
@@ -176,6 +179,7 @@ export const SPATIAL_PRESETS = [
   preset({
     name: 'Binaural Stage',
     tag: 'spatial',
+    family: 'creative',
     description: 'Headphone monitor stage — binaural spread, headphone glue and small-room depth.',
     risk: 'caution',
     parameters: {
@@ -197,6 +201,7 @@ export const SPATIAL_PRESETS = [
   }),
   preset({
     name: 'Polar Maze',
+    family: 'creative',
     tag: 'spatial',
     description: 'Spatial comb labyrinth — wide, phase-blended, low-band image split.',
     risk: 'destructive',

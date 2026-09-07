@@ -5,8 +5,9 @@ import { PARAMETERS, defaultParameters } from '../../src/app/parameters.js';
 import { phaseRiskFromParameters } from '../../src/audio/analysis/correlation.js';
 
 describe('catalogue integrity', () => {
-  it('exposes seven groups', () => {
+  it('exposes eight groups, led by the mastering family', () => {
     expect(PRESET_GROUPS.map((g) => g.id)).toEqual([
+      'mastering',
       'dimension',
       'genre',
       'cinematic',

@@ -1,12 +1,15 @@
 /**
  * The preset catalogue.
  *
- * Seven groups, sixty-eight presets, every one of them reviewed against the criteria in
+ * Eight groups: a pristine mastering family led by the Reference HD flagship, the
+ * signature and colour groups, and the intentionally strange creative end. Every preset
+ * is reviewed against the criteria in
  * `docs/PRESET-SCHEMA.md`: excessive gain, unsafe width, ceiling choice, low-frequency
  * build-up, contradictory settings, description accuracy, clipping risk and phase risk.
  * The per-preset `audit` string records the outcome and is shown in the UI.
  */
 
+import { MASTERING_PRESETS } from './mastering.js';
 import { DIMENSION_PRESETS } from './dimension.js';
 import { GENRE_PRESETS } from './genre.js';
 import { CINEMATIC_PRESETS } from './cinematic.js';
@@ -16,6 +19,11 @@ import { SPATIAL_PRESETS } from './spatial.js';
 import { RESTORATION_PRESETS } from './restoration.js';
 
 export const PRESET_GROUPS = Object.freeze([
+  {
+    id: 'mastering',
+    label: 'Mastering — pristine reference masters',
+    presets: MASTERING_PRESETS,
+  },
   {
     id: 'dimension',
     label: 'Dimension — the signature engines',
@@ -36,6 +44,7 @@ export const ALL_PRESETS = PRESET_GROUPS.flatMap((g) => g.presets);
 export const findPreset = (name) => ALL_PRESETS.find((p) => p.name === name) ?? null;
 
 export {
+  MASTERING_PRESETS,
   DIMENSION_PRESETS,
   GENRE_PRESETS,
   CINEMATIC_PRESETS,
@@ -44,3 +53,5 @@ export {
   SPATIAL_PRESETS,
   RESTORATION_PRESETS,
 };
+
+export { presetFamily, sanitizeForFamily, DEGRADATION_KEYS } from './_shared.js';

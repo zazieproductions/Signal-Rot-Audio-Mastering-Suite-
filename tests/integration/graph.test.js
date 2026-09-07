@@ -52,7 +52,7 @@ describe('mastering chain construction', () => {
     expect(chain.saturation.makeup).toBeTruthy();
     expect(chain.saturation.makeup).not.toBe(chain.output);
     applyParameters(chain, params({ sat: 100 }));
-    expect(chain.saturation.makeup.gain.value).toBeCloseTo(1.25, 6);
+    expect(chain.saturation.makeup.gain.value).toBeCloseTo(1.12, 6);
     expect(chain.output.gain.value).toBe(1);
   });
 
@@ -103,10 +103,10 @@ describe('parameter application', () => {
     const ctx = new FakeAudioContext();
     const chain = buildMasteringChain(ctx);
     applyParameters(chain, params({ mbLow: 50, mbMid: 0, mbHigh: 100 }));
-    expect(chain.multiband.compLow.threshold.value).toBeCloseTo(-18, 6);
-    expect(chain.multiband.compLow.ratio.value).toBeCloseTo(3, 6);
+    expect(chain.multiband.compLow.threshold.value).toBeCloseTo(-12, 6);
+    expect(chain.multiband.compLow.ratio.value).toBeCloseTo(2, 6);
     expect(chain.multiband.compMid.ratio.value).toBe(1);
-    expect(chain.multiband.compHigh.threshold.value).toBeCloseTo(-36, 6);
+    expect(chain.multiband.compHigh.threshold.value).toBeCloseTo(-24, 6);
   });
 
   it('engages the wet path only when a band is active', () => {
@@ -209,7 +209,7 @@ describe('parameter application', () => {
     applyParameters(chain, params({ sat: 0 }));
     expect(chain.saturation.postLowpass.frequency.value).toBe(22000);
     applyParameters(chain, params({ sat: 100 }));
-    expect(chain.saturation.postLowpass.frequency.value).toBeCloseTo(17500, 6);
+    expect(chain.saturation.postLowpass.frequency.value).toBeCloseTo(16000, 6);
   });
 
   it('reads per-band gain reduction for the meters', () => {
