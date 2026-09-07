@@ -5,6 +5,7 @@ test-results/
 playwright-report/
 blob-report/
 .playwright/
+lab-results/
 *.local
 .DS_Store
 .env

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Signal Rot — Web Audio conformance lab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        background: #101010;
+        color: #d8d8d8;
+        margin: 2rem;
+      }
+      #status {
+        color: #8fd19e;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Signal Rot conformance lab</h1>
+    <p id="status">loading…</p>
+    <p>
+      This page exists so Playwright can drive a real <code>OfflineAudioContext</code>. It is not a
+      user interface.
+    </p>
+    <script type="module" src="./harness.js"></script>
+  </body>
+</html>

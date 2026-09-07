@@ -19,6 +19,7 @@ export default [
       'node_modules/**',
       'playwright-report/**',
       'test-results/**',
+      'lab-results/**',
     ],
   },
   js.configs.recommended,
@@ -44,7 +45,7 @@ export default [
     },
   },
   {
-    files: ['tests/**/*.js', 'e2e/**/*.js'],
+    files: ['tests/**/*.js', 'e2e/**/*.js', 'tools/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
