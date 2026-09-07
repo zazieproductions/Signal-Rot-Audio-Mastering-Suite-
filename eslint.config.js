@@ -57,6 +57,24 @@ export default [
     },
   },
   {
+    // `tools/` is Node-only developer tooling: CLIs, fixture generators and the
+    // independent validators. It runs outside the browser, so it gets Node globals —
+    // but it is still linted, because a broken validator is a validator that lies.
+    files: ['tools/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node },
+    },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-console': 'off',
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
+      'no-var': 'error',
+      'prefer-const': 'error',
+    },
+  },
+  {
     files: ['*.config.js', 'vite.config.js', 'vitest.config.js', 'playwright.config.js'],
     languageOptions: { ecmaVersion: 2023, sourceType: 'module', globals: globals.node },
   },

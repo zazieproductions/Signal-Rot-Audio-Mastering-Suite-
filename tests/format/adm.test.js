@@ -23,11 +23,17 @@ const buildFor = (layoutId, frames = 480) => {
 describe('ADM identifiers', () => {
   it('uses the custom ID range (≥ 0x1000), not the ITU common definitions', () => {
     const ids = admIdsFor(1);
-    expect(ids.channelFormat).toBe('AC_00031001');
-    expect(ids.streamFormat).toBe('AS_00031001');
-    expect(ids.trackFormat).toBe('AT_00031001_01');
+    // The `0001` type digits are DirectSpeakers (BS.2076 Table 8). Releases before the
+    // export-interoperability work wrote `0003`, which is the *Objects* type label, while
+    // simultaneously declaring `typeDefinition="DirectSpeakers"`. BS.2076 §5.2 requires
+    // the digits embedded in an identifier to match the element's typeLabel, so the old
+    // documents were internally contradictory. The independent validator in
+    // `tools/export-validation/adm-validate.js` is what caught it.
+    expect(ids.channelFormat).toBe('AC_00011001');
+    expect(ids.streamFormat).toBe('AS_00011001');
+    expect(ids.trackFormat).toBe('AT_00011001_01');
     expect(ids.trackUid).toBe('ATU_00000001');
-    expect(ids.blockFormat).toBe('AB_00031001_00000001');
+    expect(ids.blockFormat).toBe('AB_00011001_00000001');
   });
 
   it('produces the exact field widths the chna chunk requires', () => {

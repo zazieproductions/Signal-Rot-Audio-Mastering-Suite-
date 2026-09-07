@@ -34,6 +34,75 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   monitor safety limiter is gentler; preview and export share the same adaptation
   function and the same adapted parameters.
 
+### Added — export interoperability and delivery tooling
+
+- **Independent export validation.** New `tools/export-validation/` contains a RIFF /
+  RF64 / BW64 / `bext` / `chna` / `axml` parser and an ADM structural validator written
+  from the published specifications, sharing no code with Signal Rot's writers, plus an
+  FFmpeg adapter. `npm run validate:exports` generates deterministic fixtures with the
+  production encoders and validates them with all three, emitting a machine-readable
+  report. The guiding principle: Signal Rot should not have to trust itself to prove that
+  its own files are valid.
+- **ADM structural validation in CI.** Namespaces, element nesting, required attributes,
+  BS.2076 ID grammar, `typeLabel` ⇄ `typeDefinition` ⇄ ID-digit agreement, cross-reference
+  resolution, DirectSpeakers semantics, coordinate ranges, `speakerLabel` ⇄ azimuth
+  agreement, and `chna` ⇄ `axml` ⇄ `fmt` consistency. Schema validation against the
+  normative BS.2076 XSD remains opt-in (`npm run validate:adm -- --xsd <path>`) because the
+  ITU does not license the schema for redistribution; the report records
+  `admSchemaValidated: false` and CI asserts it.
+- **Golden multichannel fixtures** for 5.1, 7.1, 7.1.2, 7.1.4, 9.1.6 and Sonic Lab 20.4,
+  at 16/24/32-bit plus ADM BWF, carrying channel-identification content: channel _N_ emits
+  _N_ beeps then a tone on a chromatic ladder. The channel order is recovered from the
+  decoded **audio**, not from the metadata, so a swap, a rotation or a left/right flip
+  fails the build.
+- **RF64 / BW64 support.** `src/audio/encode/riff-layout.js` plans the container and
+  promotes to BW64 (or RF64 on request) when sizes exceed 32 bits, writing a correct
+  28-byte `ds64` chunk and the `0xFFFFFFFF` sentinel. Small files stay ordinary RIFF. A
+  wrapped 32-bit size is never written. The boundary is tested exhaustively without
+  allocating a 4 GiB buffer.
+- **Delivery profiles** (`stereo-distribution`, `film-video`, `high-res-archive`,
+  `bed-714`, `sonic-lab-204`, `adm-ingest`) that alter format and metadata only — a test
+  asserts no profile carries a DSP field.
+- **Delivery packages and manifests.** `buildDeliveryPackage()` assembles the master,
+  channel maps, a channel-identification file, a render report, an auditable JSON manifest,
+  a plain-language README and `SHA256SUMS.txt`. The manifest discloses up-mix and
+  synthetic height, states exactly what validation was and was not performed, and hard-wires
+  `atmosCertified: false`.
+- **SHA-256 integrity support**, verifiable with `sha256sum -c SHA256SUMS.txt`, documented
+  as file-integrity checks and explicitly not audio fingerprints.
+- **Hostile-metadata hardening.** 195 tests covering Unicode, emoji, lone surrogates,
+  ampersands, XML-breaking characters, control characters, 10 000-character names, invalid
+  channel counts, zero-length input and odd chunk sizes. Every writer now produces a valid
+  file or refuses clearly.
+- **CI interoperability gate** (`.github/workflows/export-interoperability.yml`) using only
+  open-source tooling, which fails on a malformed file _and_ on a report that claims more
+  than it established.
+- **`docs/EXPORT-INTEROPERABILITY.md`** — what is verified, the terminology used precisely,
+  reproducible external inspection commands, and 17 explicitly stated remaining limitations.
+
+### Fixed — export formats
+
+- **ADM `typeLabel` was `0003` (Objects) on documents declaring
+  `typeDefinition="DirectSpeakers"`.** BS.2076 §5.2 requires the type digits embedded in an
+  `AC_`/`AP_`/`AS_`/`AT_` identifier to match the element's `typeLabel`, so the emitted
+  documents were internally contradictory. All identifiers now use `0001`
+  (DirectSpeakers): `AC_00031001` becomes `AC_00011001`, and so on. Found by the new
+  independent validator.
+- **`bext` fields corrupted non-ASCII input.** The fixed-width ASCII writer masked every
+  code point with `& 0x7f`, silently turning an em-dash into a control character and an
+  embedded NUL into a premature terminator. Non-ASCII now becomes `?`, NULs are dropped,
+  and over-long input truncates rather than wrapping.
+- **ADM XML could be made not well-formed by a hostile programme name.** Characters XML 1.0
+  cannot represent (NUL, `\u0001`–`\u001f`, non-characters) were escaped rather than removed
+  — but `&#0;` is equally forbidden, so the result was a document no parser would open.
+  They are now stripped, lone surrogates become `U+FFFD`, and names are clamped to 256
+  code points on a code-point boundary.
+- **An empty or all-control-character programme name produced an empty required
+  `audioProgrammeName` attribute.** The fallback is now applied after sanitising.
+- **`writeWav` accepted a 0 Hz sample rate and 0 channels**, producing a `fmt` chunk with a
+  zero `byteRate` and `blockAlign` that a decoder can only guess at. Both are now refused,
+  as is a channel array shorter than the declared frame count.
+
 ### Added
 
 - **Browser conformance + golden audio regression lab.** Real-`OfflineAudioContext`

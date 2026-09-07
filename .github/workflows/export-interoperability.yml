@@ -1,0 +1,161 @@
+name: Export interoperability
+
+# ─────────────────────────────────────────────────────────────────────────────────────
+# The gate that stops a malformed deliverable reaching a venue.
+#
+# This job generates real exports with the production writers and then attacks them with
+# tooling that shares no code with those writers: an independent RIFF/RF64/BW64 parser, an
+# independent ADM structural validator, and FFmpeg. If any of them refuses a file, or
+# disagrees with the header, or finds the channels reordered, the build fails.
+#
+# Everything here is open source. There is no proprietary dependency, no licence to
+# accept, and nothing to download from a vendor. Commercial and manual validation —
+# ingesting into a licensed renderer, or checking against the ITU's non-redistributable
+# BS.2076 schema — is documented in docs/EXPORT-INTEROPERABILITY.md and deliberately kept
+# OUT of this job, because a CI gate that cannot run is not a gate.
+# ─────────────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Independent export validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # ffprobe from `ffprobe-static` is already installed by `npm ci`. The system
+      # packages add a real ffmpeg (for sample-accurate external decoding) and xmllint
+      # (for the optional --xsd path). Neither is required: the runner degrades to
+      # "skipped, with a reason" rather than silently passing.
+      - name: Install open-source inspection tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg libxml2-utils
+
+      - name: Tool versions (for the record)
+        run: |
+          node --version
+          ffprobe -version | head -1
+          ffmpeg -version | head -1
+          xmllint --version 2>&1 | head -1
+
+      - name: Format-layer unit tests
+        run: npx vitest run tests/format tests/interoperability
+
+      - name: ADM structural validation
+        run: npm run validate:adm
+
+      - name: Generate fixtures and validate with independent parsers
+        run: npm run validate:exports
+
+      - name: Assert the report makes no claim it has not earned
+        run: |
+          node --input-type=module -e '
+            import { readFile } from "node:fs/promises";
+            const r = JSON.parse(await readFile("export-validation-report.json", "utf8"));
+
+            const fail = (m) => { console.error("::error::" + m); process.exitCode = 1; };
+
+            if (r.summary.failed > 0) fail(`${r.summary.failed} fixtures failed validation.`);
+            if (r.summary.total < 25) fail(`Only ${r.summary.total} fixtures — the matrix shrank.`);
+
+            // These must be false forever, whatever the tooling reports. A regression
+            // that flipped them would be a false claim shipped to a client.
+            if (r.claims.dolbyAtmosCertified !== false) fail("Report claims Atmos certification.");
+            if (r.claims.admSchemaValidated !== false) fail("Report claims BS.2076 schema validation.");
+
+            // CI has ffprobe, so a skip here means the external check silently vanished.
+            if (!r.tooling.externalDecoderAvailable) {
+              fail("No external decoder ran. Independent validation was skipped, not passed.");
+            }
+            if (!r.claims.riffStructurallyValidated) fail("RIFF validation did not pass.");
+            if (!r.claims.admStructurallyValidated) fail("ADM validation did not pass.");
+            if (!r.claims.interoperabilityTested) fail("Interoperability was not established.");
+
+            // Every multichannel fixture must have had its channel order recovered from
+            // the audio, not merely from the metadata.
+            const multi = r.results.filter((x) => x.channelCount > 1);
+            for (const x of multi) {
+              if (!x.checks.channelOrder) fail(`${x.fixture}: channel order was never checked.`);
+              else if (!x.checks.channelOrder.matches) fail(`${x.fixture}: CHANNELS REORDERED.`);
+            }
+            console.log(`OK — ${r.summary.passed}/${r.summary.total} fixtures validated by ` +
+                        `${r.tooling.externalDecoder} and two independent parsers.`);
+          '
+
+      - name: Cross-check every fixture with ffprobe directly
+        # Belt and braces: the runner already calls ffprobe through an adapter, so this
+        # step invokes the binary the way a receiving engineer would, straight from a
+        # shell, and compares against the fixture index.
+        run: |
+          set -euo pipefail
+          node --input-type=module -e '
+            import { readFile } from "node:fs/promises";
+            const { fixtures } = JSON.parse(
+              await readFile(".fixtures/export/fixtures.json", "utf8"),
+            );
+            console.log(fixtures.map((f) => `${f.name} ${f.channelCount} ${f.sampleRate}`).join("\n"));
+          ' > /tmp/expected.txt
+          while read -r name channels rate; do
+            actual_ch=$(ffprobe -v error -select_streams a:0 \
+              -show_entries stream=channels -of csv=p=0 ".fixtures/export/$name")
+            actual_sr=$(ffprobe -v error -select_streams a:0 \
+              -show_entries stream=sample_rate -of csv=p=0 ".fixtures/export/$name")
+            if [ "$actual_ch" != "$channels" ] || [ "$actual_sr" != "$rate" ]; then
+              echo "::error::$name — ffprobe reports ${actual_ch}ch/${actual_sr}Hz," \
+                   "expected ${channels}ch/${rate}Hz"
+              exit 1
+            fi
+          done < /tmp/expected.txt
+          echo "ffprobe agrees with the fixture index for every file."
+
+      - name: Verify the fixture checksums
+        run: |
+          set -euo pipefail
+          node --input-type=module -e '
+            import { readFile } from "node:fs/promises";
+            const { fixtures } = JSON.parse(
+              await readFile(".fixtures/export/fixtures.json", "utf8"),
+            );
+            console.log(fixtures.map((f) => `${f.sha256}  ${f.name}`).join("\n"));
+          ' > .fixtures/export/SHA256SUMS.txt
+          cd .fixtures/export && sha256sum -c SHA256SUMS.txt
+
+      - name: Upload the validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-validation-report
+          path: |
+            export-validation-report.json
+            .fixtures/export/fixtures.json
+          retention-days: 30
+
+      - name: Upload a sample of the fixtures for manual inspection
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-fixtures-sample
+          # The full set is ~135 MB; the small ones are enough to reproduce a failure.
+          path: |
+            .fixtures/export/stereo_*.wav
+            .fixtures/export/51_*.wav
+            .fixtures/export/714_24bit.adm.wav
+            .fixtures/export/*.adm.xml
+          retention-days: 7

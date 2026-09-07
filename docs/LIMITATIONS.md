@@ -169,12 +169,26 @@ Every channel is `typeDefinition="DirectSpeakers"` — a fixed loudspeaker bed. 
 audio objects, no positional automation, no object metadata. An ADM BWF _can_ be an ingest
 format for licensed Atmos tooling; it is not itself a certified deliverable.
 
-### The ADM is not schema-validated
+### The ADM is structurally validated, not schema-validated
 
-64 tests assert structural correctness — chunk sizes, padding, `chna` field widths, UID
-uniqueness, full ID cross-reference resolution, well-formed XML, azimuth convention. It has
-**not** been validated against an official BS.2076 XSD, nor ingested into the Dolby Atmos
-Renderer, the Sony 360 Reality Audio suite or an MPEG-H authoring tool as part of CI.
+Every CI run parses the exported `axml` with an **independent** validator that shares no
+code with the writer (`tools/export-validation/adm-validate.js`) and checks namespaces,
+element nesting, required attributes, BS.2076 ID grammar, `typeLabel` ⇄ `typeDefinition` ⇄
+ID-digit agreement, cross-reference resolution, DirectSpeakers semantics, coordinate
+ranges, `speakerLabel` ⇄ azimuth agreement, and `chna` ⇄ `axml` ⇄ `fmt` consistency. That
+is what "structurally validated" means here, and it is genuinely established.
+
+It has **not** been validated against the normative ITU-R BS.2076 XSD. The ITU does not
+license the schema for redistribution, so this repository cannot vendor one and CI cannot
+download one; the tooling reports the check as _not attempted_ rather than skipping it
+quietly. Point `npm run validate:adm -- --xsd <path>` at your own licensed copy to close
+the gap locally.
+
+It has also **not** been ingested into the Dolby Atmos Renderer, the Sony 360 Reality
+Audio suite, or an MPEG-H authoring tool as part of CI. That remains the single most
+valuable manual check to perform on a delivery.
+
+See `docs/EXPORT-INTEROPERABILITY.md` for exactly what is and is not established.
 
 ### The binaural monitor is fixed and generic
 
@@ -198,13 +212,24 @@ elsewhere". **Always deliver the exported channel map with those files.**
 
 ## Export
 
-### RIFF is 32-bit
+### The container is not the limit — the browser is
 
-Files above 4 GB cannot be described by a RIFF header. Signal Rot **refuses** rather than
-writing a wrapped size field. The correct format is RF64/BW64 (EBU Tech 3306), which is not
-implemented.
+RIFF size fields are unsigned 32-bit, so a file above 4 GiB cannot be described by a plain
+RIFF header. Signal Rot now **promotes the container** rather than refusing: `BW64`
+(ITU-R BS.2088) by default, `RF64` (EBU Tech 3306) on request, with a correct 28-byte
+`ds64` chunk carrying the real 64-bit sizes and the `0xFFFFFFFF` sentinel in the 32-bit
+fields. Small files stay ordinary `RIFF`, because an `RF64` FourCC turns away readers that
+predate Tech 3306. **A wrapped 32-bit size is never written.**
 
-Practical ceiling: about 20 minutes of 32-bit float stereo at 192 kHz.
+That said, writing RF64 headers is necessary but not sufficient. Every export path
+materialises the whole file in a single `ArrayBuffer` before handing it to `Blob`, and
+browsers cap that well below 4 GiB — Chromium's default is around 2 GiB and Safari's is
+lower. The writer therefore refuses above roughly 2 GiB with a message that says plainly
+that the _container_ supports the size and the _browser_ does not.
+
+Practical ceiling: about 10 minutes of 32-bit float stereo at 192 kHz, or about
+25 minutes of 24-bit 7.1.4 at 48 kHz. Lifting it needs a streaming writer (File System
+Access API with incremental chunk emission), which is not implemented.
 
 ### Everything is in memory
 

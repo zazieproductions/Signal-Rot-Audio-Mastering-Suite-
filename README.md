@@ -299,19 +299,23 @@ npm run dev            # http://localhost:5173
 
 ### Scripts
 
-| Command                 | What it does                                                       |
-| ----------------------- | ------------------------------------------------------------------ |
-| `npm run dev`           | Vite dev server with HMR                                           |
-| `npm run build`         | Production build to `dist/`                                        |
-| `npm run preview`       | Serve the production build                                         |
-| `npm run lint`          | ESLint over `src` and `tests`                                      |
-| `npm run format`        | Prettier, write                                                    |
-| `npm run format:check`  | Prettier, check only (used by CI)                                  |
-| `npm run test`          | Vitest: 544 unit, DSP, format and integration tests                |
-| `npm run test:watch`    | Vitest in watch mode                                               |
-| `npm run test:coverage` | Coverage report                                                    |
-| `npm run test:e2e`      | Playwright browser tests (needs `npx playwright install chromium`) |
-| `npm run check`         | lint + test + build                                                |
+| Command                    | What it does                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| `npm run dev`              | Vite dev server with HMR                                                        |
+| `npm run build`            | Production build to `dist/`                                                     |
+| `npm run preview`          | Serve the production build                                                      |
+| `npm run lint`             | ESLint over `src`, `tests` and `tools`                                          |
+| `npm run format`           | Prettier, write                                                                 |
+| `npm run format:check`     | Prettier, check only (used by CI)                                               |
+| `npm run test`             | Vitest: 971 unit, DSP, format, interoperability and integration tests           |
+| `npm run test:watch`       | Vitest in watch mode                                                            |
+| `npm run test:coverage`    | Coverage report                                                                 |
+| `npm run test:e2e`         | Playwright browser tests (needs `npx playwright install chromium`)              |
+| `npm run validate:exports` | Generate export fixtures and validate them with independent parsers and ffprobe |
+| `npm run validate:adm`     | ADM structural validation (`-- --xsd <path>` adds schema validation)            |
+| `npm run fixtures:export`  | Write the deterministic export fixtures to `.fixtures/export/`                  |
+| `npm run inspect:export`   | Inspect any WAV / BWF / RF64 / BW64 file with the independent parser            |
+| `npm run check`            | lint + test + export validation + build                                         |
 
 ### Deployment
 
@@ -388,8 +392,9 @@ channel map.
 ## Testing
 
 ```bash
-npm run test         # 544 tests, ~100 s
-npm run test:e2e     # 37 browser tests (install Chromium first)
+npm run test              # 971 tests, ~170 s
+npm run test:e2e          # 37 browser tests (install Chromium first)
+npm run validate:exports  # real exports, checked by parsers that are not ours
 ```
 
 > **Note on the browser suite.** The Playwright specs are written and configured but were
@@ -397,19 +402,32 @@ npm run test:e2e     # 37 browser tests (install Chromium first)
 > to the Playwright browser CDN. The Vitest suite, which includes a jsdom boot test against
 > the real `index.html`, was run in full. CI runs both.
 
-| Suite                | Tests | What it proves                                                                                                                                                                                    |
-| -------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/dsp/`         | 179   | K-weighting matches the BS.1770-4 tables to 1e-12; the crossover reconstructs to 0.00000 dB; the limiter holds every ceiling on every pathological signal; dither is triangular and decorrelating |
-| `tests/format/`      | 135   | RIFF and IFF chunk sizes, padding, endianness, channel masks, ADM ID cross-references, `chna` entry widths                                                                                        |
-| `tests/app/`         | 74    | Schema integrity, clamping, hostile preset files, catalogue safety review                                                                                                                         |
-| `tests/integration/` | 116   | Graph topology against a recording fake context; the full post-render pipeline                                                                                                                    |
-| `tests/ui/`          | 40    | Schema-driven controls, ARIA tab pattern, DOM-injection safety, application boot against the real `index.html`                                                                                    |
-| `e2e/`               | 37    | Real browser: import, decode, render, download, verify header bytes                                                                                                                               |
+| Suite                     | Tests | What it proves                                                                                                                                                                                         |
+| ------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tests/dsp/`              | 179   | K-weighting matches the BS.1770-4 tables to 1e-12; the crossover reconstructs to 0.00000 dB; the limiter holds every ceiling on every pathological signal; dither is triangular and decorrelating      |
+| `tests/format/`           | 159   | RIFF and IFF chunk sizes, padding, endianness, channel masks, ADM ID cross-references, `chna` entry widths, RF64/BW64 `ds64` planning at the 4 GiB boundary                                            |
+| `tests/interoperability/` | 333   | Multichannel round trips through an **independent** decoder; channel order recovered from the audio itself; RF64/BW64 write path; hostile-metadata fuzzing; delivery profiles, manifests and checksums |
+| `tests/app/`              | 74    | Schema integrity, clamping, hostile preset files, catalogue safety review                                                                                                                              |
+| `tests/integration/`      | 116   | Graph topology against a recording fake context; the full post-render pipeline                                                                                                                         |
+| `tests/ui/`               | 40    | Schema-driven controls, ARIA tab pattern, DOM-injection safety, application boot against the real `index.html`                                                                                         |
+| `e2e/`                    | 37    | Real browser: import, decode, render, download, verify header bytes                                                                                                                                    |
 
 All test signals are generated programmatically (`tests/helpers/signals.js`) — no
 copyrighted audio in the repository, and every result reproducible on any machine.
 
-More: [`docs/TESTING.md`](docs/TESTING.md).
+### Export validation is deliberately not self-referential
+
+`npm run validate:exports` writes real files with the production encoders and then checks
+them with an independent RIFF/RF64/BW64 parser, an independent ADM validator, and FFmpeg —
+none of which share code with the writers. Multichannel fixtures carry
+channel-identification tones, so the channel order is recovered from the **audio** rather
+than believed from the metadata: a swap, a rotation or a left/right flip fails the build.
+
+The principle: **Signal Rot should not have to trust itself to prove that its own files
+are valid.**
+
+More: [`docs/TESTING.md`](docs/TESTING.md) and
+[`docs/EXPORT-INTEROPERABILITY.md`](docs/EXPORT-INTEROPERABILITY.md).
 
 ---
 
@@ -426,8 +444,10 @@ likely to matter:
    bright material.
 3. **`DynamicsCompressorNode` is implementation-defined.** The multiband will not sound
    bit-identical across browsers.
-4. **RIFF is 32-bit.** Files above 4 GB are refused rather than written with a wrapped size
-   field. RF64/BW64 is not implemented.
+4. **Exports are capped at about 2 GB by the browser, not by the format.** RF64/BW64 with
+   a correct `ds64` chunk is written when sizes exceed 32 bits, but the whole file is held
+   in one `ArrayBuffer`, and browsers cap that below 4 GiB. A wrapped size field is never
+   written.
 5. **Everything is in memory.** A 30-minute 192 kHz import will exhaust a browser tab.
    Guards warn and refuse at documented thresholds.
 6. **Browser decoders vary.** FLAC, M4A and Opus support is not universal. The About tab
@@ -442,8 +462,11 @@ likely to matter:
 - [ ] Oversampled saturation with a proper anti-imaging filter, replacing the
       `WaveShaperNode` mitigation
 - [ ] `AudioWorklet` path for the transient shaper, so preview and export converge further
-- [ ] RF64 / BW64 writer for files above 4 GB
-- [ ] Streaming render for long files, to lift the in-memory ceiling
+- [x] RF64 / BW64 writer for files above 4 GB — see `docs/EXPORT-INTEROPERABILITY.md`
+- [ ] Streaming render for long files, to lift the ~2 GB in-memory ceiling
+- [ ] Validate the ADM against the normative BS.2076 XSD in CI (blocked: the ITU does not
+      license the schema for redistribution — `npm run validate:adm -- --xsd` works locally)
+- [ ] Round-trip an ADM export through a commercial renderer and publish the result
 - [ ] Object-based ADM authoring with real positional metadata
 - [ ] Project session files (audio reference + full state)
 - [ ] Spectrogram view and waveform region export
