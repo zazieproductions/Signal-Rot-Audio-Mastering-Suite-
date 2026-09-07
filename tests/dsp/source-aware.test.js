@@ -38,6 +38,12 @@ describe('classifySource', () => {
       'balanced',
     );
   });
+
+  it('tags wide and phasey sources from correlation', () => {
+    expect(classifySource({ integrated: -16, crestDb: 12, correlation: 0.2 })).toContain('wide');
+    expect(classifySource({ integrated: -16, crestDb: 12, correlation: 0.05 })).toContain('phasey');
+    expect(classifySource({ correlation: 0.1 })).toContain('phasey');
+  });
 });
 
 describe('spectralSummary', () => {
@@ -191,6 +197,61 @@ describe('adaptParameters', () => {
     expect(adaptations.length).toBeGreaterThan(0);
   });
 
+  it('kills widening on a phasey source and does not raise bassMono', () => {
+    const p = params({
+      width: 1.8,
+      haas: 12,
+      spread: 0.6,
+      phaseRot: 0.4,
+      widthLow: 1.4,
+      widthMid: 1.5,
+      widthHigh: 1.8,
+      bassMono: 0,
+    });
+    const { parameters, adaptations, sourceClass } = adaptParameters(p, {
+      integrated: -16,
+      crestDb: 12,
+      correlation: 0.05,
+    });
+    expect(sourceClass).toContain('phasey');
+    expect(parameters.width).toBe(1);
+    expect(parameters.haas).toBe(0);
+    expect(parameters.spread).toBe(0);
+    expect(parameters.phaseRot).toBe(0);
+    expect(parameters.widthLow).toBe(1);
+    expect(parameters.widthMid).toBe(1);
+    expect(parameters.widthHigh).toBe(1);
+    expect(parameters.bassMono).toBe(0);
+    expect(adaptations.some((n) => /phasey/.test(n))).toBe(true);
+  });
+
+  it('scales widening toward unity on an already-wide source', () => {
+    const p = params({ width: 2, haas: 10, widthHigh: 2 });
+    const { parameters } = adaptParameters(p, {
+      integrated: -16,
+      crestDb: 12,
+      correlation: 0.25,
+    });
+    expect(parameters.width).toBeCloseTo(1 + 1 * 0.35, 6);
+    expect(parameters.haas).toBeCloseTo(10 * 0.35, 6);
+    expect(parameters.widthHigh).toBeCloseTo(1 + 1 * 0.4, 6);
+  });
+
+  it('caps air, clarity, tilt and extra width on an already-loud master', () => {
+    const p = params({ air: 2, clarity: 2, tilt: 1.5, width: 1.8, drive: 2 });
+    const { parameters } = adaptParameters(p, {
+      integrated: -9,
+      crestDb: 8,
+      lra: 4,
+      truePeakDb: -1,
+    });
+    expect(parameters.air).toBeLessThanOrEqual(0.5);
+    expect(parameters.clarity).toBeLessThanOrEqual(0.5);
+    expect(parameters.tilt).toBe(0);
+    expect(parameters.width).toBeLessThanOrEqual(1 + 0.25 * 0.8 + 1e-9);
+    expect(parameters.drive).toBe(0);
+  });
+
   it('never increases processing beyond what was asked', () => {
     // Scale-down-only is a hard contract: fuzz it across sources and snapshots.
     const cases = [
@@ -218,11 +279,19 @@ describe('adaptParameters', () => {
         sub: 2,
         warm: 2,
         bassMono: 60,
+        width: 1.6,
+        haas: 8,
+        spread: 0.4,
+        phaseRot: 0.3,
       });
       const { parameters: q } = adaptParameters(p, stats);
       for (const key of downs) {
         expect(q[key], `${key} increased`).toBeLessThanOrEqual(p[key]);
       }
+      expect(q.width).toBeLessThanOrEqual(p.width);
+      expect(q.haas).toBeLessThanOrEqual(p.haas);
+      expect(q.spread).toBeLessThanOrEqual(p.spread);
+      expect(q.phaseRot).toBeLessThanOrEqual(p.phaseRot);
       expect(Math.abs(q.transAttack)).toBeLessThanOrEqual(Math.abs(p.transAttack));
       expect(Math.abs(q.transSustain)).toBeLessThanOrEqual(Math.abs(p.transSustain));
       // Positive EQ boosts may only shrink (cuts are corrective and untouched).

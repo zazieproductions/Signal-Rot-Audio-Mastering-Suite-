@@ -276,6 +276,35 @@ describe('parameter application', () => {
     );
   });
 
+  it('zeros the multiband dry delay when the wet path is silent (issue #23)', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    applyParameters(chain, params({ mbLow: 0, mbMid: 0, mbHigh: 0, mbMix: 100 }));
+    expect(chain.multiband.dryDelay.delayTime.value).toBe(0);
+    applyParameters(chain, params({ mbLow: 40, mbMix: 60 }));
+    expect(chain.multiband.dryDelay.delayTime.value).toBeCloseTo(0.006, 9);
+  });
+
+  it('zeros the tape transport delay when tape is 0 and restores it when tape is on (issue #23)', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    applyParameters(chain, params({ tape: 0 }));
+    expect(chain.character.tapeDelay.delayTime.value).toBe(0);
+    applyParameters(chain, params({ tape: 90 }));
+    expect(chain.character.tapeDelay.delayTime.value).toBeCloseTo(0.006, 9);
+    applyParameters(chain, params({ tape: 90 }), { moduleBypass: { character: true } });
+    expect(chain.character.tapeDelay.delayTime.value).toBe(0);
+  });
+
+  it('turns WaveShaper oversampling off at sat = 0', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    applyParameters(chain, params({ sat: 0 }));
+    expect(chain.saturation.shaper.oversample).toBe('none');
+    applyParameters(chain, params({ sat: 40 }));
+    expect(chain.saturation.shaper.oversample).toBe('4x');
+  });
+
   it('uses a 4th-order Linkwitz-Riley high-pass for bass mono', () => {
     const ctx = new FakeAudioContext();
     const chain = buildMasteringChain(ctx);

@@ -291,4 +291,7 @@ export function applySaturation(n, p) {
   n.preGain.gain.value = staging.preGain;
   n.postLowpass.frequency.value = staging.postLowpassHz;
   n.makeup.gain.value = staging.postGain;
+  // Oversampling adds engine-dependent latency. At sat = 0 the curve is identity
+  // over the headroom domain, so the 4× oversampler is a delay with no benefit.
+  n.shaper.oversample = amount > 0 ? '4x' : 'none';
 }

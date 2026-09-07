@@ -226,16 +226,20 @@ export function buildRenderReport(input) {
     },
 
     latency: {
-      // The multiband dry-path delay the render used, matched to the compressor
-      // latency measured in the running engine (6.000 ms in browsers). `measured:
-      // false` means the documented 6 ms default was used because the probe could
-      // not run — the alignment is then assumed, not established.
-      dryDelayMs: latency ? num(latency.dryDelaySeconds * 1000, 3) : null,
+      // Graph delays actually in circuit for this render. Dry delay is 0 when the
+      // multiband wet path is silent; tape delay is 0 when tape is 0 (issue #23).
+      // The limiter look-ahead is a centred offline window — it does not shift the file.
+      dryDelayMs: latency ? num((latency.dryDelaySeconds ?? 0) * 1000, 3) : null,
       compressorLatencyMs:
         latency && Number.isFinite(latency.compressorLatencySeconds)
           ? num(latency.compressorLatencySeconds * 1000, 3)
           : null,
       compressorLatencyMeasured: latency ? latency.compressorLatencyMeasured === true : false,
+      tapeDelayMs: latency ? num((latency.tapeDelaySeconds ?? 0) * 1000, 3) : null,
+      limiterLookaheadMs: latency
+        ? num((latency.limiterLookaheadSeconds ?? 0.003) * 1000, 3)
+        : null,
+      note: latency?.note ?? null,
     },
 
     warnings,

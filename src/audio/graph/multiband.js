@@ -308,6 +308,8 @@ export function buildMultiband(ctx, opts = {}) {
     midMakeup,
     highMakeup,
     dryDelay,
+    /** Nominal dry-path delay (seconds). `applyMultiband` zeros the node when mix is 0. */
+    dryDelaySeconds,
     wet,
     dry,
     crossoverFrequencies: { low: fLow, high: fHigh },

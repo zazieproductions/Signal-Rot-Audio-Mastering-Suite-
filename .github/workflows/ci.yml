@@ -1,0 +1,40 @@
+name: CI
+
+# Release gate for the engine: lint, the full Vitest suite, and a production build.
+# Failures are failures — this workflow does not continue-on-error and does not
+# skip known-broken tests (issue #15).
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit / integration / DSP tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build

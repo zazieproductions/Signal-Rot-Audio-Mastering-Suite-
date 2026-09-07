@@ -343,6 +343,60 @@ describe('render report', () => {
     expect(report.warnings).toBeDefined();
   });
 
+  it('reports idle graph delays as zero and names the limiter look-ahead (issue #23)', () => {
+    const forged = buildRenderReport({
+      parameters: defaultParameters(),
+      analysisBefore: {
+        loudness: { integrated: -20, lra: 5, maxMomentary: -18, maxShortTerm: -19 },
+        peaks: { samplePeakDb: -3, truePeakDb: -2.5 },
+        crestFactorDb: 12,
+      },
+      analysisAfter: {
+        loudness: { integrated: -14, lra: 5, maxMomentary: -12, maxShortTerm: -13, silent: false },
+        peaks: { samplePeakDb: -1.2, truePeakDb: -1.05 },
+        crestFactorDb: 10,
+        mono: null,
+        samplePeak: 0.87,
+      },
+      loudnessResult: {
+        measuredBeforeLufs: -20,
+        normalizationGainDb: 6,
+        achievedLufs: -14,
+        deltaLu: 0,
+        passes: 1,
+        limiter: {
+          maxGainReductionDb: -0.4,
+          averageGainReductionDb: -0.1,
+          reducedSampleRatio: 0.01,
+          achievedTruePeakDb: -1.05,
+          ceilingRespected: true,
+          correctionTrimDb: 0,
+        },
+      },
+      transient: { applied: false },
+      dither: { mode: 'tpdf', applied: true },
+      latency: {
+        dryDelaySeconds: 0,
+        tapeDelaySeconds: 0,
+        limiterLookaheadSeconds: 0.003,
+        compressorLatencySeconds: 0.006,
+        compressorLatencyMeasured: true,
+        note: 'Look-ahead limiter delay is in the gain computer.',
+      },
+      source: { name: 'x', sampleRate: 48000, channels: 2, durationSeconds: 10 },
+      output: { sampleRate: 48000, channels: 2, durationSeconds: 10, bitDepth: 24, format: 'wav' },
+      presetName: 'X',
+      moduleBypass: {},
+      renderMs: 1,
+    });
+    expect(forged.latency.dryDelayMs).toBe(0);
+    expect(forged.latency.tapeDelayMs).toBe(0);
+    expect(forged.latency.limiterLookaheadMs).toBe(3);
+    expect(forged.latency.compressorLatencyMs).toBe(6);
+    expect(forged.latency.compressorLatencyMeasured).toBe(true);
+    expect(forged.latency.note).toMatch(/look-ahead/i);
+  });
+
   it('summarises a render in one line', () => {
     const { report } = runPipeline(pinkNoise({ seconds: 6, seed: 23 }), defaultParameters());
     const summary = summariseReport(report);

@@ -31,7 +31,7 @@ import { dynamicsCompressorMakeupCompensation } from '../audio/dsp/dynamics-comp
 import { linearQToDb } from '../audio/dsp/biquad.js';
 import { dbToGain, gainToDb, clamp } from '../audio/dsp/math.js';
 import { truePeakEstimate } from '../audio/analysis/true-peak.js';
-import { phaseRiskFromParameters } from '../audio/analysis/correlation.js';
+import { correlation, phaseRiskFromParameters } from '../audio/analysis/correlation.js';
 import { computeMatchCurve } from '../audio/analysis/spectral-match.js';
 import { randomSeed } from '../audio/dsp/prng.js';
 import { renderChain } from '../audio/render/render-master.js';
@@ -169,7 +169,11 @@ export function bootstrap() {
     // Fire-and-forget: a failed probe keeps the documented default, never silence.
     resolveDryDelay(ctx.sampleRate)
       .then((dry) => {
-        if (dry.measured && Math.abs(dry.seconds - chain.multiband.dryDelay.delayTime.value) > 1e-9) {
+        if (!dry.measured) return;
+        chain.multiband.dryDelaySeconds = dry.seconds;
+        // Only push the delay into the node when the wet path is actually in circuit;
+        // otherwise it is unreported latency (issue #23).
+        if (chain.multiband.wet.gain.value > 0) {
           chain.multiband.dryDelay.delayTime.value = dry.seconds;
         }
       })
@@ -189,6 +193,7 @@ export function bootstrap() {
       truePeakDb: s.peaks?.truePeakDb,
       spectral: spectralSummary(s.fingerprint ?? null),
       channels: store.getState().source.buffer?.numberOfChannels,
+      correlation: s.correlation,
     };
   }
 
@@ -367,10 +372,12 @@ export function bootstrap() {
         // The source never changes for a loaded file: measure it once (loudness, peaks,
         // crest factor, tonal shape) and reuse the result on every later slider move.
         if (sourceStatsCache.token !== token || !sourceStatsCache.stats) {
-          sourceStatsCache = {
-            token,
-            stats: await analyseBuffer(source, ['loudness', 'peaks', 'rms', 'fingerprint']),
-          };
+          const stats = await analyseBuffer(source, ['loudness', 'peaks', 'rms', 'fingerprint']);
+          let corr = 1;
+          if (source.numberOfChannels >= 2) {
+            corr = correlation(source.getChannelData(0), source.getChannelData(1));
+          }
+          sourceStatsCache = { token, stats: { ...stats, correlation: corr } };
         }
         const srcStats = sourceStatsCache.stats;
         const adaptation = adaptParameters(parameters, {
@@ -380,6 +387,7 @@ export function bootstrap() {
           truePeakDb: srcStats.peaks?.truePeakDb,
           spectral: spectralSummary(srcStats.fingerprint ?? null),
           channels: source.numberOfChannels,
+          correlation: srcStats.correlation,
         });
         currentAdaptation = {
           adaptations: adaptation.adaptations,
@@ -676,7 +684,13 @@ export function bootstrap() {
   initSourceHero({ store });
   const masterStatus = initMasterStatus({ store });
   initSonicSummary({ store });
-  initAbEnhanced({ store, pushParameters, getLiveGraph: () => live });
+  const abEnhanced = initAbEnhanced({
+    store,
+    pushParameters,
+    getLiveGraph: () => live,
+    setAbMode,
+    cycleAbMode,
+  });
   initMacroControls({ store, pushParameters });
   initPresetBrowserEnhanced({ store });
   const spatialLab = initSpatialLab({ store, getLiveGraph: () => live });
@@ -1189,7 +1203,19 @@ export function bootstrap() {
   initShortcuts({
     palette: () => (palette.isOpen() ? palette.close() : palette.open()),
     playPause: () => transport.toggle(),
-    toggleAb: () => cycleAbMode(),
+    toggleAb: () => {
+      if (abEnhanced?.isBlind) abEnhanced.flipBlind();
+      else cycleAbMode();
+    },
+    auditionA: () => {
+      if (!abEnhanced?.isBlind) setAbMode('A');
+    },
+    auditionB: () => {
+      if (!abEnhanced?.isBlind) setAbMode('B');
+    },
+    auditionC: () => {
+      if (!abEnhanced?.isBlind) setAbMode('C');
+    },
     monoAudition: () => setAudition(store.getState().ui.audition === 'mono' ? 'stereo' : 'mono'),
     sideAudition: () => setAudition(store.getState().ui.audition === 'side' ? 'stereo' : 'side'),
     undo: () => {

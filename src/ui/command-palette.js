@@ -175,6 +175,18 @@ export function initShortcuts(handlers) {
       case 'X':
         handlers.toggleAb?.(event);
         break;
+      case 'a':
+      case 'A':
+        handlers.auditionA?.(event);
+        break;
+      case 'b':
+      case 'B':
+        handlers.auditionB?.(event);
+        break;
+      case 'c':
+      case 'C':
+        handlers.auditionC?.(event);
+        break;
       case 'm':
       case 'M':
         handlers.monoAudition?.(event);
