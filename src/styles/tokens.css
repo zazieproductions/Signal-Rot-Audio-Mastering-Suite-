@@ -8,6 +8,11 @@
    and button. Do not reuse them decoratively and do not introduce a third
    accent.
 
+   The `--dom-*` tokens at the bottom of each theme block are a separate,
+   non-signal namespace: seven domain colours that organise the repository
+   itself (docs, diagrams, `area:*` labels, future section chips). They sit
+   beside the identity, they never join it. Spec: docs/COLOR-SYSTEM.md.
+
    The system below establishes reusable tokens for spacing, typography,
    surfaces, borders, radius and states — prefer these over one-off values.
    ============================================================================ */
@@ -37,6 +42,38 @@
   --ok-dim: #3d9d6b;
   --warn: #ffc861;
   --grid: #1a222a;
+
+  /* ---- Domain coding (repository organisation — not signal state) ----
+     Seven colours code the major areas of this repo: diagrams and tables
+     in docs/, the module map, GitHub `area:*` labels, and (later) any
+     section chip that wants to say "this widget belongs to that engine".
+     They NEVER encode audio state: `--orig` and `--proc` remain the only
+     signal accents, and no meter, scope, waveform or bypass control may
+     borrow a `--dom-*` hue. A domain colour is always paired with its
+     name in text — colour is reinforcement, never the sole channel.
+     Hexes are mirrored in docs/COLOR-SYSTEM.md and asserted in
+     tests/app/visual-system.test.js; change them in one commit or not at all. */
+  --dom-dsp: #a78bfa;
+  --dom-dsp-soft: rgba(167, 139, 250, 0.12);
+  --dom-dsp-line: rgba(167, 139, 250, 0.55);
+  --dom-spatial: #58a6ff;
+  --dom-spatial-soft: rgba(88, 166, 255, 0.12);
+  --dom-spatial-line: rgba(88, 166, 255, 0.55);
+  --dom-runtime: #c8e15c;
+  --dom-runtime-soft: rgba(200, 225, 92, 0.1);
+  --dom-runtime-line: rgba(200, 225, 92, 0.5);
+  --dom-export: #e26bd8;
+  --dom-export-soft: rgba(226, 107, 216, 0.12);
+  --dom-export-line: rgba(226, 107, 216, 0.55);
+  --dom-testing: #38bdf8;
+  --dom-testing-soft: rgba(56, 189, 248, 0.12);
+  --dom-testing-line: rgba(56, 189, 248, 0.55);
+  --dom-ui: #f472b6;
+  --dom-ui-soft: rgba(244, 114, 182, 0.12);
+  --dom-ui-line: rgba(244, 114, 182, 0.55);
+  --dom-app: #94a3b8;
+  --dom-app-soft: rgba(148, 163, 184, 0.1);
+  --dom-app-line: rgba(148, 163, 184, 0.45);
 
   /* ---- Workspace accents (related but distinct) ---- */
   --master-accent: var(--proc);
@@ -84,8 +121,8 @@
 
   /* ---- Elevation ---- */
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 12px 30px -18px rgba(0, 0, 0, 0.8);
-  --shadow-lg: 0 1px 0 rgba(255,255,255,0.03), 0 18px 40px -16px rgba(0,0,0,0.85);
-  --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-lg: 0 1px 0 rgba(255, 255, 255, 0.03), 0 18px 40px -16px rgba(0, 0, 0, 0.85);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
   /* ---- Focus ---- */
   --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--proc);
@@ -122,6 +159,31 @@
   --warn: #96650a;
   --grid: #ddd8cc;
 
+  /* Domain coding, light theme. Same seven identities, re-inked for the
+     bright room so each still clears 4.5:1 against the paper surfaces —
+     the numbers are asserted, not eyeballed (tests/app/visual-system). */
+  --dom-dsp: #6d28d9;
+  --dom-dsp-soft: rgba(109, 40, 217, 0.08);
+  --dom-dsp-line: rgba(109, 40, 217, 0.45);
+  --dom-spatial: #1d4ed8;
+  --dom-spatial-soft: rgba(29, 78, 216, 0.08);
+  --dom-spatial-line: rgba(29, 78, 216, 0.45);
+  --dom-runtime: #456f0d;
+  --dom-runtime-soft: rgba(69, 111, 13, 0.08);
+  --dom-runtime-line: rgba(69, 111, 13, 0.4);
+  --dom-export: #a21caf;
+  --dom-export-soft: rgba(162, 28, 175, 0.08);
+  --dom-export-line: rgba(162, 28, 175, 0.45);
+  --dom-testing: #0369a1;
+  --dom-testing-soft: rgba(3, 105, 161, 0.08);
+  --dom-testing-line: rgba(3, 105, 161, 0.45);
+  --dom-ui: #be185d;
+  --dom-ui-soft: rgba(190, 24, 93, 0.08);
+  --dom-ui-line: rgba(190, 24, 93, 0.45);
+  --dom-app: #475569;
+  --dom-app-soft: rgba(71, 85, 105, 0.08);
+  --dom-app-line: rgba(71, 85, 105, 0.4);
+
   --surface-1: var(--panel);
   --surface-2: var(--panel2);
   --surface-3: var(--panel3);
@@ -130,7 +192,7 @@
   --surface-active: rgba(179, 105, 15, 0.1);
 
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 14px 30px -20px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 8px 32px -12px rgba(0,0,0,0.18);
+  --shadow-lg: 0 8px 32px -12px rgba(0, 0, 0, 0.18);
   --spatial-accent-soft: #d6f0ee;
 }
 
@@ -160,7 +222,9 @@
     --motion: 0.001s;
     --motion-slow: 0.001s;
   }
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;

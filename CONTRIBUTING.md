@@ -35,6 +35,11 @@ baseline, and [CI status](ci/README.md) before claiming a pull request is fully 
 | Interface                   | `src/ui/**` — never construct audio nodes here              |
 | Drawing                     | `src/visualizers/**` — never allocate per frame             |
 
+Which workstream owns which ground, who reviews what, and the boundary conventions between
+them: [`docs/WORKSTREAMS.md`](docs/WORKSTREAMS.md). The seven domain colours those documents
+and the diagrams share are specified in [`docs/COLOR-SYSTEM.md`](docs/COLOR-SYSTEM.md);
+`npm run test` keeps code, docs and GitHub labels in sync.
+
 ### Adding a parameter
 
 Add one entry to `PARAMETER_LIST`:

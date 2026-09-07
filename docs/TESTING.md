@@ -1,13 +1,18 @@
 # Testing
 
 ```bash
-npm run test           # Node + jsdom suites; see runner output for current totals
+npm run test             # 1,070 tests in Node + jsdom; duration is runner-reported
 npm run test:watch
 npm run test:coverage
-npm run test:e2e       # UI browser tests — npx playwright install chromium first
-npm run test:conformance # Web Audio — install chromium firefox webkit first
-npm run check          # lint + test + independent export validation + build
+npm run test:e2e         # 37 Playwright specs — npx playwright install chromium first
+npm run test:conformance # 7 real-browser measurement specs × chromium/firefox/webkit
+npm run validate:exports # independent parsers + ffprobe over production output
+npm run check            # lint + test + export validation + build
 ```
+
+Counts above are the measured reality at this commit and appear verbatim in the diagrams
+below; `npm run test` prints the live totals. Domain colours used here and in every diagram
+are the seven from [COLOR-SYSTEM.md](COLOR-SYSTEM.md).
 
 ## Philosophy
 
@@ -33,18 +38,24 @@ Three rules follow:
 
 ```
 tests/
-├── helpers/           synthetic signals, independent parsers, fake Web Audio/canvas
-├── dsp/               loudness, limiter, saturation, source adaptation, crossover maths
-├── format/            WAV, AIFF, ADM, layouts, RIFF/RF64/BW64 planning
-├── interoperability/  hostile metadata, independent round trips, delivery packages
-├── app/               parameters, state, preset IO/catalogue/families
-├── integration/       graph topology and full post-render pipeline
-├── runtime/           scheduler, worker RPC, memory, waveform and streaming primitives
-├── ui/                controls, product experience and real-markup bootstrap
-├── fixtures/          deterministic sources and committed measurement goldens
-├── conformance/       baseline/candidate classification and layout contracts (Node)
-└── browser/           real OfflineAudioContext measurements (Playwright)
-e2e/                   import, controls, export, responsive UI, accessibility (Playwright)
+├── helpers/
+│   ├── signals.js              synthetic test signals
+│   ├── riff.js                 independent RIFF / IFF / chna / axml parsers
+│   ├── fake-audio-context.js   recording Web Audio implementation
+│   └── fake-canvas.js          no-op 2D context for jsdom
+├── dsp/              238 tests ● DSP      math · biquad · prng · loudness · true-peak · limiter ·
+│                                          transient · dither · crossover · correlation · match
+├── format/           159 tests ● EXPORT   wav · aiff · adm · layouts · download
+├── interoperability/ 333 tests ● EXPORT   independent round-trips · hostile metadata · delivery
+├── app/               93 tests ● APP      parameters · state · presets-io · presets-catalog ·
+│                                          visual-system (the colour/diagram guard)
+├── integration/      154 tests ● DSP      graph topology (126) · full post-render pipeline (28)
+├── runtime/            6 tests ● RUNTIME  scheduler · rpc · memory plan · pyramid · stream
+├── fixtures/          13 tests ● DSP      golden bank snapshots
+├── conformance/       20 tests ● TESTING  lab classification + immersive catalog fixtures
+└── ui/                54 tests ● UI       controls · tabs · signal-flow · presets · boot · UX
+e2e/                 37 specs   ● TESTING  Playwright · import · controls · export · responsive · a11y
+tests/browser/        7 specs   ● TESTING  OfflineAudioContext conformance lab (3 engines)
 ```
 
 ## Test signals
@@ -69,7 +80,7 @@ e2e/                   import, controls, export, responsive UI, accessibility (P
 
 [`tests/helpers/fake-audio-context.js`](../tests/helpers/fake-audio-context.js) implements
 the Web Audio _node_ API without processing audio. It records topology and parameter
-values, which lets graph tests assert things a browser test could not easily reach:
+values, which lets `graph.test.js` (126 tests) assert things a browser test could not easily reach:
 
 - Every declared speaker feed exists and is connected to the source, for all six layouts
 - Bypass really neutralises a module, and only that module
@@ -122,7 +133,7 @@ because the fake was too forgiving.
 - LFE channels are excluded from detection but still gained
 - Material below the ceiling comes out **bit-identical**
 
-### `tests/dsp/multiband-crossover.test.js`
+### `tests/dsp/multiband-crossover.test.js` — 15
 
 - The ideal-filter model sums to **< 0.001 dB** at nine mix positions, four sample rates
   and four crossover-frequency pairs; the browser wet-sum contract remains open (A-6)
@@ -148,7 +159,7 @@ because the fake was too forgiving.
 - A steady 2 kHz tone is left alone to within 0.02
 - Bounded to ±12 dB; no NaN on silence
 
-### `tests/format/`
+### `tests/format/` — 159
 
 WAV: header fields, `WAVE_FORMAT_IEEE_FLOAT`, 24-bit packing, exact float round-trip,
 half-LSB 16-bit round-trip, channel interleave order, extensible fields and GUID tail,
@@ -186,27 +197,27 @@ names, HTML-injection filenames, truncation preserving the extension, unicode pr
 - `tests/fixtures/` and `tests/conformance/`: golden audio and comparison rules;
   [the browser lab](CONFORMANCE.md) verifies real nodes independently of fake topology.
 
-### `tests/app/`
+### `tests/app/` — 93
 
 Schema integrity (every parameter complete, defaults in range, divergences explained),
 clamping, hostile input, prototype pollution, preset round-trip, migration from a realistic
 pre-7.0 file, the nine enforced catalogue safety rules, store subscriptions, undo/redo
 bounds, deterministic reset.
 
-### `tests/integration/`
+### `tests/integration/` — 154
 
-`graph.test.js` — topology, parameter application, bypass semantics, every catalogue
+`graph.test.js` (126) — topology, parameter application, bypass semantics, every catalogue
 preset against a real graph, immersive feeds and binaural placement.
 
-`render-pipeline.test.js` — the whole post-render pipeline: convergence to −14, −18 and
+`render-pipeline.test.js` (28) — the whole post-render pipeline: convergence to −14, −18 and
 −23 LUFS within 0.25 LU; honest reporting of the unreachable −9 LUFS target; the ceiling
 held at four values × two targets, re-verified independently; **bit-identical output for the
 same seed**; duration, rate and channel count preserved through WAV and AIFF; the ceiling
 surviving 16-bit quantisation; the render report's completeness and JSON-safety.
 
-### `tests/ui/`
+### `tests/ui/` — 54
 
-`controls.test.js` — `el()` never produces HTML from dynamic values; the ARIA tab
+`controls.test.js` (30) — `el()` never produces HTML from dynamic values; the ARIA tab
 pattern including arrow/Home/End and roving tabindex; schema-driven control rendering,
 label association, `aria-valuetext`, badges, cross-parameter disabling; the signal-flow view;
 the preset panel.
@@ -248,6 +259,68 @@ Real Chromium, real Web Audio, real downloads.
 > Vitest or the export CI check. General CI and conformance workflows remain uninstalled
 > templates; see [CI status](../ci/README.md) and [recorded browser findings](FINDINGS-FOR-AGENT-A.md).
 
+## The pipeline
+
+Four validation routes are shown below. Only export interoperability (Gate 4) is active
+CI; general CI, UI browser and conformance jobs remain templates in `ci/`. Gate 1 runs
+locally via `npm run check`, with formatting checked separately. The colours mark domain
+ownership ([WORKSTREAMS.md](WORKSTREAMS.md)); they do not imply a gate is installed.
+
+```mermaid
+flowchart LR
+  SRC["change lands"]:::dom-app
+
+  subgraph GATE1["Gate 1 · local check / general CI template"]
+    F["eslint · prettier check is separate"]:::dom-testing
+    V["vitest — 1,070 tests in Node + jsdom<br/>dsp 238 · interop 333 · format 159 · integration 154<br/>app 93 · ui 54 · fixtures 13 · conformance 20 · runtime 6"]:::dom-testing
+    B["vite build"]:::dom-app
+  end
+
+  subgraph GATE2["Gate 2 · browser template — not installed"]
+    E2E["37 Playwright specs — real Chromium<br/>import · transport · downloaded bytes · a11y · responsive"]:::dom-ui
+  end
+
+  subgraph GATE3["Gate 3 · conformance template — not installed"]
+    GO["goldens + lab:compare + lab:bench (Node)"]:::dom-dsp
+    BR["7 specs × chromium / firefox / webkit<br/>OfflineAudioContext measurements → lab-results/*.json"]:::dom-testing
+    FI["thresholds exceeded? finding + kept test<br/>land in docs/FINDINGS-FOR-AGENT-A.md"]:::dom-testing
+  end
+
+  subgraph GATE4["Gate 4 · export interoperability — Agent C"]
+    FX["fixtures:export — real files, production writers"]:::dom-export
+    IP["independent RIFF/ADM parsers + ffprobe"]:::dom-export
+    AS["asserts: ≥25 fixtures · channel order recovered<br/>from the audio · checksums · no over-claims<br/>(Atmos certified / XSD validated stay false)"]:::dom-testing
+  end
+
+  SRC --> F --> V --> B --> E2E
+  V --> GO --> BR
+  BR -- "recorded vs open" --> FI
+  B --> FX --> IP --> AS
+  AS -- "a malformed deliverable<br/>never passes quietly" --> STOP["release gate"]:::dom-export
+
+  classDef dom-dsp fill:#222131,stroke:#a78bfa,color:#a78bfa
+  classDef dom-export fill:#2a1a2c,stroke:#e26bd8,color:#e26bd8
+  classDef dom-ui fill:#2d1b27,stroke:#f472b6,color:#f472b6
+  classDef dom-testing fill:#112631,stroke:#38bdf8,color:#38bdf8
+  classDef dom-app fill:#1f2328,stroke:#94a3b8,color:#94a3b8
+```
+
+### Suite sizes, in numbers
+
+```text
+tests/interoperability   333  ██████████████████████████████████████████████
+tests/dsp                238  ██████████████████████████████
+tests/format             159  ████████████████████
+tests/integration        154  ███████████████████
+tests/app                 93  ████████████
+tests/ui                  54  ███████
+e2e (Playwright specs)    37  █████
+tests/conformance         20  ███
+tests/fixtures            13  ██
+tests/runtime              6  █
+tests/browser (lab specs)  7  █        1 █ = 8 tests · vitest totals measured 2026-09-07
+```
+
 ## Coverage
 
 ```bash
@@ -267,3 +340,6 @@ wiring, covered by the boot smoke test and the e2e suite rather than by unit tes
    reproduction of the old behaviour if it is cheap to express.
 4. If you are changing what a render sounds like, add a measurement to
    `tests/integration/render-pipeline.test.js` and put the before/after numbers in the PR.
+5. If you are changing domain colours, diagram classDefs or the repo map, nothing to do —
+   `tests/app/visual-system.test.js` reads the spec, the tokens and every diagram, and
+   fails if any of them drift ([COLOR-SYSTEM.md](COLOR-SYSTEM.md)).

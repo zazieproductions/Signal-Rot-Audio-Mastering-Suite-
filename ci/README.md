@@ -6,8 +6,9 @@
 ADM structural validation, independent export validation and ffprobe/channel-order checks.
 It does **not** run the full application, DSP, runtime, UI or browser suites.
 
-The Labeler workflow uses `.github/labeler.yml` (the v4 glob format) and the existing
-`documentation` label. A missing config previously failed every PR's label check.
+The Labeler workflow uses `.github/labeler.yml` (the v4 glob format), preserving the
+seven domain `area:*` labels alongside the general `documentation` matcher. A missing
+config previously failed every PR's label check.
 
 ## Templates, not active gates
 

@@ -1,4 +1,84 @@
-# actions/labeler@v4 uses arrays of path globs. Keep this in sync with label.yml.
-# Use the existing repository label; do not infer feature/bug labels from paths alone.
+# Path → area labels, driven by the repository domain map.
+#
+# Consumed by actions/labeler@v4 (.github/workflows/label.yml). The seven area labels below
+# carry the exact colours of docs/COLOR-SYSTEM.md so a triaged PR is literally coloured
+# by the domain it touches. Labels must exist in the repo before they can be applied —
+# create them once with the `gh label create` lines in docs/COLOR-SYSTEM.md §GitHub labels.
+#
+# Rules here intentionally mirror the machine-readable map in docs/COLOR-SYSTEM.md;
+# tests/app/visual-system.test.js checks the label names, the spec checks the colours.
+
+area:dsp:
+  - 'src/audio/dsp/**'
+  - 'src/audio/analysis/**'
+  - 'src/audio/graph/**'
+  - 'src/audio/render/**'
+  - 'src/audio/adaptive/**'
+  - 'src/audio/context.js'
+  - 'tests/dsp/**'
+  - 'tests/integration/**'
+  - 'tests/fixtures/**'
+  - 'docs/DSP-SIGNAL-FLOW.md'
+  - 'docs/LOUDNESS-ANALYSIS.md'
+  - 'docs/TRUE-PEAK-LIMITER.md'
+  - 'docs/GAIN-STRUCTURE-AUDIT.md'
+
+area:spatial:
+  - 'src/audio/immersive/**'
+  - 'src/app/immersive-controller.js'
+  - 'src/ui/spatial-lab.js'
+  - 'src/visualizers/speaker-map.js'
+  - 'src/visualizers/elevation-view.js'
+  - 'src/visualizers/spatial-energy.js'
+  - 'src/visualizers/motion-viz.js'
+  - 'docs/IMMERSIVE-AUDIO.md'
+  - 'docs/SONIC-LAB-20.4.md'
+
+area:runtime:
+  - 'src/runtime/**'
+  - 'src/workers/**'
+  - 'tests/runtime/**'
+
+area:export:
+  - 'src/audio/encode/**'
+  - 'src/audio/immersive/adm.js'
+  - 'src/app/export-controller.js'
+  - 'src/ui/export-summary.js'
+  - 'tools/export-validation/**'
+  - 'tests/format/**'
+  - 'tests/interoperability/**'
+  - '.github/workflows/export-interoperability.yml'
+  - 'docs/EXPORT-INTEROPERABILITY.md'
+
+area:testing:
+  - 'tests/**'
+  - 'e2e/**'
+  - 'ci/**'
+  - 'tools/audio-regression/**'
+  - 'tools/benchmarks/**'
+  - 'tools/conformance/**'
+  - 'docs/TESTING.md'
+  - 'docs/CONFORMANCE.md'
+  - 'docs/AUDIO-REGRESSION.md'
+  - 'docs/FINDINGS-FOR-AGENT-A.md'
+
+area:ui:
+  - 'src/ui/**'
+  - 'src/visualizers/**'
+  - 'src/styles/**'
+  - 'index.html'
+  - 'tests/ui/**'
+  - 'docs/PRODUCT-EXPERIENCE.md'
+
+area:app:
+  - 'src/app/**'
+  - 'src/main.js'
+  - 'src/presets/**'
+  - 'tests/app/**'
+  - 'docs/PRESET-SCHEMA.md'
+  - 'docs/COLOR-SYSTEM.md'
+  - 'docs/WORKSTREAMS.md'
+
+# General documentation triage alongside domain ownership.
 documentation:
   - '**/*.md'

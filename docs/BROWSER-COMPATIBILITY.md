@@ -18,12 +18,12 @@ load time and shows what it actually found.
 
 ## Verification status for 7.0
 
-| Environment                          | Status                                                                                                                                                                                           |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Node 22 + jsdom                      | **tested** — 544 Vitest tests including a boot smoke test that loads the real `index.html`, stubs Web Audio and canvas, runs `bootstrap()`, and asserts no console errors                        |
-| Vite dev server and production build | **tested** — both build and serve cleanly                                                                                                                                                        |
-| Chromium via Playwright              | **not run during the 7.0 refactor.** The development sandbox had no network access to the Playwright browser CDN. The 37 specs in `e2e/` are written and configured; CI runs them on every push. |
-| Firefox, Safari, mobile              | **not run.** Claims below are expectations from platform documentation.                                                                                                                          |
+| Environment                          | Status                                                                                                                                                                                                                            |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node 22 + jsdom                      | **tested** — 1,070 Vitest tests including a boot smoke test that loads the real `index.html`, stubs Web Audio and canvas, runs `bootstrap()`, and asserts no console errors                                                       |
+| Vite dev server and production build | **tested** — both build and serve cleanly                                                                                                                                                                                         |
+| Chromium via Playwright              | **not run during the 7.0 refactor.** The development sandbox had no network access to the Playwright browser CDN. The 37 specs in `e2e/` are written and configured; the browser CI job remains an uninstalled template in `ci/`. |
+| Firefox, Safari, mobile              | **not run.** Claims below are expectations from platform documentation.                                                                                                                                                           |
 
 ---
 

@@ -14,6 +14,10 @@
   export checks are authoritative. Preserve `tests/format/` and
   `tests/interoperability/`; structural/decoder validation is not XSD or Atmos certification.
 
+- `39d9db7`: retain the seven domain colours, diagrams and `area:*` Labeler rules.
+  `tests/app/visual-system.test.js` checks their shared contract; do not replace the
+  domain config with a documentation-only matcher.
+
 ## Integration contracts
 
 - PCM is `{ sampleRate, length, channels: Float32Array[] }`.
