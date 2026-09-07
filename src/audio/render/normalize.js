@@ -40,9 +40,29 @@
  * `targetReachable: false`, and the render report says how far short it fell and why.
  * Getting louder than this requires clipping, distortion, or a different mix.
  *
+ * ── Loudness ambition vs transparency ────────────────────────────────────────────────
+ * LUFS targets are guidelines, not mandatory destinations. If reaching the target would
+ * require destructive processing, the loop settles for a quieter master instead:
+ *
+ *  · Every pass is *scored*, not just measured: `|delta| + overBudget × 1.5`, where the
+ *    budget is 1.5 dB of *average* limiter gain reduction. A pass that lands closer to
+ *    the target by crushing the mix scores worse than a quieter, cleaner pass.
+ *  · If average reduction passes 3 dB while the target is still short, the loop stops —
+ *    more gain would only buy more gain reduction — sets `ambitionReduced: true`, and
+ *    keeps the best-scoring (cleaner) pass.
+ *  · If the loop converged on the target but only by limiting constantly (average
+ *    reduction beyond 3 dB), it steps the gain back down and re-renders once, delivering
+ *    a quieter master that still breathes.
+ *
+ * The budget uses *average* reduction deliberately. Sparse transient limiting — deep cuts
+ * on a few snare hits — is normal mastering; constant several-dB reduction across the
+ * programme is crushing. The two look identical in `maxGainReductionDb` and nothing alike
+ * in the average.
+ *
  * The caller decides whether to run the loop (`refine: true` for the final export) or a
  * single pass (`refine: false` for previews and batch, where speed matters more than the
- * last 0.2 LU).
+ * last 0.2 LU). The ambition guard only engages in the refining loop — a single pass
+ * reports what it did and lets the report speak.
  *
  * ── Crest-factor-aware targets ───────────────────────────────────────────────────────
  * Saturation of the limiter is only half the story: a target can be *reachable* only by
@@ -53,6 +73,8 @@
  * that stays inside the budget instead — below the requested target and reported, never
  * louder than the target, never more limited than the budget. This is what
  * `docs/GAIN-STRUCTURE-AUDIT.md` §2.6 calls for: loudness is the output, not the input.
+ * The ambition guard above is the budget's always-on sibling for callers that supply no
+ * explicit budget: both refuse to trade the sound for the number, and both say so.
  */
 
 import { dbToGain, clamp } from '../dsp/math.js';
@@ -79,11 +101,29 @@ export const CREST_AWARE_BUDGET = Object.freeze({
  * @property {number} deltaLu              achieved − target
  * @property {number} passes
  * @property {boolean} targetReachable  false when the target was not delivered (limiter
- *     saturation, or a crest-aware budget that refused to brickwall the material)
+ *     saturation, the ambition guard, or a crest-aware budget that refused to brickwall
+ *     the material)
+ * @property {boolean} ambitionReduced  true when loudness ambition was cut to protect the sound
+ * @property {number} effectiveTargetLufs the loudness actually pursued (below target when reduced)
  * @property {object} crestAware  { capped, requestedLufs, deliveredLufs, maxAverageGainReductionDb,
  *     maxPeakGainReductionDb } — present when a GR budget was supplied
  * @property {import('./limiter.js').LimiterResult} limiter
  */
+
+/** Average limiter reduction (dB) tolerated before a pass starts scoring badly. */
+export const LIMITER_GR_BUDGET_DB = 1.5;
+/** Average reduction (dB) beyond which the loop stops pushing, full stop. */
+export const LIMITER_GR_CEILING_DB = 3;
+
+/**
+ * Score a refinement pass. Lower is better. Loudness error counts 1:1; every dB of
+ * average limiting beyond the budget counts 1.5×, so the loop prefers a quieter clean
+ * master over a louder crushed one.
+ */
+export function scoreRefinementPass(deltaLu, averageGainReductionDb) {
+  const over = Math.max(0, -averageGainReductionDb - LIMITER_GR_BUDGET_DB);
+  return Math.abs(deltaLu) + over * 1.5;
+}
 
 /**
  * Normalise to a target integrated loudness and limit to a true-peak ceiling.
@@ -137,6 +177,8 @@ export function normalizeAndLimit(data, opts) {
       deltaLu: after.integrated - targetLufs,
       passes: 1,
       targetReachable: true,
+      ambitionReduced: false,
+      effectiveTargetLufs: targetLufs,
       limiter,
     };
   }
@@ -153,10 +195,13 @@ export function normalizeAndLimit(data, opts) {
   // Previous (gain, achieved) pair, for the secant slope estimate.
   let previousGainDb = null;
   let previousAchieved = null;
-  // Best result seen so far, so a diverging late pass cannot make things worse.
+  // Best result seen so far, scored for loudness AND cleanliness, so a diverging late
+  // pass — or a crushed one — cannot make things worse.
   let bestGainDb = totalGainDb;
+  let bestScore = Infinity;
   let bestDelta = Infinity;
   let saturated = false;
+  let ambitionReduced = false;
 
   const maxIterations = refine ? maxPasses : 1;
   for (let pass = 0; pass < maxIterations; pass++) {
@@ -176,10 +221,27 @@ export function normalizeAndLimit(data, opts) {
     if (!Number.isFinite(achieved)) break;
 
     const delta = achieved - targetLufs;
-    if (Math.abs(delta) < Math.abs(bestDelta)) {
+    const score = refine
+      ? scoreRefinementPass(delta, limiter.averageGainReductionDb)
+      : Math.abs(delta);
+    if (score < bestScore) {
+      bestScore = score;
       bestDelta = delta;
       bestGainDb = totalGainDb;
     }
+
+    // The ambition guard: constant heavy limiting while still short of the target means
+    // more gain buys only more gain reduction. Stop pushing and keep the cleaner pass.
+    if (
+      refine &&
+      -limiter.averageGainReductionDb > LIMITER_GR_CEILING_DB &&
+      delta < -toleranceLu
+    ) {
+      saturated = true;
+      ambitionReduced = true;
+      break;
+    }
+
     if (Math.abs(delta) <= toleranceLu || pass === maxIterations - 1) break;
 
     // Secant slope: how much delivered loudness moved per dB of gain last time.
@@ -202,13 +264,42 @@ export function normalizeAndLimit(data, opts) {
   }
 
   // If the final pass was not the best one, redo the best.
-  if (refine && pristine && Math.abs(achieved - targetLufs) > Math.abs(bestDelta) + 1e-9) {
+  const finalScore = refine && limiter
+    ? scoreRefinementPass(achieved - targetLufs, limiter.averageGainReductionDb)
+    : Math.abs(achieved - targetLufs);
+  if (refine && pristine && finalScore > bestScore + 1e-9) {
     for (let c = 0; c < data.channels.length; c++) data.channels[c].set(pristine.channels[c]);
     totalGainDb = bestGainDb;
     applyGain(data, dbToGain(totalGainDb));
     limiter = limitTruePeak(data, { ceilingDb, lfeChannels });
     achieved = analyseLoudness(data, { weights: channelWeights }).integrated;
     passes += 1;
+    if (Math.abs(achieved - targetLufs) > toleranceLu && bestDelta < -toleranceLu) {
+      ambitionReduced = true;
+    }
+  }
+
+  // Converged on the number but only by crushing: step back down and re-render once.
+  // A quieter master that breathes beats a louder one that doesn't.
+  if (
+    refine &&
+    pristine &&
+    Number.isFinite(achieved) &&
+    Math.abs(achieved - targetLufs) <= toleranceLu &&
+    limiter &&
+    -limiter.averageGainReductionDb > LIMITER_GR_CEILING_DB
+  ) {
+    const stepBackDb = Math.min(
+      4,
+      -limiter.averageGainReductionDb - LIMITER_GR_CEILING_DB + 1.5,
+    );
+    for (let c = 0; c < data.channels.length; c++) data.channels[c].set(pristine.channels[c]);
+    totalGainDb -= stepBackDb;
+    applyGain(data, dbToGain(totalGainDb));
+    limiter = limitTruePeak(data, { ceilingDb, lfeChannels });
+    achieved = analyseLoudness(data, { weights: channelWeights }).integrated;
+    passes += 1;
+    ambitionReduced = true;
   }
 
   // ── Crest-factor-aware budget enforcement ────────────────────────────────────────
@@ -291,6 +382,9 @@ export function normalizeAndLimit(data, opts) {
       Number.isFinite(finalDelta) &&
       finalDelta < -toleranceLu
     ),
+    ambitionReduced: ambitionReduced || crestCapped,
+    effectiveTargetLufs:
+      (ambitionReduced || crestCapped) && Number.isFinite(achieved) ? achieved : targetLufs,
     crestAware,
     limiter,
   };

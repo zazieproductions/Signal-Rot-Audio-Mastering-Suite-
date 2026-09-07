@@ -24,43 +24,50 @@ export const GENRE_PRESETS = [
     name: 'Streaming -14',
     tag: 'loud',
     description: 'Spotify / Apple / YouTube target, gentle glue.',
-    parameters: { targetLUFS: -14, ceiling: -1.0, drive: 1.2, clarity: 0.6, air: 0.8, sat: 4 },
-    audit: 'Matches the loudness normalisation target used by the major streaming services.',
+    parameters: { targetLUFS: -14, ceiling: -1.0, drive: 0, clarity: 0.3, air: 0.4, sat: 0 },
+    audit:
+      'Matches the loudness normalisation target used by the major streaming services. ' +
+      'Retuned conservative: no drive, no saturation, presence under +0.5 dB.',
   }),
   preset({
     name: 'Club / EDM',
     tag: 'loud',
+    risk: 'caution',
     description: 'Loud, tight mono low end, bright top.',
     parameters: {
       targetLUFS: -9,
       ceiling: -1.0,
-      drive: 3,
+      drive: 1.5,
       bassMono: 120,
-      air: 1.8,
-      clarity: 1,
-      width: 1.1,
-      sat: 10,
-      mbLow: 20,
+      air: 1.2,
+      clarity: 0.8,
+      width: 1.05,
+      sat: 4,
+      mbLow: 18,
     },
     audit:
       'Ceiling raised from −0.5 to −1.0 dBTP during review — a −9 LUFS master is almost ' +
-      'certainly going through a lossy codec. Low-band compression added to keep the sub ' +
-      'steady under 3 dB of drive.',
+      'certainly going through a lossy codec. Low-band compression keeps the sub steady. ' +
+      'Deliberately loud: the engine will still refuse to crush a source that cannot get ' +
+      'there transparently.',
   }),
   preset({
     name: 'Hip-Hop',
     tag: 'warm',
+    risk: 'caution',
     description: 'Thick lows, controlled width, present mids.',
     parameters: {
       targetLUFS: -10,
       ceiling: -1.0,
-      drive: 2.5,
-      warm: 1.6,
+      drive: 1,
+      warm: 1.2,
       bassMono: 90,
-      clarity: 1.0,
-      sat: 8,
+      clarity: 0.8,
+      sat: 3,
     },
-    audit: 'Ceiling raised from −0.5 to −1.0 dBTP during review.',
+    audit:
+      'Ceiling raised from −0.5 to −1.0 dBTP during review. Retuned: drive and ' +
+      'saturation halved — the weight comes from the mix, not the master.',
   }),
   preset({
     name: 'Ambient / Drone',
@@ -69,11 +76,11 @@ export const GENRE_PRESETS = [
     parameters: {
       targetLUFS: -18,
       ceiling: -1.0,
-      width: 1.35,
-      air: 1.5,
-      warm: 0.8,
-      sat: 3,
-      bassMono: 50,
+      width: 1.3,
+      air: 1.0,
+      warm: 0.6,
+      sat: 0,
+      bassMono: 60,
     },
     audit:
       'No dynamics processing at all — the loudness target does the work. Bass-mono at 50 Hz ' +
@@ -84,7 +91,7 @@ export const GENRE_PRESETS = [
     name: 'Acoustic / Folk',
     tag: 'natural',
     description: 'Light touch, natural stereo, no pump.',
-    parameters: { targetLUFS: -16, ceiling: -1.0, drive: 0.5, clarity: 0.5, warm: 0.5, sat: 2 },
+    parameters: { targetLUFS: -16, ceiling: -1.0, drive: 0, clarity: 0.4, warm: 0.4, sat: 0 },
     audit: 'Deliberately the least processed preset after Transparent.',
   }),
   preset({
@@ -95,15 +102,16 @@ export const GENRE_PRESETS = [
     parameters: {
       targetLUFS: -9,
       ceiling: -1.0,
-      drive: 3,
+      drive: 1.5,
       ms: -0.1,
-      clarity: 1.5,
+      clarity: 1.2,
       bassMono: 140,
-      sat: 14,
+      sat: 8,
     },
     audit:
-      'Ceiling raised from −0.5 to −1.0 dBTP. At −9 LUFS with 14 % saturation this will ' +
-      'engage the limiter heavily; that is the sound, but check the export report.',
+      'Ceiling raised from −0.5 to −1.0 dBTP. Deliberately loud and mid-forward; ' +
+      'saturation trimmed 14 → 8 so the aggression comes from the target, not the ' +
+      'waveshaper. Check the export report for limiter activity.',
   }),
   preset({
     name: 'Classical',
@@ -121,15 +129,15 @@ export const GENRE_PRESETS = [
     parameters: {
       targetLUFS: -12,
       ceiling: -1.0,
-      drive: 1.2,
-      clarity: 1.2,
-      air: 1.2,
-      warm: 0.6,
-      width: 1.2,
+      drive: 0.5,
+      clarity: 1.0,
+      air: 1.0,
+      warm: 0.5,
+      width: 1.15,
       bassMono: 100,
-      mbMid: 15,
-      mbMix: 75,
-      sat: 4,
+      mbMid: 12,
+      mbMix: 70,
+      sat: 2,
     },
     audit:
       'The presence shelf and air lift a vocal without opening the top too far. mbMid 15 at a ' +
@@ -139,25 +147,26 @@ export const GENRE_PRESETS = [
   preset({
     name: 'Drum & Bass',
     tag: 'bass',
+    risk: 'caution',
     description: 'Sub-heavy, punchy, transient-forward club master with a wide, bright top.',
     parameters: {
       targetLUFS: -10,
       ceiling: -1.0,
-      drive: 2.5,
-      sub: 1.8,
-      air: 1.5,
-      clarity: 1.4,
-      transAttack: 25,
-      mbLow: 30,
-      mbMix: 90,
+      drive: 1,
+      sub: 1.2,
+      air: 1.2,
+      clarity: 1.0,
+      transAttack: 12,
+      mbLow: 22,
+      mbMix: 80,
       bassMono: 130,
-      width: 1.15,
-      sat: 12,
+      width: 1.1,
+      sat: 5,
     },
     audit:
-      'Sub is +1.8 dB at 55 Hz with no warm shelf stacking on it; the low band and 130 Hz ' +
-      'bass-mono keep the bottom steady. transAttack 25 is +1.5 dB of transient emphasis; at ' +
-      '−10 LUFS expect noticeable limiter action on the snare and kick. sat 12 is safe at this target.',
+      'Sub is +1.2 dB at 55 Hz with no warm shelf stacking on it; the low band and 130 Hz ' +
+      'bass-mono keep the bottom steady. transAttack 12 is +0.7 dB of transient emphasis; at ' +
+      '−10 LUFS expect the limiter to catch kick and snare peaks. Retuned conservative.',
   }),
   preset({
     name: 'Reggae / Dub',
@@ -166,17 +175,17 @@ export const GENRE_PRESETS = [
     parameters: {
       targetLUFS: -14,
       ceiling: -1.0,
-      drive: 1,
-      sub: 1.6,
-      warm: 0.8,
-      tilt: -0.6,
-      width: 1.3,
+      drive: 0.5,
+      sub: 1.2,
+      warm: 0.6,
+      tilt: -0.5,
+      width: 1.25,
       bassMono: 130,
-      depth: 35,
+      depth: 30,
       depthSize: 'large',
-      mbLow: 20,
+      mbLow: 15,
       mbMix: 70,
-      sat: 8,
+      sat: 3,
     },
     audit:
       'sub + warm is +2.4 dB at 50 Hz before the low band — intentional for a dub bottom, but ' +

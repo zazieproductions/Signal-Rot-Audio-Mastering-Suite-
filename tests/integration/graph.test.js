@@ -124,10 +124,10 @@ describe('parameter application', () => {
     const ctx = new FakeAudioContext();
     const chain = buildMasteringChain(ctx);
     applyParameters(chain, params({ mbLow: 50, mbMid: 0, mbHigh: 100 }));
-    expect(chain.multiband.compLow.threshold.value).toBeCloseTo(-18, 6);
-    expect(chain.multiband.compLow.ratio.value).toBeCloseTo(3, 6);
+    expect(chain.multiband.compLow.threshold.value).toBeCloseTo(-12, 6);
+    expect(chain.multiband.compLow.ratio.value).toBeCloseTo(2, 6);
     expect(chain.multiband.compMid.ratio.value).toBe(1);
-    expect(chain.multiband.compHigh.threshold.value).toBeCloseTo(-36, 6);
+    expect(chain.multiband.compHigh.threshold.value).toBeCloseTo(-24, 6);
   });
 
   it('engages the wet path only when a band is active', () => {

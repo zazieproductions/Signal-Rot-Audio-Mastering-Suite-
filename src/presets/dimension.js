@@ -16,6 +16,7 @@ import { preset } from './_shared.js';
 export const DIMENSION_PRESETS = [
   preset({
     name: 'Analog Womb',
+    family: 'creative',
     tag: 'dimension',
     description:
       'Tape-warmed multiband glue, head bump, enveloping depth. The expensive-console sound.',
@@ -44,14 +45,14 @@ export const DIMENSION_PRESETS = [
     parameters: {
       targetLUFS: -13,
       ceiling: -1.0,
-      widthHigh: 1.6,
+      widthHigh: 1.5,
       widthLow: 0.7,
-      air: 2.5,
-      clarity: 1.2,
-      mbHigh: 20,
-      mbMix: 70,
-      depth: 15,
-      sat: 3,
+      air: 1.5,
+      clarity: 0.8,
+      mbHigh: 15,
+      mbMix: 60,
+      depth: 12,
+      sat: 0,
       bassMono: 60,
     },
     audit:
@@ -85,6 +86,7 @@ export const DIMENSION_PRESETS = [
   }),
   preset({
     name: 'Tape Ghost',
+    family: 'creative',
     tag: 'dimension',
     description:
       'Heavy wow/flutter, hiss bed, dark and haunted. Signal rot as mastering aesthetic.',
@@ -107,6 +109,7 @@ export const DIMENSION_PRESETS = [
   }),
   preset({
     name: 'Vinyl Séance',
+    family: 'creative',
     tag: 'dimension',
     description: 'Crackle, rumble, narrowed low end. A record that remembers being played.',
     parameters: {
@@ -128,27 +131,30 @@ export const DIMENSION_PRESETS = [
   preset({
     name: 'Hyperreal',
     tag: 'dimension',
+    risk: 'caution',
     description: 'Multiband punch, transient attack, wide sparkle. More vivid than reality.',
     parameters: {
       targetLUFS: -11,
       ceiling: -1.0,
-      transAttack: 35,
-      mbLow: 35,
-      mbMid: 25,
-      mbHigh: 30,
-      mbMix: 70,
-      widthHigh: 1.4,
-      clarity: 1.5,
-      air: 2,
-      sat: 6,
-      bassMono: 60,
+      transAttack: 15,
+      mbLow: 25,
+      mbMid: 18,
+      mbHigh: 20,
+      mbMix: 65,
+      widthHigh: 1.3,
+      clarity: 1.0,
+      air: 1.2,
+      sat: 3,
+      bassMono: 70,
     },
     audit:
-      '−11 LUFS with +35 transient attack is a demanding combination: expect 3–5 dB of ' +
-      'limiter reduction on dense material. The export report shows exactly how much.',
+      '−11 LUFS is a demanding target; transient attack is +0.9 dB and the multiband ' +
+      'sits at glue levels. On dense material the engine backs the target down rather ' +
+      'than crushing. The export report shows exactly how much limiting happened.',
   }),
   preset({
     name: 'Ferric Bloom',
+    family: 'creative',
     tag: 'dimension',
     description:
       'Magnetic tape warmth, soft saturation, close-room bloom. A small depth field around a forward mid.',
@@ -180,16 +186,16 @@ export const DIMENSION_PRESETS = [
     parameters: {
       targetLUFS: -15,
       ceiling: -1.0,
-      depth: 55,
+      depth: 45,
       depthSize: 'large',
-      width: 1.35,
-      widthMid: 1.25,
-      widthHigh: 1.5,
+      width: 1.3,
+      widthMid: 1.2,
+      widthHigh: 1.4,
       bassMono: 90,
-      air: 2.0,
-      clarity: 1.2,
-      crossfeed: 0.3,
-      sat: 4,
+      air: 1.2,
+      clarity: 0.8,
+      crossfeed: 0.25,
+      sat: 0,
     },
     audit:
       'Depth 55 large means the two taps land at 27/47 ms — a wide first-arrival bloom, still no tail. ' +
@@ -198,6 +204,7 @@ export const DIMENSION_PRESETS = [
   }),
   preset({
     name: 'Magnetic Memory',
+    family: 'creative',
     tag: 'dimension',
     description: 'Medium tape head-bump, a faint hiss bed and a forward low-mid. A cassette that still has its soul.',
     parameters: {
@@ -227,24 +234,23 @@ export const DIMENSION_PRESETS = [
     parameters: {
       targetLUFS: -12,
       ceiling: -1.0,
-      drive: 1.5,
-      mbLow: 35,
-      mbMid: 25,
-      mbHigh: 25,
-      mbMix: 65,
+      drive: 0.5,
+      mbLow: 25,
+      mbMid: 18,
+      mbHigh: 15,
+      mbMix: 60,
       mbSpeed: 'slow',
       mbAutoMakeup: true,
-      transAttack: 20,
-      width: 1.3,
+      transAttack: 10,
+      width: 1.25,
       bassMono: 90,
-      clarity: 1.2,
-      air: 1.5,
-      sat: 8,
+      clarity: 0.8,
+      air: 1.0,
+      sat: 3,
     },
     audit:
-      'Slow ballistics (30 ms attack / 400 ms release) with auto make-up keeps the parallel mix ' +
-      'holding level rather than pumping. transAttack 20 is +1.2 dB of transient emphasis — ' +
-      'modest, but expect 2–3 dB of limiter reduction at −12. Width 130% with bass-mono 90 Hz ' +
-      'keeps the low end anchored. No phase trigger.',
+      'Slow ballistics with auto make-up keeps the parallel mix holding level rather than ' +
+      'pumping. transAttack 10 is +0.6 dB of transient emphasis. Width 125% with bass-mono ' +
+      '90 Hz keeps the low end anchored. No phase trigger. Retuned conservative.',
   }),
 ];

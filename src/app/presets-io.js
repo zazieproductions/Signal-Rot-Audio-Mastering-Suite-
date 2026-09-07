@@ -31,6 +31,7 @@
 
 import { ENGINE_VERSION, PRESET_SCHEMA_VERSION } from './constants.js';
 import { validateParameters, defaultParameters } from './parameters.js';
+import { sanitizeForFamily } from '../presets/_shared.js';
 import { defaultImmersive } from './state.js';
 
 /** Refuse to parse anything larger than this — a preset is a few kilobytes. */
@@ -44,6 +45,7 @@ export const MAX_PRESET_BYTES = 256 * 1024;
  * @param {object} [opts.immersive]
  * @param {string} [opts.name]
  * @param {string} [opts.description]
+ * @param {'mastering'|'creative'} [opts.family]
  */
 export function serializePreset(opts) {
   return {
@@ -52,6 +54,7 @@ export function serializePreset(opts) {
     engineVersion: ENGINE_VERSION,
     name: String(opts.name ?? 'Custom').slice(0, 120),
     description: String(opts.description ?? '').slice(0, 500),
+    ...(opts.family ? { family: opts.family } : {}),
     savedAt: new Date().toISOString(),
     parameters: { ...opts.parameters },
     immersive: opts.immersive ? { ...opts.immersive } : undefined,
@@ -159,8 +162,22 @@ export function parsePreset(text) {
     };
   }
 
-  const { parameters, warnings: paramWarnings } = validateParameters(parameterSource);
+  const { parameters: validated, warnings: paramWarnings } = validateParameters(parameterSource);
   warnings.push(...paramWarnings);
+
+  // Family contract, file edition: a file that claims to be a mastering preset may not
+  // smuggle degradation DSP in. Creative files pass through untouched.
+  let parameters = validated;
+  if (raw.family === 'mastering') {
+    const scrubbed = sanitizeForFamily('mastering', validated);
+    if (scrubbed.scrubbed.length) {
+      warnings.push(
+        `Mastering family: ${scrubbed.scrubbed.join(', ')} forced off — degradation DSP ` +
+          'cannot appear in a mastering preset.',
+      );
+    }
+    parameters = scrubbed.parameters;
+  }
 
   /** @type {Record<string, any>|undefined} */
   let safeImmersive;

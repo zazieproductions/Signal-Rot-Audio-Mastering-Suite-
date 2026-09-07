@@ -29,6 +29,8 @@ import { analyseLoudness } from '../analysis/loudness.js';
 import { analysePeaks } from '../analysis/true-peak.js';
 import { crestFactorDb } from '../analysis/rms.js';
 import { monoCompatibility } from '../analysis/correlation.js';
+import { spectralFingerprint } from '../analysis/spectral-match.js';
+import { adaptParameters, spectralSummary } from '../adaptive/source-aware.js';
 import { shapeTransients } from './transient-shaper.js';
 import { normalizeAndLimit, CREST_AWARE_BUDGET } from './normalize.js';
 import { applyDither } from './dither.js';
@@ -136,8 +138,20 @@ export async function renderMaster(opts) {
     crestFactorDb: crestFactorDb(sourceData),
   };
 
+  // Source-aware adaptation: the same pure function the live preview uses, fed with a
+  // fresh measurement of the source. The preset defines the character; the audio decides
+  // how hard the processors work. The report records exactly what was softened and why.
+  const adaptation = adaptParameters(parameters, {
+    integrated: analysisBefore.loudness.integrated,
+    lra: analysisBefore.loudness.lra,
+    crestDb: analysisBefore.crestFactorDb,
+    truePeakDb: analysisBefore.peaks.truePeakDb,
+    spectral: spectralSummary(spectralFingerprint(sourceData)),
+  });
+  const effective = adaptation.parameters;
+
   onProgress('rendering chain', 0.12);
-  const renderedBuffer = await renderChain(source, parameters, {
+  const renderedBuffer = await renderChain(source, effective, {
     sampleRate,
     moduleBypass,
   });
@@ -145,15 +159,15 @@ export async function renderMaster(opts) {
 
   onProgress('transient shaping', 0.42);
   const transient = shapeTransients(data, {
-    attack: parameters.transAttack,
-    sustain: parameters.transSustain,
+    attack: effective.transAttack,
+    sustain: effective.transSustain,
   });
 
   onProgress('normalising and limiting', 0.5);
   const loudnessResult = normalizeAndLimit(data, {
-    normalize: parameters.normalize,
-    targetLufs: parameters.targetLUFS,
-    ceilingDb: parameters.ceiling,
+    normalize: effective.normalize,
+    targetLufs: effective.targetLUFS,
+    ceilingDb: effective.ceiling,
     refine: opts.refine !== false,
     // The export must never brickwall a record to hit a hot target: if the material
     // cannot take the limiting the target demands, deliver the loudest clean result and
@@ -181,6 +195,10 @@ export async function renderMaster(opts) {
     loudnessResult,
     transient,
     dither,
+    adaptation: {
+      sourceClass: adaptation.sourceClass,
+      adaptations: adaptation.adaptations,
+    },
     source: {
       name: opts.sourceName ?? '',
       sampleRate: source.sampleRate,

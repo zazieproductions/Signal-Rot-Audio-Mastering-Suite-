@@ -12,8 +12,9 @@
  * the original engine because it was already unusually careful, and its reasoning is worth
  * keeping:
  *
- *   · Drive scales 1…2.2, not 1…4 — gentle enough to stay in the "density" region rather
- *     than the "crunch" region.
+ *   · Drive scales 1…1.8 — gentle enough to stay in the "density" region rather than
+ *     the "crunch" region. Clean mastering presets leave this at or near zero; the
+ *     control exists for colour, not for loudness.
  *   · Asymmetry is introduced as `x + a·(x² − x⁴)`, whose integral over a symmetric
  *     domain is approximately zero, so even harmonics appear without a DC shift.
  *   · Any residual DC is measured and subtracted from the curve.
@@ -135,8 +136,8 @@ export function makeSaturationCurve(amount) {
   if (amount <= 0) return IDENTITY_CURVE;
   const n = SATURATION_CURVE_POINTS;
   const c = new Float32Array(n);
-  const k = 1 + amount * 1.2; // drive 1 … 2.2
-  const asym = amount * 0.06; // even-harmonic asymmetry
+  const k = 1 + amount * 0.8; // drive 1 … 1.8 — density, not crunch
+  const asym = amount * 0.04; // even-harmonic asymmetry
   const blend = 1 - (1 - amount) * (1 - amount); // accelerating wet blend
   const D = SATURATION_HEADROOM;
 

@@ -6,6 +6,34 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed — transparency-first mastering engine
+
+- **New flagship preset: `Reference HD`** (`-15 LUFS`, `-1 dBTP`, no saturation, no
+  drive, gentle slow-glue multiband), heading a new eighth catalogue group
+  (`mastering`) alongside `Balanced Modern`, `Modern Loud` and `Quiet Dynamics`.
+- **Source-aware adaptation.** Both preview and export measure the source (integrated
+  loudness, LRA, crest factor, true peak, tonal shape) and scale processing down-only:
+  already-loud/dense sources get minimal compression, saturation and drive; dynamic
+  sources keep their dynamics; bright sources get no HF lift; bass-heavy sources get
+  bass control plus a centred sub. Every softening is listed in the render report.
+- **Loudness ambition guard.** Refinement passes are scored for loudness *and*
+  cleanliness; average limiter reduction beyond 3 dB stops the push and the engine
+  delivers a quieter master instead of a crushed one (`ambitionReduced`, reported).
+- **Conservative retunes.** Multiband mapping is now −24 dB / 3:1 at full scale with a
+  12 dB knee and transient-friendly attacks; saturation drive, asymmetry and make-up
+  reduced; limiter defaults widened (3 ms look-ahead, 1.5 dB knee, 25/220 ms release);
+  every clean preset rebalanced (less drive/saturation/EQ stacking); loud targets
+  (`> −12 LUFS`) carry a caution flag.
+- **Mastering vs creative families.** `mastering` presets can never contain tape, hiss,
+  vinyl, Haas or side-comb DSP — enforced in the catalogue and scrubbed at apply/load
+  time. Degradation presets (`Tape Ghost`, `Vinyl Séance`, `Rust`, …) are explicitly
+  `creative` and untouched.
+- **Three-way audition: Original / Mastered / Matched (A/B/C).** The new Matched mode
+  level-matches the master to the source for honest comparison; X cycles all three.
+- **Preview/export consistency.** Input drive now trims to −6 dB for hot sources; the
+  monitor safety limiter is gentler; preview and export share the same adaptation
+  function and the same adapted parameters.
+
 ### Added
 
 - **Browser conformance + golden audio regression lab.** Real-`OfflineAudioContext`

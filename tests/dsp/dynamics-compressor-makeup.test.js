@@ -37,22 +37,29 @@ describe('dynamics compressor fixed make-up (engine model)', () => {
   });
 
   it('reproduces the engine make-up for every band amount (knee 9 dB)', () => {
+    // The reference table was generated against the threshold/ratio ladder
+    // (threshold −0.36·a, ratio 1 + 0.04·a, knee 9 dB), so the inputs are passed
+    // explicitly: this test verifies the *engine model* against the independent
+    // script, independent of whatever the UI amount mapping currently is.
     for (const [amount, expectedDb] of Object.entries(ENGINE_REFERENCE_DB)) {
-      const s = bandAmountToSettings(Number(amount));
-      const got = dynamicsCompressorMakeupDb(s.thresholdDb, s.kneeDb, s.ratio);
+      const a = Number(amount);
+      const got = dynamicsCompressorMakeupDb(a === 0 ? 0 : -a * 0.36, 9, 1 + a * 0.04);
       expect(got, `amount ${amount}`).toBeCloseTo(expectedDb, 2);
     }
   });
 
   it('is audible even at modest settings — this is the gain the chain was hiding', () => {
-    const s = bandAmountToSettings(20);
+    // The transparency retune gentled the amount mapping (threshold −0.24·a, ratio
+    // 1 + 0.02·a, knee 12 dB), which shrank the hidden make-up — but it is still
+    // well above audibility at ordinary settings, so the compensation stays essential.
+    const s = bandAmountToSettings(35);
     const db_ = dynamicsCompressorMakeupDb(s.thresholdDb, s.kneeDb, s.ratio);
     expect(db_).toBeGreaterThan(0.5);
-    // 50 = a typical "glue" setting: +5.5 dB of unasked-for low end
+    // 50 = a typical "glue" setting: +1.7 dB of unasked-for level without compensation
     const s50 = bandAmountToSettings(50);
     const db50 = dynamicsCompressorMakeupDb(s50.thresholdDb, s50.kneeDb, s50.ratio);
-    expect(db50).toBeGreaterThan(5);
-    expect(db50).toBeCloseTo(5.506, 2);
+    expect(db50).toBeGreaterThan(1.5);
+    expect(db50).toBeCloseTo(1.709, 2);
   });
 
   it('grows monotonically with amount', () => {

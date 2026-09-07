@@ -11,7 +11,9 @@ import { ENGINE_NAME, ENGINE_VERSION, EXPORT_SAMPLE_RATES, LIMITS } from './cons
 import { createStore } from './state.js';
 import { PARAMETER_LIST, previewDivergences } from './parameters.js';
 import { serializePreset, parsePreset, expandCatalogPreset } from './presets-io.js';
-import { ALL_PRESETS, PRESET_GROUPS } from '../presets/index.js';
+import { ALL_PRESETS, PRESET_GROUPS, findPreset } from '../presets/index.js';
+import { presetFamily, sanitizeForFamily } from '../presets/_shared.js';
+import { adaptParameters, spectralSummary } from '../audio/adaptive/source-aware.js';
 
 import {
   getAudioContext,
@@ -83,6 +85,10 @@ export function bootstrap() {
   let bufferToken = {};
   let previousParameters = null;
   let comparing = false;
+  /** Source measurements, cached per loaded file — the source never changes. */
+  let sourceStatsCache = { token: null, stats: null };
+  /** Latest source-aware adaptation summary, for the loudness-tab notice. */
+  let currentAdaptation = { adaptations: [], sourceClass: 'unmeasured' };
 
   const scheduler = createAnalysisScheduler(420);
 
@@ -96,13 +102,13 @@ export function bootstrap() {
     });
 
     // Safety limiter for the monitor path only. This is NOT the export limiter and the UI
-    // says so in three places.
+    // says so in three places. Gentle settings: it should catch accidents, not shape sound.
     const safety = ctx.createDynamicsCompressor();
     safety.threshold.value = -1.2;
-    safety.knee.value = 0;
-    safety.ratio.value = 20;
-    safety.attack.value = 0.002;
-    safety.release.value = 0.12;
+    safety.knee.value = 1;
+    safety.ratio.value = 12;
+    safety.attack.value = 0.003;
+    safety.release.value = 0.2;
 
     // `DynamicsCompressorNode` applies a fixed, non-configurable make-up gain of
     // pow(1/Saturate(1,k), 0.6) — here +0.68 dB at −1.2 dB / 20:1. Without an exact
@@ -158,20 +164,46 @@ export function bootstrap() {
     return live;
   }
 
-  /** Push the current parameters (and A/B state) onto the live graph. */
+  /** Source stats for the live graph, or null before the first analysis lands. */
+  function liveSourceStats() {
+    if (sourceStatsCache.token !== bufferToken || !sourceStatsCache.stats) return null;
+    const s = sourceStatsCache.stats;
+    return {
+      integrated: s.loudness?.integrated,
+      lra: s.loudness?.lra,
+      crestDb: s.crestFactorDb,
+      truePeakDb: s.peaks?.truePeakDb,
+      spectral: spectralSummary(s.fingerprint ?? null),
+    };
+  }
+
+  /** Push the current parameters (and A/B/C state) onto the live graph. */
   function pushParameters() {
     if (!live) return;
     const state = store.getState();
     const p = store.getParameters();
-    const bypassAll = state.ui.abMode === 'A';
+    const mode = state.ui.abMode;
+    const bypassAll = mode === 'A';
 
-    applyParameters(live.chain, p, {
+    // Source-aware preview: the same adaptation the export applies, so the monitor and
+    // the master agree on how hard each processor works.
+    const stats = liveSourceStats();
+    const eff = stats ? adaptParameters(p, stats).parameters : p;
+    if (stats) {
+      const summary = adaptParameters(p, stats);
+      currentAdaptation = {
+        adaptations: summary.adaptations,
+        sourceClass: summary.sourceClass,
+      };
+    }
+
+    applyParameters(live.chain, eff, {
       bypassAll,
       moduleBypass: state.ui.moduleBypass,
       audition: state.ui.audition,
     });
 
-    live.safety.threshold.value = bypassAll ? 0 : Math.min(-0.2, p.ceiling - 0.2);
+    live.safety.threshold.value = bypassAll ? 0 : Math.min(-0.2, eff.ceiling - 0.2);
     // Exact inverse of the safety's fixed spec make-up at the threshold just set (knee 0,
     // ratio 20 stay fixed at build time). At threshold 0 (A/B audition of the source) the
     // make-up is 0 dB and this node is transparent.
@@ -182,31 +214,46 @@ export function bootstrap() {
     );
 
     // ── Monitor level ────────────────────────────────────────────────────────────────
-    // One reference level, applied consistently. The audited build set the normalisation
-    // gain on the same node the saturation make-up used, and computed the loudness-match
-    // trim so that A and B could never actually match. Here:
-    //   · `normGain` moves the processed signal to the target, using the last measurement.
-    //   · `matchGain` moves whichever signal is being auditioned to the *same* reference
-    //     level, so A/B is level-matched by construction.
+    // Three audition modes, switchable instantly for genuine comparison:
+    //   · A — ORIGINAL: the unprocessed source.
+    //   · B — MASTERED: the chain plus the normalisation gain toward the target.
+    //   · C — MATCHED: the mastered chain level-matched to the original, removing the
+    //     psychological advantage of "the master is louder".
+    // The legacy "match loudness" toggle additionally level-matches A against B.
     const analysis = state.analysis;
+    const orig = analysis.original;
+    const proc = analysis.processed;
     let gain = 1;
-    if (
-      p.normalize &&
-      !bypassAll &&
-      analysis.processed &&
-      Number.isFinite(analysis.processed.integrated)
-    ) {
-      gain = dbToGain(clamp(p.targetLUFS - analysis.processed.integrated, -24, 24));
-    }
-    if (state.ui.matchLoudness && analysis.original && analysis.processed) {
-      const reference = p.normalize
-        ? p.targetLUFS
-        : Number.isFinite(analysis.processed.integrated)
-          ? analysis.processed.integrated
-          : null;
-      const current = bypassAll ? analysis.original.integrated : analysis.processed.integrated;
-      if (reference !== null && Number.isFinite(current)) {
-        gain = dbToGain(clamp(reference - current, -24, 24));
+    if (mode === 'C') {
+      if (
+        orig &&
+        proc &&
+        Number.isFinite(orig.integrated) &&
+        Number.isFinite(proc.integrated)
+      ) {
+        gain = dbToGain(clamp(orig.integrated - proc.integrated, -24, 24));
+      } else if (eff.normalize && proc && Number.isFinite(proc.integrated)) {
+        gain = dbToGain(clamp(eff.targetLUFS - proc.integrated, -24, 24));
+      }
+    } else {
+      if (
+        eff.normalize &&
+        !bypassAll &&
+        proc &&
+        Number.isFinite(proc.integrated)
+      ) {
+        gain = dbToGain(clamp(eff.targetLUFS - proc.integrated, -24, 24));
+      }
+      if (state.ui.matchLoudness && orig && proc) {
+        const reference = eff.normalize
+          ? eff.targetLUFS
+          : Number.isFinite(proc.integrated)
+            ? proc.integrated
+            : null;
+        const current = bypassAll ? orig.integrated : proc.integrated;
+        if (reference !== null && Number.isFinite(current)) {
+          gain = dbToGain(clamp(reference - current, -24, 24));
+        }
       }
     }
     live.post.gain.value = gain;
@@ -297,18 +344,36 @@ export function bootstrap() {
     const source = store.getState().source.buffer;
     if (!source) return;
     store.setAnalysis({ running: true });
+    const token = bufferToken;
 
     const result = await scheduler.request(
       async () => {
         const parameters = store.getParameters();
-        const processed = await renderChain(source, parameters, {
+        // The source never changes for a loaded file: measure it once (loudness, peaks,
+        // crest factor, tonal shape) and reuse the result on every later slider move.
+        if (sourceStatsCache.token !== token || !sourceStatsCache.stats) {
+          sourceStatsCache = {
+            token,
+            stats: await analyseBuffer(source, ['loudness', 'peaks', 'rms', 'fingerprint']),
+          };
+        }
+        const srcStats = sourceStatsCache.stats;
+        const adaptation = adaptParameters(parameters, {
+          integrated: srcStats.loudness?.integrated,
+          lra: srcStats.loudness?.lra,
+          crestDb: srcStats.crestFactorDb,
+          truePeakDb: srcStats.peaks?.truePeakDb,
+          spectral: spectralSummary(srcStats.fingerprint ?? null),
+        });
+        currentAdaptation = {
+          adaptations: adaptation.adaptations,
+          sourceClass: adaptation.sourceClass,
+        };
+        const processed = await renderChain(source, adaptation.parameters, {
           moduleBypass: store.getState().ui.moduleBypass,
         });
-        const [originalStats, processedStats] = await Promise.all([
-          analyseBuffer(source, ['loudness', 'peaks']),
-          analyseBuffer(processed, ['loudness', 'peaks', 'mono']),
-        ]);
-        return { original: originalStats, processed: processedStats };
+        const processedStats = await analyseBuffer(processed, ['loudness', 'peaks', 'mono']);
+        return { source: srcStats, processed: processedStats };
       },
       { immediate },
     );
@@ -316,7 +381,7 @@ export function bootstrap() {
     if (!result) return; // superseded by a newer request
     store.setAnalysis({
       running: false,
-      original: { ...result.original.loudness, peaks: result.original.peaks },
+      original: { ...result.source.loudness, peaks: result.source.peaks },
       processed: {
         ...result.processed.loudness,
         peaks: result.processed.peaks,
@@ -383,6 +448,18 @@ export function bootstrap() {
                 ? 'Severe phase risk — this will not survive a mono fold-down'
                 : 'Phase / mono-compatibility notes',
             messages,
+          }
+        : null,
+    );
+
+    // Source-aware adaptation notice: say what was softened and why.
+    renderNotice(
+      $('#adaptNotice'),
+      currentAdaptation.adaptations.length
+        ? {
+            level: 'info',
+            title: `Source-aware: ${currentAdaptation.sourceClass} source — processing eased off`,
+            messages: currentAdaptation.adaptations,
           }
         : null,
     );
@@ -621,7 +698,15 @@ export function bootstrap() {
 
   function applyCatalogPreset(preset) {
     previousParameters = store.getParameters();
-    const parameters = expandCatalogPreset(preset.parameters, {
+    // Family contract: degradation DSP can never leak into a mastering preset, even from
+    // a hand-edited catalogue entry.
+    const family = presetFamily(preset);
+    const { parameters: clean, scrubbed } = sanitizeForFamily(family, preset.parameters);
+    if (scrubbed.length) {
+      console.warn(`[signal-rot] ${preset.name}: scrubbed [${scrubbed}] (mastering family)`);
+      toast(`Mastering preset — ${scrubbed.join(', ')} forced off`);
+    }
+    const parameters = expandCatalogPreset(clean, {
       preserve: {
         // A match curve is a measurement of *your* source, not a creative choice, so it
         // survives preset changes. Everything else resets — the audited behaviour of also
@@ -664,6 +749,7 @@ export function bootstrap() {
   $('#stopBtn').addEventListener('click', () => transport.stop());
   $('#abA').addEventListener('click', () => setAbMode('A'));
   $('#abB').addEventListener('click', () => setAbMode('B'));
+  $('#abC').addEventListener('click', () => setAbMode('C'));
   $('#auditionSelect').addEventListener('change', (event) => {
     store.setUi({ audition: event.target.value });
     pushParameters();
@@ -682,10 +768,17 @@ export function bootstrap() {
 
   function setAbMode(mode) {
     store.setUi({ abMode: mode });
-    $('#abA').setAttribute('aria-pressed', String(mode === 'A'));
-    $('#abB').setAttribute('aria-pressed', String(mode === 'B'));
+    for (const m of ['A', 'B', 'C']) {
+      $(`#ab${m}`)?.setAttribute('aria-pressed', String(mode === m));
+    }
     pushParameters();
     updateAnalysisUi();
+  }
+
+  /** Cycle Original → Mastered → loudness-Matched, for the X key and the palette. */
+  function cycleAbMode() {
+    const cur = store.getState().ui.abMode;
+    setAbMode(cur === 'A' ? 'B' : cur === 'B' ? 'C' : 'A');
   }
 
   /* ---- waveform interaction (pointer events: mouse, touch and pen) ---- */
@@ -817,10 +910,12 @@ export function bootstrap() {
   /* ---- preset save / load ---- */
   $('#savePresetBtn').addEventListener('click', () => {
     const state = store.getState();
+    const catalogEntry = findPreset(state.ui.presetName);
     const preset = serializePreset({
       parameters: store.getParameters(),
       immersive: state.immersive,
       name: state.ui.presetName,
+      family: catalogEntry ? presetFamily(catalogEntry) : undefined,
     });
     downloadJson(preset, `${baseNameOf(state.source.name || 'signal-rot')}_preset.json`);
     toast('Preset saved');
@@ -1021,9 +1116,16 @@ export function bootstrap() {
       { id: 'play', label: 'Play / pause', hint: 'Space', run: () => transport.toggle() },
       {
         id: 'ab',
-        label: 'Toggle original / processed',
+        label: 'Cycle audition: original / mastered / loudness-matched',
         hint: 'X',
-        run: () => setAbMode(store.getState().ui.abMode === 'A' ? 'B' : 'A'),
+        run: () => cycleAbMode(),
+      },
+      { id: 'ab-original', label: 'Audition: original', run: () => setAbMode('A') },
+      { id: 'ab-mastered', label: 'Audition: mastered', run: () => setAbMode('B') },
+      {
+        id: 'ab-matched',
+        label: 'Audition: loudness-matched master',
+        run: () => setAbMode('C'),
       },
       { id: 'mono', label: 'Monitor: mono sum', hint: 'M', run: () => setAudition('mono') },
       { id: 'side', label: 'Monitor: side only', hint: 'S', run: () => setAudition('side') },
@@ -1076,7 +1178,7 @@ export function bootstrap() {
   initShortcuts({
     palette: () => (palette.isOpen() ? palette.close() : palette.open()),
     playPause: () => transport.toggle(),
-    toggleAb: () => setAbMode(store.getState().ui.abMode === 'A' ? 'B' : 'A'),
+    toggleAb: () => cycleAbMode(),
     monoAudition: () => setAudition(store.getState().ui.audition === 'mono' ? 'stereo' : 'mono'),
     sideAudition: () => setAudition(store.getState().ui.audition === 'side' ? 'stereo' : 'side'),
     undo: () => {

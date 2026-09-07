@@ -79,9 +79,10 @@
           <div class="transport" id="transportFull" hidden>
             <button class="icbtn" id="playBtn" aria-label="Play" aria-pressed="false">▶</button>
             <button class="icbtn" id="stopBtn" aria-label="Stop">■</button>
-            <div class="seg" role="group" aria-label="Audition original or processed">
-              <button id="abA" data-ab="A" aria-pressed="false">Original</button>
-              <button id="abB" data-ab="B" aria-pressed="true">Processed</button>
+            <div class="seg" role="group" aria-label="Audition original, mastered or loudness-matched">
+              <button id="abA" data-ab="A" aria-pressed="false" title="Original — the unprocessed source">Original</button>
+              <button id="abB" data-ab="B" aria-pressed="true" title="Mastered — the chain plus normalisation gain">Mastered</button>
+              <button id="abC" data-ab="C" aria-pressed="false" title="Matched — the master level-matched to the original for honest comparison">Matched</button>
             </div>
             <div class="field" style="margin: 0; min-width: 150px">
               <label class="sr-only" for="auditionSelect">Monitor path</label>
@@ -440,6 +441,7 @@
           <!-- LOUDNESS -->
           <div class="tpanel" data-tab="loudness" style="max-width: 640px">
             <div class="grouplab">Loudness normalisation and peak ceiling</div>
+            <div id="adaptNotice" hidden></div>
             <div data-controls="loudness"></div>
             <canvas
               id="loudnessGraph"
