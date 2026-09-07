@@ -4,8 +4,9 @@
 
 - `5adcf91` + reconciliation `78e264b`: saturation has ±4 curve-domain headroom and
   unity small-signal gain; compressor fixed make-up is cancelled separately; multiband
-  dry delay is 6 ms. Preserve `tests/dsp/saturation.test.js`,
-  `tests/dsp/dynamics-compressor-makeup.test.js` and `tests/integration/graph.test.js`.
+  dry delay is the engine-measured compressor latency (6 ms default). Preserve
+  `tests/dsp/saturation.test.js`, `tests/dsp/dynamics-compressor-makeup.test.js` and
+  `tests/integration/graph.test.js`.
 - `78e264b`: preview/export share `adaptParameters`; mastering families exclude
   degradation, and crest/ambition guards may deliver below the requested loudness.
   Preserve `tests/dsp/source-aware.test.js`, `tests/dsp/mastering-guardrails.test.js`,
@@ -32,9 +33,12 @@
 
 ## Open handoffs / merge order
 
-- [Browser multiband A-6 (#12)](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/12) remains open: the ideal Node filter model is not evidence of a
-  flat real wet sum. Keep `tests/browser/multiband.spec.js`'s 1.5 dB limit and the
-  compensated gain/delay baseline while fixing it. See [findings](FINDINGS-FOR-AGENT-A.md).
+- [Browser multiband A-6 (#12)](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/12): root cause fixed
+  (dB-Q crossover units, #19, plus engine-measured dry-path alignment). The browser
+  contract is now 0.5 dB hard with a ±0.1 dB recorded goal (`tests/browser/multiband.spec.js`,
+  new `tests/browser/stereo-section.spec.js`); the headless rig reads ±0.00 dB at every
+  mix on 44.1/48/96/192 kHz. Keep the compensated gain/delay baseline. A-6 re-capture in
+  a real browser is still required before closing. See [findings](FINDINGS-FOR-AGENT-A.md).
 - [Enhanced A/B vs A/B/C (#13)](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/13): keyboard/indicator handling still conflicts. Port
   the enhanced UI to the three-way contract rather than reverting Matched mode.
 - [General CI/conformance (#15)](https://github.com/zazieproductions/Signal-Rot-Audio-Mastering-Suite-/issues/15) are uninstalled templates; only export validation is an active

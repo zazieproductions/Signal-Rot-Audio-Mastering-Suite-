@@ -127,6 +127,46 @@ describe('adaptParameters', () => {
     expect(parameters.bassMono).toBeGreaterThanOrEqual(90);
   });
 
+  it('skips the mono-below raise for a mono source (issue #20)', () => {
+    const p = params({ sub: 2.5, warm: 2, bassMono: 0, mbLow: 30 });
+    const { parameters, adaptations, sourceClass } = adaptParameters(p, {
+      integrated: -15,
+      crestDb: 12,
+      spectral: { bassDb: 5, presenceDb: 0, trebleDb: -1 },
+      channels: 1,
+    });
+    // A mono sub is already centred: the corner stays where the user put it, and the
+    // report says why instead of silently forcing a stereo render downstream.
+    expect(parameters.bassMono).toBe(0);
+    expect(adaptations.some((n) => /mono-below stays 0 Hz/.test(n))).toBe(true);
+    // The rest of the bass-heavy guardrail still applies.
+    expect(parameters.sub).toBeLessThanOrEqual(0.8);
+    expect(parameters.warm).toBeLessThanOrEqual(1.0);
+    expect(sourceClass).toContain('bass-heavy');
+  });
+
+  it('still raises mono-below for stereo bass-heavy sources', () => {
+    const p = params({ sub: 2.5, warm: 2, bassMono: 0, mbLow: 30 });
+    const { parameters, adaptations } = adaptParameters(p, {
+      integrated: -15,
+      crestDb: 12,
+      spectral: { bassDb: 5, presenceDb: 0, trebleDb: -1 },
+      channels: 2,
+    });
+    expect(parameters.bassMono).toBe(90);
+    expect(adaptations.some((n) => /mono-below 0 → 90 Hz/.test(n))).toBe(true);
+  });
+
+  it('raises mono-below when the channel count is unknown (back-compat)', () => {
+    const p = params({ sub: 2.5, warm: 2, bassMono: 0, mbLow: 30 });
+    const { parameters } = adaptParameters(p, {
+      integrated: -15,
+      crestDb: 12,
+      spectral: { bassDb: 5, presenceDb: 0, trebleDb: -1 },
+    });
+    expect(parameters.bassMono).toBe(90);
+  });
+
   it('kills input drive on hot sources', () => {
     const p = params({ drive: 2, sat: 10 });
     const { parameters } = adaptParameters(p, {

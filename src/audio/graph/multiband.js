@@ -2,7 +2,12 @@
  * Three-band mastering compressor.
  *
  * ── Crossover topology ───────────────────────────────────────────────────────────────
- * Two cascaded Butterworth biquads (Q = 1/√2) give a 4th-order Linkwitz-Riley section.
+ * Two cascaded Butterworth biquads give a 4th-order Linkwitz-Riley section. A Butterworth
+ * section needs linear Q = 1/√2, but `BiquadFilterNode.Q` is resonance in **dB** for
+ * `lowpass`/`highpass`, so the nodes get `BUTTERWORTH_Q_DB` = 20·log10(1/√2) ≈ −3.0103 —
+ * assigning 0.7071 builds a section that peaks +0.71 dB and sums +7.4 dB at the corner
+ * (issues #19 / #12). The `allpass` compensation keeps linear Q = 1/√2: allpass Q *is*
+ * linear in the node, and the LR4-sum identity requires the same linear Q throughout.
  * An LR4 two-way split reconstructs with **flat magnitude** and an **all-pass phase**:
  *
  *     LP4(f) + HP4(f)  =  all-pass of order 2   (|H| = 1, arg H sweeps 360°)
@@ -40,13 +45,18 @@
  * `DynamicsCompressorNode` is a *look-ahead* compressor: every engine delays the signal
  * by a fixed pre-delay (`kPreDelay = 0.006 s` in Chromium, and the same constant in the
  * WebKit/Gecko kernels). Phase coherence is not enough for a parallel mix — a wet path
- * arriving 6 ms late against an undelayed dry path is a delay comb with notches at
- * 83 / 250 / 417 / 583 Hz …, which sits exactly in the kick-fundamental and body region
+ * arriving late against an undelayed dry path is a delay comb with notches starting at
+ * 83 Hz, which sits exactly in the kick-fundamental and body region
  * (`docs/GAIN-STRUCTURE-AUDIT.md` §2.4). The dry path therefore also runs through a
- * 6 ms `DelayNode` before the all-passes. All three band compressors share the same
+ * `DelayNode` before the all-passes. All three band compressors share the same
  * look-ahead, so the band *sum* is internally consistent; only the dry path needs the
- * explicit delay. The residual mismatch is whatever the running browser's pre-delay
- * rounding is, a fraction of a millisecond.
+ * explicit delay.
+ *
+ * The delay is matched to the *measured* compressor latency of the running engine
+ * (`resolveDryDelaySeconds`), not hard-coded: real browsers measure 6.000 ms, but other
+ * engines differ (the headless QA engine's reimplementation measures 8.7 / 8.0 / 6.7 /
+ * 6.0 ms at 44.1 / 48 / 96 / 192 kHz), and a fixed 6 ms against those is a 2 ms comb at
+ * partial mix. When the latency cannot be measured the documented 6 ms constant is used.
  *
  * ── Compressor nodes ─────────────────────────────────────────────────────────────────
  * The per-band dynamics use `DynamicsCompressorNode`. That node is a fixed-topology
@@ -65,7 +75,15 @@
  */
 
 import { MB_CROSSOVER_LOW, MB_CROSSOVER_HIGH } from '../../app/constants.js';
-import { designBiquad, cascadeResponse, cadd, cabs } from '../dsp/biquad.js';
+import {
+  designBiquad,
+  designNodeBiquad,
+  cascadeResponse,
+  cadd,
+  cabs,
+  BUTTERWORTH_Q_DB,
+} from '../dsp/biquad.js';
+import { measureCompressorLatency } from '../context.js';
 
 /** Ballistics presets. Attack/release in seconds. */
 export const MB_BALLISTICS = Object.freeze({
@@ -75,12 +93,45 @@ export const MB_BALLISTICS = Object.freeze({
 });
 
 /**
- * Fixed look-ahead pre-delay of `DynamicsCompressorNode` in seconds, from the engine
- * sources (`kPreDelay = 0.006f` in Chromium, identical constant in WebKit/Gecko). The
- * dry path of the parallel mix carries a `DelayNode` of this length so wet and dry
- * arrive together (see the module header).
+ * Documented look-ahead pre-delay of `DynamicsCompressorNode` in seconds, from the
+ * engine sources (`kPreDelay = 0.006f` in Chromium, identical constant in WebKit/Gecko).
+ * This is the dry-path delay when the running engine's latency cannot be measured;
+ * production graphs resolve the real value via `resolveDryDelaySeconds`.
  */
 export const MB_COMPRESSOR_LOOKAHEAD_S = 0.006;
+
+/**
+ * Resolve the dry-path delay for a render at `sampleRate`: the measured compressor
+ * latency of the running engine, or `MB_COMPRESSOR_LOOKAHEAD_S` when unmeasurable.
+ * Memoised per sample rate by the underlying probe — repeated calls are free.
+ *
+ * @param {number} sampleRate
+ * @returns {Promise<{seconds:number, measured:boolean, latencySeconds:number|null}>}
+ *   `measured` tells whether the value came from the engine or the documented default,
+ *   so the render report can say which (a guessed 6 ms and a measured 6.000 ms are not
+ *   the same claim).
+ */
+export async function resolveDryDelay(sampleRate) {
+  let latency = null;
+  try {
+    latency = await measureCompressorLatency(sampleRate);
+  } catch {
+    latency = null;
+  }
+  if (latency == null || !(latency >= 0) || latency > 0.05) {
+    return {
+      seconds: MB_COMPRESSOR_LOOKAHEAD_S,
+      measured: false,
+      latencySeconds: latency,
+    };
+  }
+  return { seconds: latency, measured: true, latencySeconds: latency };
+}
+
+/** `resolveDryDelay` reduced to the delay value, for graph wiring. */
+export async function resolveDryDelaySeconds(sampleRate) {
+  return (await resolveDryDelay(sampleRate)).seconds;
+}
 
 /**
  * Map the 0–100 "amount" control onto threshold and ratio.
@@ -104,16 +155,16 @@ export function bandAmountToSettings(amount) {
   };
 }
 
-/** Build an LR4 section (two cascaded Butterworth biquads). */
+/** Build an LR4 section (two cascaded Butterworth biquads, node Q in dB). */
 function lr4Section(ctx, type, freq) {
   const a = ctx.createBiquadFilter();
   a.type = type;
   a.frequency.value = freq;
-  a.Q.value = Math.SQRT1_2;
+  a.Q.value = BUTTERWORTH_Q_DB;
   const b = ctx.createBiquadFilter();
   b.type = type;
   b.frequency.value = freq;
-  b.Q.value = Math.SQRT1_2;
+  b.Q.value = BUTTERWORTH_Q_DB;
   a.connect(b);
   return { in: a, out: b, sections: [a, b] };
 }
@@ -147,11 +198,14 @@ function lr4Section(ctx, type, freq) {
  * @param {object} [opts]
  * @param {number} [opts.lowHz]
  * @param {number} [opts.highHz]
+ * @param {number} [opts.dryDelaySeconds] dry-path delay; default is the documented
+ *   6 ms constant, production renders pass `resolveDryDelaySeconds(sampleRate)`
  * @returns {MultibandNodes}
  */
 export function buildMultiband(ctx, opts = {}) {
   const fLow = opts.lowHz ?? MB_CROSSOVER_LOW;
   const fHigh = opts.highHz ?? MB_CROSSOVER_HIGH;
+  const dryDelaySeconds = opts.dryDelaySeconds ?? MB_COMPRESSOR_LOOKAHEAD_S;
 
   const input = ctx.createGain();
   const output = ctx.createGain();
@@ -224,10 +278,10 @@ export function buildMultiband(ctx, opts = {}) {
   highSolo.connect(wet);
 
   // ── Delay-matched dry path ──
-  // The compressors look 6 ms ahead, so the wet path emerges 6 ms late. The dry path
-  // carries the same 6 ms so a parallel mix is delay-matched as well as phase-matched.
+  // The compressors look ahead, so the wet path emerges late. The dry path carries the
+  // same delay so a parallel mix is delay-matched as well as phase-matched.
   const dryDelay = ctx.createDelay(0.05);
-  dryDelay.delayTime.value = MB_COMPRESSOR_LOOKAHEAD_S;
+  dryDelay.delayTime.value = dryDelaySeconds;
   const dryAp1 = lr4AllpassNodes(ctx, fLow);
   const dryAp2 = lr4AllpassNodes(ctx, fHigh);
   input.connect(dryDelay);
@@ -288,6 +342,8 @@ function lr4AllpassNodes(ctx, freq) {
   const a = ctx.createBiquadFilter();
   a.type = 'allpass';
   a.frequency.value = freq;
+  // Linear: allpass Q is linear in the node (verified by phase measurement), and the
+  // LR4-sum identity needs this to be the same linear Q as the crossover sections.
   a.Q.value = Math.SQRT1_2;
   return { in: a, out: a, sections: [a] };
 }
@@ -296,7 +352,9 @@ function lr4AllpassNodes(ctx, freq) {
  * Analytical diagnostics
  *
  * These mirror the node graph above using the same RBJ coefficient formulae the Web Audio
- * `BiquadFilterNode` uses, so a test on these functions is a test of the real crossover.
+ * `BiquadFilterNode` uses, *in the node's Q convention* (`designNodeBiquad`), so a test
+ * on these functions is a test of the real crossover. Modelling the graph with linear Q
+ * here while the nodes take dB is exactly the mistake that hid issue #19.
  * ──────────────────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -316,11 +374,11 @@ export function multibandResponse(freq, sampleRate, opts = {}) {
   const fHigh = opts.highHz ?? MB_CROSSOVER_HIGH;
   const mix = opts.mix ?? 1;
   const [gL, gM, gH] = opts.bandGains ?? [1, 1, 1];
-  const Q = Math.SQRT1_2;
 
-  const lp = (f) => designBiquad('lowpass', f, Q, 0, sampleRate);
-  const hp = (f) => designBiquad('highpass', f, Q, 0, sampleRate);
-  const ap = (f) => designBiquad('allpass', f, Q, 0, sampleRate);
+  // Node Q values, exactly as `lr4Section`/`lr4AllpassNodes` assign them.
+  const lp = (f) => designNodeBiquad('lowpass', f, BUTTERWORTH_Q_DB, 0, sampleRate);
+  const hp = (f) => designNodeBiquad('highpass', f, BUTTERWORTH_Q_DB, 0, sampleRate);
+  const ap = (f) => designNodeBiquad('allpass', f, Math.SQRT1_2, 0, sampleRate);
 
   const low = cascadeResponse([lp(fLow), lp(fLow), ap(fHigh)], freq, sampleRate);
   const mid = cascadeResponse([hp(fLow), hp(fLow), lp(fHigh), lp(fHigh)], freq, sampleRate);
@@ -342,6 +400,8 @@ export function legacyMultibandResponse(freq, sampleRate, opts = {}) {
   const fLow = opts.lowHz ?? MB_CROSSOVER_LOW;
   const fHigh = opts.highHz ?? MB_CROSSOVER_HIGH;
   const mix = opts.mix ?? 1;
+  // Ideal linear Q on purpose: this models the old *topology* with ideal filters to
+  // demonstrate the dry-wire comb, independently of node Q units (issue #19).
   const Q = Math.SQRT1_2;
   const lp = (f) => designBiquad('lowpass', f, Q, 0, sampleRate);
   const hp = (f) => designBiquad('highpass', f, Q, 0, sampleRate);

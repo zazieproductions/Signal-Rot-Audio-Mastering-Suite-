@@ -23,7 +23,12 @@
  */
 
 import { createOfflineContext } from '../context.js';
-import { buildMasteringChain, applyParameters } from '../graph/build-mastering-chain.js';
+import {
+  buildMasteringChain,
+  applyParameters,
+  monoSafeSource,
+} from '../graph/build-mastering-chain.js';
+import { resolveDryDelay } from '../graph/multiband.js';
 import { fromAudioBuffer, samplePeak } from '../dsp/audio-data.js';
 import { analyseLoudness } from '../analysis/loudness.js';
 import { analysePeaks } from '../analysis/true-peak.js';
@@ -69,6 +74,7 @@ export function requiresStereo(p) {
  * @param {Record<string, boolean>} [opts.moduleBypass]
  * @param {boolean} [opts.bypassAll]
  * @param {number} [opts.maxSeconds] truncate for fast analysis
+ * @param {number} [opts.dryDelaySeconds] override the engine-measured dry-path delay
  * @returns {Promise<AudioBuffer>}
  */
 export async function renderChain(source, parameters, opts = {}) {
@@ -77,18 +83,32 @@ export async function renderChain(source, parameters, opts = {}) {
   const channels = source.numberOfChannels === 1 && !requiresStereo(parameters) ? 1 : 2;
   const length = Math.max(1, Math.ceil(duration * sampleRate));
 
+  // Match the multiband dry path to the compressor latency this engine actually has
+  // (6.000 ms in browsers; measured per engine and rate, memoised).
+  const dryDelay =
+    opts.dryDelaySeconds != null
+      ? { seconds: opts.dryDelaySeconds, measured: false, latencySeconds: null }
+      : await resolveDryDelay(sampleRate);
+
   const ctx = createOfflineContext(channels, length, sampleRate);
   const src = ctx.createBufferSource();
   src.buffer = source;
 
-  const chain = buildMasteringChain(ctx, { textureSeed: parameters.textureSeed });
+  const chain = buildMasteringChain(ctx, {
+    textureSeed: parameters.textureSeed,
+    dryDelaySeconds: dryDelay.seconds,
+  });
   applyParameters(chain, parameters, {
     bypassAll: opts.bypassAll,
     moduleBypass: opts.moduleBypass,
     audition: 'stereo',
   });
 
-  src.connect(chain.input);
+  // Mono sources rendered to stereo are explicitly duplicated to dual mono first: a
+  // 1-channel signal would otherwise reach the M/S splitter as L + silence and come
+  // back as decorrelated pseudo-stereo (issue #20). Mono-to-mono connects directly.
+  const head = source.numberOfChannels === 1 && channels === 2 ? monoSafeSource(src) : src;
+  head.connect(chain.input);
   chain.output.connect(ctx.destination);
   chain.start(0);
   src.start(0);
@@ -147,6 +167,7 @@ export async function renderMaster(opts) {
     crestDb: analysisBefore.crestFactorDb,
     truePeakDb: analysisBefore.peaks.truePeakDb,
     spectral: spectralSummary(spectralFingerprint(sourceData)),
+    channels: source.numberOfChannels,
   });
   const effective = adaptation.parameters;
 
@@ -156,6 +177,8 @@ export async function renderMaster(opts) {
     moduleBypass,
   });
   const data = fromAudioBuffer(renderedBuffer);
+  // The dry-path delay renderChain used (memoised — this does not re-probe).
+  const dryDelay = await resolveDryDelay(sampleRate || source.sampleRate);
 
   onProgress('transient shaping', 0.42);
   const transient = shapeTransients(data, {
@@ -195,6 +218,11 @@ export async function renderMaster(opts) {
     loudnessResult,
     transient,
     dither,
+    latency: {
+      dryDelaySeconds: dryDelay.seconds,
+      compressorLatencySeconds: dryDelay.latencySeconds,
+      compressorLatencyMeasured: dryDelay.measured,
+    },
     adaptation: {
       sourceClass: adaptation.sourceClass,
       adaptations: adaptation.adaptations,

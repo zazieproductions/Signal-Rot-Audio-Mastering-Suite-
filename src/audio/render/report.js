@@ -27,6 +27,7 @@ export function buildRenderReport(input) {
     loudnessResult,
     transient,
     dither,
+    latency,
     source,
     output,
     presetName,
@@ -222,6 +223,19 @@ export function buildRenderReport(input) {
         'Re-rendering with this engine version, these parameters and this texture seed ' +
         'produces an identical file. Browser differences in DynamicsCompressorNode and ' +
         'WaveShaperNode oversampling can change results across engines.',
+    },
+
+    latency: {
+      // The multiband dry-path delay the render used, matched to the compressor
+      // latency measured in the running engine (6.000 ms in browsers). `measured:
+      // false` means the documented 6 ms default was used because the probe could
+      // not run — the alignment is then assumed, not established.
+      dryDelayMs: latency ? num(latency.dryDelaySeconds * 1000, 3) : null,
+      compressorLatencyMs:
+        latency && Number.isFinite(latency.compressorLatencySeconds)
+          ? num(latency.compressorLatencySeconds * 1000, 3)
+          : null,
+      compressorLatencyMeasured: latency ? latency.compressorLatencyMeasured === true : false,
     },
 
     warnings,

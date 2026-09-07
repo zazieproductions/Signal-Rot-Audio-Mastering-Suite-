@@ -62,6 +62,7 @@ export function createOfflineContext(channels, length, sampleRate) {
 }
 
 const probeCache = new Map();
+const compressorLatencyCache = new Map(); // sampleRate -> seconds | null (unmeasurable)
 
 /**
  * Test whether this browser will accept a given offline sample rate.
@@ -81,6 +82,70 @@ export function probeOfflineSampleRate(sampleRate) {
   }
   probeCache.set(sampleRate, ok);
   return ok;
+}
+
+/**
+ * Measure this engine's `DynamicsCompressorNode` look-ahead latency at a sample rate.
+ *
+ * The compressor delays the signal by a fixed pre-delay, but the value is engine
+ * folklore, not spec: Chromium/WebKit/Gecko share a 6 ms kernel constant (measured
+ * 6.000 ms in Chromium — finding A-2), while the headless QA engine measures 8.7 / 8.0
+ * / 6.7 / 6.0 ms at 44.1 / 48 / 96 / 192 kHz (block-processing latency in the
+ * reimplementation, not a look-ahead design). The multiband dry path must match the
+ * *running* engine, so this is measured, not assumed. Costs one ~50 ms scratch render
+ * per sample rate and is memoised; returns `null` when unmeasurable (no offline
+ * context, e.g. unit tests) so callers can fall back to the documented constant.
+ *
+ * The latency is structural — identical at threshold 0 / ratio 1 and at threshold −24 /
+ * ratio 3 — so neutral settings are used and the impulse passes through at unity.
+ *
+ * @param {number} sampleRate
+ * @returns {Promise<number|null>} latency in seconds, or null when unmeasurable
+ */
+export async function measureCompressorLatency(sampleRate) {
+  if (compressorLatencyCache.has(sampleRate)) return compressorLatencyCache.get(sampleRate);
+  let latency = null;
+  try {
+    const Ctor = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!Ctor) return null;
+    const length = Math.max(256, Math.ceil(0.05 * sampleRate));
+    const ctx = new Ctor(1, length, sampleRate);
+    const at = 64;
+    const src = ctx.createBufferSource();
+    const buf = ctx.createBuffer(1, length, sampleRate);
+    buf.getChannelData(0).fill(0);
+    buf.getChannelData(0)[at] = 1;
+    src.buffer = buf;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = 0;
+    comp.ratio.value = 1;
+    comp.knee.value = 12;
+    comp.attack.value = 0.015;
+    comp.release.value = 0.3;
+    src.connect(comp);
+    comp.connect(ctx.destination);
+    src.start(0);
+    const rendered = await ctx.startRendering();
+    const ch = rendered.getChannelData(0);
+    let peak = 0;
+    let index = -1;
+    for (let i = 0; i < ch.length; i++) {
+      const a = Math.abs(ch[i]);
+      if (a > peak) {
+        peak = a;
+        index = i;
+      }
+    }
+    // Sanity: the peak must exist, be near unity (neutral settings are transparent),
+    // and sit within a plausible look-ahead window.
+    if (index >= at && peak > 0.5 && index - at <= Math.ceil(0.05 * sampleRate)) {
+      latency = (index - at) / sampleRate;
+    }
+  } catch {
+    latency = null;
+  }
+  compressorLatencyCache.set(sampleRate, latency);
+  return latency;
 }
 
 /**

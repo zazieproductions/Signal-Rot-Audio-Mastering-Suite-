@@ -32,8 +32,10 @@ The structural fixes below have landed on top of 7.0.0, each with regression tes
 - **§2.3 — fixed.** Unity small-signal slope, make-up exactly `1/preGain`, stage 0 dB for
   small signals at every drive; DC-free monotonic curve over the headroom domain
   (`tone.js`, `tests/dsp/saturation.test.js`).
-- **§2.4 — fixed.** The dry path carries the same 6 ms (`MB_COMPRESSOR_LOOKAHEAD_S`) as
-  the compressor look-ahead (`multiband.js`, graph topology tests).
+- **§2.4 — fixed.** The dry path carries the running engine's measured compressor
+  latency (`resolveDryDelaySeconds`; `MB_COMPRESSOR_LOOKAHEAD_S` 6 ms is the fallback
+  when the probe cannot run), as the §2.4 fix note prescribes (`multiband.js`,
+  `context.js`, graph topology tests, `qa/scripts/crossover-check.mjs`).
 - **§2.6 — fixed.** Final exports enforce a crest-aware gain-reduction budget (avg ≤ 2 dB,
   peak ≤ 6 dB) and deliver/report the loudest clean result at or below the target when the
   requested one would brickwall the record (`normalize.js`, `render-master.js`, report
@@ -218,9 +220,10 @@ maths carefully — but it is not delay-matched, so at `mbMix < 100` the wet pat
 
 Seventeen presets use `mbMix` between 40 and 90 %. The 250 Hz notch is squarely in the
 "body" region; the 83 Hz notch is the kick fundamental. The 7.0 audit fixed the phase
-comb and introduced (or left) a delay comb. **Fix:** insert a `DelayNode(0.006)` in the
-dry path (and verify the constant per browser via an impulse render — it is 6 ms in
-Blink and WebKit; Gecko should be measured at startup). Note the same 6 ms applies to
+comb and introduced (or left) a delay comb. **Fix:** insert a delay in the
+dry path matched to the running engine's measured compressor latency (6.000 ms in
+browsers; other engines are probed per sample rate at render time — it is 6 ms in
+Blink and WebKit; Gecko should be measured at startup). Note the same delay applies to
 the low/mid/high bands equally, so the _band sum_ is internally consistent.
 
 ### 2.5 Transient shaper is in the wrong place and is then erased

@@ -67,6 +67,9 @@ const MONO_BANDS = [
 
 function bandpassCopy(channel, lo, hi, sampleRate) {
   const out = Float32Array.from(channel);
+  // Linear Q on purpose: this is pure offline analysis with no `BiquadFilterNode`
+  // counterpart, so the RBJ-linear convention of `designBiquad` is the right one here
+  // (node Q units only apply to nodes — see `dsp/biquad.js`).
   processBiquadCascade(out, [
     designBiquad('highpass', lo, 0.7071, 0, sampleRate),
     designBiquad('highpass', lo, 0.7071, 0, sampleRate),

@@ -32,18 +32,21 @@
 
 import { WIDTH_CROSSOVER_LOW, WIDTH_CROSSOVER_HIGH } from '../../app/constants.js';
 import { clamp } from '../dsp/math.js';
+import { BUTTERWORTH_Q_DB } from '../dsp/biquad.js';
 
 /** @typedef {'stereo'|'mono'|'mid'|'side'|'left'|'right'} AuditionMode */
 
 function lr4(ctx, type, freq) {
+  // Node Q is resonance in dB for lowpass/highpass: Butterworth needs −3.0103, not
+  // 0.7071 (which peaks +0.71 dB per section — issue #19 put +7.4 dB on this path).
   const a = ctx.createBiquadFilter();
   a.type = type;
   a.frequency.value = freq;
-  a.Q.value = Math.SQRT1_2;
+  a.Q.value = BUTTERWORTH_Q_DB;
   const b = ctx.createBiquadFilter();
   b.type = type;
   b.frequency.value = freq;
-  b.Q.value = Math.SQRT1_2;
+  b.Q.value = BUTTERWORTH_Q_DB;
   a.connect(b);
   return { in: a, out: b };
 }
@@ -119,7 +122,7 @@ export function buildStereo(ctx) {
   const sideAllpass = ctx.createBiquadFilter();
   sideAllpass.type = 'allpass';
   sideAllpass.frequency.value = 800;
-  sideAllpass.Q.value = 0.7;
+  sideAllpass.Q.value = 0.7; // linear — allpass Q is linear in the node
   const sideAllpassGain = ctx.createGain();
   sideAllpassGain.gain.value = 0;
   const sideMix = ctx.createGain();
@@ -167,7 +170,7 @@ export function buildStereo(ctx) {
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.value = 700;
-    lp.Q.value = 0.7071;
+    lp.Q.value = BUTTERWORTH_Q_DB;
     const g = ctx.createGain();
     g.gain.value = 0;
     from.connect(d);

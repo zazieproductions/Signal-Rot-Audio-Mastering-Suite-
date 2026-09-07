@@ -18,6 +18,8 @@
  * rather than centre.
  */
 
+import { BUTTERWORTH_Q_DB } from '../dsp/biquad.js';
+
 /** Room-size presets: the two tap times in seconds. */
 export const DEPTH_SIZES = Object.freeze({
   small: { taps: [0.011, 0.019], label: 'Small — tight room' },
@@ -40,12 +42,12 @@ export function buildDepth(ctx) {
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.value = lpFreq;
-    lp.Q.value = 0.7071;
+    lp.Q.value = BUTTERWORTH_Q_DB; // node Q in dB — gentle damping, no resonant bump
     // A gentle high-pass keeps reflections out of the sub region, where they only muddy.
     const hp = ctx.createBiquadFilter();
     hp.type = 'highpass';
     hp.frequency.value = 180;
-    hp.Q.value = 0.7071;
+    hp.Q.value = BUTTERWORTH_Q_DB;
     const gain = ctx.createGain();
     gain.gain.value = 0;
     input.connect(delay);

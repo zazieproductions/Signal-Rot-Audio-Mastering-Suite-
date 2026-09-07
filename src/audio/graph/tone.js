@@ -46,6 +46,7 @@
  */
 
 import { clamp } from '../dsp/math.js';
+import { BUTTERWORTH_Q_DB } from '../dsp/biquad.js';
 
 /**
  * The tonal EQ band definitions. `key` is the parameter name; `label` and `hint` are what
@@ -236,7 +237,7 @@ export function buildSaturation(ctx) {
   const dcBlock = ctx.createBiquadFilter();
   dcBlock.type = 'highpass';
   dcBlock.frequency.value = 5;
-  dcBlock.Q.value = 0.7071;
+  dcBlock.Q.value = BUTTERWORTH_Q_DB; // node Q in dB — maximally flat, no subsonic lift
 
   const preGain = ctx.createGain();
   const shaper = ctx.createWaveShaper();
@@ -245,7 +246,7 @@ export function buildSaturation(ctx) {
   const postLowpass = ctx.createBiquadFilter();
   postLowpass.type = 'lowpass';
   postLowpass.frequency.value = 22000;
-  postLowpass.Q.value = 0.7071;
+  postLowpass.Q.value = BUTTERWORTH_Q_DB; // node Q in dB — smooth roll-off, not a peak
   const makeup = ctx.createGain();
 
   dcBlock.connect(preGain);

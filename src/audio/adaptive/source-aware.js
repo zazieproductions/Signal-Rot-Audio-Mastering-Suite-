@@ -13,7 +13,9 @@
  * asked for. The two exceptions are guardrails, not processing:
  *
  *  · `bassMono` may be *raised* to a floor (never lowered) on bass-heavy sources, so
- *    sub energy stays centred instead of wandering.
+ *    sub energy stays centred instead of wandering. Skipped when the source is mono
+ *    (`stats.channels === 1`): a mono sub is already centred, and raising the corner
+ *    would only force a stereo render downstream.
  *  · Nothing else is ever raised. No EQ boost is added, no width is widened, no drive
  *    is increased.
  *
@@ -37,6 +39,9 @@ import { clamp } from '../dsp/math.js';
  * @property {number} [truePeakDb]   source true peak, dBTP
  * @property {{bassDb:number, presenceDb:number, trebleDb:number}|null} [spectral]
  *   mean-removed tonal shape; see `spectralSummary`
+ * @property {number} [channels]     source channel count; when 1 the bass-mono
+ *   guardrail is skipped (a mono sub is already centred — raising the corner would
+ *   only force a stereo render). Absent = unknown = previous behaviour.
  */
 
 /**
@@ -313,8 +318,14 @@ export function adaptParameters(parameters, stats = {}) {
         }
       }
       if (p.bassMono < 90) {
-        notes.push(`mono-below ${p.bassMono} → 90 Hz (bass-heavy source)`);
-        p.bassMono = 90;
+        if (stats.channels === 1) {
+          // Mono sub is already centred: nothing to fix, and raising the corner
+          // would only force a stereo render downstream (issue #20).
+          notes.push(`mono-below stays ${p.bassMono} Hz (mono source — nothing to centre)`);
+        } else {
+          notes.push(`mono-below ${p.bassMono} → 90 Hz (bass-heavy source)`);
+          p.bassMono = 90;
+        }
       }
     }
   }

@@ -29,6 +29,7 @@
  */
 
 import { dbToGain } from '../dsp/math.js';
+import { BUTTERWORTH_Q_DB } from '../dsp/biquad.js';
 import { LAYOUTS } from './layouts.js';
 import { SONIC_LAB_SPEAKERS } from './sonic-lab.js';
 
@@ -44,16 +45,16 @@ import { SONIC_LAB_SPEAKERS } from './sonic-lab.js';
  * @property {number} frontRear 0..1 (0 = front-weighted, 1 = surround-weighted)
  */
 
-/** Cascade of two Butterworth sections = 4th-order Linkwitz-Riley. */
+/** Cascade of two Butterworth sections = 4th-order Linkwitz-Riley (node Q in dB). */
 function lr4(ctx, type, freq) {
   const a = ctx.createBiquadFilter();
   a.type = type;
   a.frequency.value = freq;
-  a.Q.value = Math.SQRT1_2;
+  a.Q.value = BUTTERWORTH_Q_DB;
   const b = ctx.createBiquadFilter();
   b.type = type;
   b.frequency.value = freq;
-  b.Q.value = Math.SQRT1_2;
+  b.Q.value = BUTTERWORTH_Q_DB;
   a.connect(b);
   return { in: a, out: b };
 }
@@ -136,7 +137,7 @@ export function buildSpeakerFeeds(ctx, source, layoutId, p) {
     const hp = track(ctx.createBiquadFilter());
     hp.type = 'highpass';
     hp.frequency.value = 700;
-    hp.Q.value = 0.7;
+    hp.Q.value = BUTTERWORTH_Q_DB; // node Q in dB — gentle HP, no resonant lift
     const ap2 = track(ctx.createBiquadFilter());
     ap2.type = 'allpass';
     ap2.frequency.value = freq * 1.7;
@@ -192,7 +193,7 @@ export function buildSpeakerFeeds(ctx, source, layoutId, p) {
       const lp = track(ctx.createBiquadFilter());
       lp.type = 'lowpass';
       lp.frequency.value = 3000;
-      lp.Q.value = 0.7;
+      lp.Q.value = BUTTERWORTH_Q_DB; // node Q in dB — darker wash, no bump at 3 kHz
       const g = gain(surrG * 0.5);
       a.connect(lp);
       lp.connect(g);
