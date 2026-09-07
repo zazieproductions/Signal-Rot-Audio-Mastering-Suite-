@@ -1,24 +1,104 @@
-name: Conformance
+name: Conformance lab
 
-# Real-browser DSP and product E2E. Not optional, not skipped (issue #15).
-# Chromium is the required gate; Firefox and WebKit run as additional projects
-# in the conformance lab and fail the job if they fail.
+# ─────────────────────────────────────────────────────────────────────────────────────
+# Real-Web-Audio conformance, the goldens, and the Node benchmarks.
+#
+# Heavy: installs three Playwright browser engines and renders real OfflineAudioContext
+# graphs. Only triggered by changes that can actually move the audio behaviour:
+# DSP, graph, render, immersive, presets, dependencies, the browser lab itself, or
+# the conformance tooling. Documentation-only changes skip this entirely.
+#
+# Companion to `.github/workflows/ci.yml`, which is the fast always-on gate.
+# ─────────────────────────────────────────────────────────────────────────────────────
 
 on:
-  push:
-    branches: ['**']
-  pull_request:
   workflow_dispatch:
+  push:
+    paths:
+      - 'src/audio/**'
+      - 'src/presets/**'
+      - 'src/app/parameters.js'
+      - 'src/app/constants.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tests/browser/**'
+      - 'tests/fixtures/**'
+      - 'tests/conformance/**'
+      - 'tests/dsp/**'
+      - 'tests/integration/**'
+      - 'tools/**'
+      - 'tests/ui/**'
+      - 'src/ui/**'
+      - 'src/app/bootstrap.js'
+      - 'src/app/state.js'
+      - 'src/app/presets-io.js'
+      - '.github/workflows/conformance.yml'
+  pull_request:
+    paths:
+      - 'src/audio/**'
+      - 'src/presets/**'
+      - 'src/app/parameters.js'
+      - 'src/app/constants.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tests/browser/**'
+      - 'tests/fixtures/**'
+      - 'tests/conformance/**'
+      - 'tests/dsp/**'
+      - 'tests/integration/**'
+      - 'tools/**'
+      - 'tests/ui/**'
+      - 'src/ui/**'
+      - 'src/app/bootstrap.js'
+      - 'src/app/state.js'
+      - 'src/app/presets-io.js'
+      - '.github/workflows/conformance.yml'
 
 concurrency:
-  group: conformance-${{ github.workflow }}-${{ github.ref }}
+  group: conformance-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  e2e:
-    name: Product E2E (Chromium)
+  goldens:
+    name: Golden fixtures (Node)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # `node-web-audio-api` (a devDependency, only loaded by the
+      # real-BiquadFilterNode regression lock in `tests/dsp/crossover-real-biquad.test.js`)
+      # dlopens `libasound.so.2` at import time. `ubuntu-latest` ships it but the
+      # package name differs across releases, so install both candidates.
+      - name: Install ALSA (node-web-audio-api native binding)
+        run: sudo apt-get update && sudo apt-get install -y libasound2 libasound2t64 || true
+
+      - name: Generate goldens and compare against committed snapshots
+        run: |
+          npm run lab:goldens
+          npx vitest run tests/fixtures/goldens.test.js tests/conformance
+      - name: Node benchmarks
+        run: npm run lab:bench
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lab-results-node
+          path: lab-results
+          retention-days: 14
+
+  browsers:
+    name: Web Audio conformance (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,39 +106,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-      - name: E2E
-        run: npm run test:e2e
-      - if: failure()
-        uses: actions/upload-artifact@v4
+      - name: Install ${{ matrix.browser }}
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Conformance suite
+        run: npx playwright test --config tests/browser/playwright.config.js --project ${{ matrix.browser }}
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: e2e-report
+          name: conformance-${{ matrix.browser }}
           path: |
+            lab-results
             playwright-report
             test-results
-          retention-days: 7
-
-  dsp-lab:
-    name: Web Audio conformance lab
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox webkit
-      - name: Conformance lab
-        run: npm run test:conformance
-      - if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: conformance-report
-          path: |
-            playwright-report
-            test-results
-          retention-days: 7
+          retention-days: 14
