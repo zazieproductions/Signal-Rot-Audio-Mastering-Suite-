@@ -31,11 +31,17 @@ The standing question: **at matched loudness, would I choose the Signal Rot mast
 ## Running
 
     npm install
+    npm install --no-save node-web-audio-api   # render shim for qa/ only; not a product dependency
     python3 -m venv .venv-qa && .venv-qa/bin/pip install numpy scipy soundfile
     QA_MAT=$PWD/../qa-materials .venv-qa/bin/python qa/scripts/gen_materials.py
     node qa/scripts/render.mjs --jobs qa/jobs-smoke.json --out /tmp/o
     python3 qa/scripts/audit.py --dir /tmp/o
     bash qa/scripts/evidence.sh            # regenerates qa/results/evidence/*.md
+
+On Linux the `node-web-audio-api` native binding loads `libasound.so.2` at import time, so renders
+need ALSA present (`apt-get install libasound2`) or, in an offline sandbox, a minimal stub on
+`LD_LIBRARY_PATH` — the environment this audit ran in had no audio stack at all and used a 79-symbol
+versioned stub. `OfflineAudioContext` touches no real device either way.
 
 Job files in `qa/jobs-*.json` are the ones the findings quote: `jobs-smoke` (preset sweep over the
 matrix), `jobs-stress` (loudness targets, GR ladder, saturation, HF, width, transient, multiband,
