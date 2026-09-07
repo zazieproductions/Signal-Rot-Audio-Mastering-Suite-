@@ -123,8 +123,10 @@ jobs:
       - name: Findings folder structure
         run: |
           test -d qa/findings || (echo "qa/findings missing" && exit 1)
-          # Each SON-* file must reference its issue number in the title.
+          # Each SON-* file must reference its issue number in the title. The
+          # existing files use either `#` (h1) or `##` (h2) for the title; the
+          # first line just has to mention SON-N.
           for f in qa/findings/SON-*.md; do
-            head -1 "$f" | grep -q "^# SON-" || (echo "Bad header in $f" && exit 1)
+            head -1 "$f" | grep -qE "^#+ SON-[0-9]+" || (echo "Bad header in $f" && head -1 "$f" && exit 1)
           done
           echo "OK qa/findings structure"
