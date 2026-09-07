@@ -7,6 +7,7 @@ import {
   MB_BALLISTICS,
 } from '../../src/audio/graph/multiband.js';
 import { cabs } from '../../src/audio/dsp/biquad.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
 const SR = 48000;
 const dbOf = (c) => 20 * Math.log10(Math.max(1e-12, cabs(c)));
@@ -18,7 +19,7 @@ const dbOf = (c) => 20 * Math.log10(Math.max(1e-12, cabs(c)));
  * frequencies. Both the failure and the fix are asserted here so the bug cannot silently
  * return.
  */
-describe('crossover reconstruction — current topology', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} crossover reconstruction — current topology`, () => {
   it('sums to exactly 0 dB at full wet', () => {
     const result = crossoverReconstruction(SR, { mix: 1, points: 1024 });
     expect(Math.abs(result.worstDeviationDb)).toBeLessThan(0.001);
@@ -91,7 +92,7 @@ describe('crossover reconstruction — current topology', () => {
   });
 });
 
-describe('crossover reconstruction — pre-7.0 topology (the bug)', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} crossover reconstruction — pre-7.0 topology (the bug)`, () => {
   it('was flat at full wet, which is why nobody noticed', () => {
     let worst = 0;
     for (let i = 0; i < 1024; i++) {
@@ -130,7 +131,7 @@ describe('crossover reconstruction — pre-7.0 topology (the bug)', () => {
   });
 });
 
-describe('band amount mapping', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} band amount mapping`, () => {
   it('is inert at 0 and firm-but-mastering-grade at 100', () => {
     const zero = bandAmountToSettings(0);
     expect(zero.thresholdDb).toBe(0);

@@ -10,8 +10,9 @@ import { analysePeaks, analysePeaksVerified, truePeakChannelExact } from '../../
 import { analyseLoudness } from '../../src/audio/analysis/loudness.js';
 import { cloneAudioData } from '../../src/audio/dsp/audio-data.js';
 import { transientTrain, sine, silence, make, whiteNoise } from '../helpers/signals.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-describe('slidingMinimum', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} slidingMinimum`, () => {
   it('takes the minimum over a centred window of 2·half + 1 samples', () => {
     //          i:  0    1    2    3    4    5    6    7    8
     const src = Float32Array.from([1, 1, 0.2, 1, 1, 1, 0.5, 1, 1]);
@@ -35,7 +36,7 @@ describe('slidingMinimum', () => {
   });
 });
 
-describe('hannSmooth', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} hannSmooth`, () => {
   it('preserves a constant signal', () => {
     const src = new Float32Array(200).fill(0.7);
     const out = hannSmooth(src, 20);
@@ -54,7 +55,7 @@ describe('hannSmooth', () => {
   });
 });
 
-describe('gain computation', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} gain computation`, () => {
   it('leaves quiet material completely untouched', () => {
     const data = sine({ amplitude: 0.1, seconds: 1 });
     const gain = computeLimiterGain(data, { ceilingDb: -1 });
@@ -95,7 +96,7 @@ describe('gain computation', () => {
   });
 });
 
-describe('limitTruePeak', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} limitTruePeak`, () => {
   it('holds the ceiling on sharp electronic transients', () => {
     for (const ceilingDb of [-0.1, -0.3, -1.0, -2.0]) {
       const data = transientTrain({ seconds: 2, peakAmplitude: 2.2 });
@@ -226,7 +227,7 @@ describe('limitTruePeak', () => {
   });
 });
 
-describe('verifyCeiling', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} verifyCeiling`, () => {
   it('reports compliance without modifying the buffer', () => {
     const data = sine({ amplitude: 0.5, seconds: 0.5 });
     const before = cloneAudioData(data);

@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { openLab, callLab, writeResult } from './helpers.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-test.describe('Performance benchmarks', () => {
+test.describe(`${mark(SCOPE.REAL_WEB_AUDIO)} Performance benchmarks`, () => {
   test('records render time, output size and scaling (does not optimise production code)', async ({
     page,
   }, testInfo) => {

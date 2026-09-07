@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { openLab, callLab, writeResult } from './helpers.js';
 import { THRESHOLDS } from '../conformance/thresholds.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-test.describe('DynamicsCompressorNode (real Web Audio)', () => {
+test.describe(`${mark(SCOPE.REAL_WEB_AUDIO)} DynamicsCompressorNode (real Web Audio)`, () => {
   test('measures lookahead, make-up, static curve and ballistics', async ({ page }, testInfo) => {
     await openLab(page);
     const result = await callLab(page, 'compressor');

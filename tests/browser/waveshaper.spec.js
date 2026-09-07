@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { openLab, callLab, writeResult } from './helpers.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-test.describe('WaveShaperNode (real Web Audio)', () => {
+test.describe(`${mark(SCOPE.REAL_WEB_AUDIO)} WaveShaperNode (real Web Audio)`, () => {
   test('measures clamp, sat=0 unity, headroom, oversampling, DC, monotonicity, harmonics', async ({
     page,
   }, testInfo) => {

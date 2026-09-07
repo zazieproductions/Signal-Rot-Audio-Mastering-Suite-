@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { SCOPE, mark } from '../conformance/scope.js';
 import {
   makeSaturationCurve,
   saturationGainStaging,
@@ -39,7 +40,7 @@ function stageGainDb(amount, x) {
   return 20 * Math.log10(Math.abs(out) / Math.abs(x));
 }
 
-describe('saturation gain staging', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} saturation gain staging`, () => {
   it('is 0 dB for small signals at every amount', () => {
     for (let a = 0; a <= 100; a += 5) {
       const amount = a / 100;
@@ -99,7 +100,7 @@ describe('saturation gain staging', () => {
   });
 });
 
-describe('saturation curve (headroom domain)', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} saturation curve (headroom domain)`, () => {
   it('is a straight line over ±HEADROOM at sat = 0, so sat = 0 cannot hard-clip', () => {
     const curve = makeSaturationCurve(0);
     expect(curve).toBe(IDENTITY_CURVE);

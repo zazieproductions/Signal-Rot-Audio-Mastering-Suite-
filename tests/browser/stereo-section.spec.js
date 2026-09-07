@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { openLab, callLab, writeResult } from './helpers.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-test.describe('Stereo section (real Web Audio render)', () => {
+test.describe(`${mark(SCOPE.REAL_WEB_AUDIO)} Stereo section (real Web Audio render)`, () => {
   test('side path is unity at unity width; bass-mono is a true LR4', async ({
     page,
   }, testInfo) => {

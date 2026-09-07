@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { openLab, callLab, writeResult } from './helpers.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-test.describe('Immersive speaker-feed renders', () => {
+test.describe(`${mark(SCOPE.REAL_WEB_AUDIO)} Immersive speaker-feed renders`, () => {
   test('every layout emits every channel, with correct L/R, height and sub routing', async ({
     page,
   }, testInfo) => {

@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { openLab, callLab, writeResult } from './helpers.js';
 import { THRESHOLDS } from '../conformance/thresholds.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-test.describe('Multiband (real Web Audio render)', () => {
+test.describe(`${mark(SCOPE.REAL_WEB_AUDIO)} Multiband (real Web Audio render)`, () => {
   test('measures dry/wet alignment, reconstruction and partial-mix comb', async ({
     page,
   }, testInfo) => {
