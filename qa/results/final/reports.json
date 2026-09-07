@@ -1,0 +1,3419 @@
+[
+  {
+    "job": {
+      "id": "RATE-48",
+      "src": "acoustic.wav",
+      "preset": "Reference HD",
+      "overrides": {},
+      "bypass": null,
+      "meta": {
+        "family": "mastering",
+        "risk": "safe",
+        "description": "Flagship transparent master — controlled low end, smooth highs, natural stereo dimension. On a great mix it does almost nothing.",
+        "scrubbed": [],
+        "appPathDiffers": true
+      }
+    },
+    "ms": 2487,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/RATE-48.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:25.559Z",
+      "renderMs": 2437,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "Reference HD",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -14.92,
+        "loudnessRangeLu": 2.67,
+        "maxMomentaryLufs": -10.51,
+        "maxShortTermLufs": -13.56,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.77,
+        "correlation": 0.92,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.9,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.68,
+            "monoLossDb": -0.8
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.96,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.73,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.86,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 10.78,
+        "achievedLufs": -14.92,
+        "deltaLu": 0.08,
+        "refinementPasses": 2,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -14.9,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -3.47,
+        "averageGainReductionDb": -0.18,
+        "reducedSampleRatio": 0.4725,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "RATE-nomb-48",
+      "src": "acoustic.wav",
+      "preset": "Reference HD",
+      "overrides": {},
+      "bypass": {
+        "multiband": true
+      },
+      "meta": {
+        "family": "mastering",
+        "risk": "safe",
+        "description": "Flagship transparent master — controlled low end, smooth highs, natural stereo dimension. On a great mix it does almost nothing.",
+        "scrubbed": [],
+        "appPathDiffers": true
+      }
+    },
+    "ms": 1924,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/RATE-nomb-48.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:27.496Z",
+      "renderMs": 1877,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "Reference HD",
+        "moduleBypass": {
+          "multiband": true
+        }
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -15,
+        "loudnessRangeLu": 2.56,
+        "maxMomentaryLufs": -10.56,
+        "maxShortTermLufs": -14.09,
+        "samplePeakDbfs": -1.21,
+        "truePeakDbtp": -1.17,
+        "crestFactorDb": 16.63,
+        "correlation": 0.96,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.92,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.92,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.98,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.93,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.76,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.88,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 5.69,
+        "achievedLufs": -15,
+        "deltaLu": 0,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": 0,
+        "averageGainReductionDb": 0,
+        "reducedSampleRatio": 0,
+        "achievedTruePeakDbtp": -1.17,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "RATE-96",
+      "src": "acoustic-96k.wav",
+      "preset": "Reference HD",
+      "overrides": {},
+      "bypass": null,
+      "meta": {
+        "family": "mastering",
+        "risk": "safe",
+        "description": "Flagship transparent master — controlled low end, smooth highs, natural stereo dimension. On a great mix it does almost nothing.",
+        "scrubbed": [],
+        "appPathDiffers": true
+      }
+    },
+    "ms": 3499,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/RATE-96.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:30.982Z",
+      "renderMs": 3427,
+      "source": {
+        "name": "acoustic-96k.wav",
+        "sampleRate": 96000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "Reference HD",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.73,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.3,
+        "maxShortTermLufs": -19.82,
+        "samplePeakDbfs": -6.37,
+        "truePeakDbtp": -6.37,
+        "crestFactorDb": 17.2
+      },
+      "analysisAfter": {
+        "integratedLufs": -15,
+        "loudnessRangeLu": 2.79,
+        "maxMomentaryLufs": -10.5,
+        "maxShortTermLufs": -14.04,
+        "samplePeakDbfs": -2.85,
+        "truePeakDbtp": -2.85,
+        "crestFactorDb": 14.97,
+        "correlation": 0.96,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.89,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.87,
+            "monoLossDb": -0.3
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.98,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.93,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.74,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.86,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 6.06,
+        "achievedLufs": -15,
+        "deltaLu": 0,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": 0,
+        "averageGainReductionDb": 0,
+        "reducedSampleRatio": 0,
+        "achievedTruePeakDbtp": -2.85,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 96000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "RATE-nomb-96",
+      "src": "acoustic-96k.wav",
+      "preset": "Reference HD",
+      "overrides": {},
+      "bypass": {
+        "multiband": true
+      },
+      "meta": {
+        "family": "mastering",
+        "risk": "safe",
+        "description": "Flagship transparent master — controlled low end, smooth highs, natural stereo dimension. On a great mix it does almost nothing.",
+        "scrubbed": [],
+        "appPathDiffers": true
+      }
+    },
+    "ms": 3328,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/RATE-nomb-96.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:34.309Z",
+      "renderMs": 3260,
+      "source": {
+        "name": "acoustic-96k.wav",
+        "sampleRate": 96000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "Reference HD",
+        "moduleBypass": {
+          "multiband": true
+        }
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.73,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.3,
+        "maxShortTermLufs": -19.82,
+        "samplePeakDbfs": -6.37,
+        "truePeakDbtp": -6.37,
+        "crestFactorDb": 17.2
+      },
+      "analysisAfter": {
+        "integratedLufs": -15.01,
+        "loudnessRangeLu": 2.59,
+        "maxMomentaryLufs": -10.56,
+        "maxShortTermLufs": -14.04,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.81,
+        "correlation": 0.96,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.92,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.92,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.98,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.93,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.75,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.88,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 5.71,
+        "achievedLufs": -15.01,
+        "deltaLu": -0.01,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -0.23,
+        "averageGainReductionDb": -0.04,
+        "reducedSampleRatio": 0.1186,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 96000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "RATE-192",
+      "src": "acoustic-192k.wav",
+      "preset": "Reference HD",
+      "overrides": {},
+      "bypass": null,
+      "meta": {
+        "family": "mastering",
+        "risk": "safe",
+        "description": "Flagship transparent master — controlled low end, smooth highs, natural stereo dimension. On a great mix it does almost nothing.",
+        "scrubbed": [],
+        "appPathDiffers": true
+      }
+    },
+    "ms": 8259,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/RATE-192.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:42.540Z",
+      "renderMs": 8128,
+      "source": {
+        "name": "acoustic-192k.wav",
+        "sampleRate": 192000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "Reference HD",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.74,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.31,
+        "maxShortTermLufs": -19.83,
+        "samplePeakDbfs": -6.37,
+        "truePeakDbtp": -6.37,
+        "crestFactorDb": 17.2
+      },
+      "analysisAfter": {
+        "integratedLufs": -15.02,
+        "loudnessRangeLu": 2.72,
+        "maxMomentaryLufs": -10.62,
+        "maxShortTermLufs": -14.09,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.9,
+        "correlation": 0.96,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.89,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.89,
+            "monoLossDb": -0.3
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.98,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.93,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.74,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.86,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 3.81,
+        "achievedLufs": -15.02,
+        "deltaLu": -0.02,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -0.41,
+        "averageGainReductionDb": -0.06,
+        "reducedSampleRatio": 0.1306,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 192000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "RATE-nomb-192",
+      "src": "acoustic-192k.wav",
+      "preset": "Reference HD",
+      "overrides": {},
+      "bypass": {
+        "multiband": true
+      },
+      "meta": {
+        "family": "mastering",
+        "risk": "safe",
+        "description": "Flagship transparent master — controlled low end, smooth highs, natural stereo dimension. On a great mix it does almost nothing.",
+        "scrubbed": [],
+        "appPathDiffers": true
+      }
+    },
+    "ms": 7981,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/RATE-nomb-192.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:50.532Z",
+      "renderMs": 7866,
+      "source": {
+        "name": "acoustic-192k.wav",
+        "sampleRate": 192000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "Reference HD",
+        "moduleBypass": {
+          "multiband": true
+        }
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.74,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.31,
+        "maxShortTermLufs": -19.83,
+        "samplePeakDbfs": -6.37,
+        "truePeakDbtp": -6.37,
+        "crestFactorDb": 17.2
+      },
+      "analysisAfter": {
+        "integratedLufs": -15.01,
+        "loudnessRangeLu": 2.59,
+        "maxMomentaryLufs": -10.56,
+        "maxShortTermLufs": -14.04,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.81,
+        "correlation": 0.96,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.92,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.92,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.98,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.93,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.75,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.88,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 5.71,
+        "achievedLufs": -15.01,
+        "deltaLu": -0.01,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -0.28,
+        "averageGainReductionDb": -0.03,
+        "reducedSampleRatio": 0.1732,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 192000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "MIX-0",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 0,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 1698,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/MIX-0.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:52.253Z",
+      "renderMs": 1656,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "MIX-0",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 0,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -15,
+        "loudnessRangeLu": 2.56,
+        "maxMomentaryLufs": -10.56,
+        "maxShortTermLufs": -14.09,
+        "samplePeakDbfs": -1.21,
+        "truePeakDbtp": -1.17,
+        "crestFactorDb": 16.63,
+        "correlation": 0.96,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.92,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.92,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.98,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.93,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.76,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.88,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 5.69,
+        "achievedLufs": -15,
+        "deltaLu": 0,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": 0,
+        "averageGainReductionDb": 0,
+        "reducedSampleRatio": 0,
+        "achievedTruePeakDbtp": -1.17,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 0,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "MIX-25",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 25,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 1709,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/MIX-25.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:53.978Z",
+      "renderMs": 1685,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "MIX-25",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 25,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -15.08,
+        "loudnessRangeLu": 2.35,
+        "maxMomentaryLufs": -10.76,
+        "maxShortTermLufs": -13.88,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.85,
+        "correlation": 0.93,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.92,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.76,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.96,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.75,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.88,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 10.47,
+        "achievedLufs": -15.08,
+        "deltaLu": -0.08,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15.1,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -1.25,
+        "averageGainReductionDb": -0.08,
+        "reducedSampleRatio": 0.3961,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 25,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "MIX-50",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 2270,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/MIX-50.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:56.244Z",
+      "renderMs": 2235,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "MIX-50",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -14.92,
+        "loudnessRangeLu": 2.67,
+        "maxMomentaryLufs": -10.51,
+        "maxShortTermLufs": -13.56,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.77,
+        "correlation": 0.92,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.9,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.68,
+            "monoLossDb": -0.8
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.96,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.73,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.86,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 10.78,
+        "achievedLufs": -14.92,
+        "deltaLu": 0.08,
+        "refinementPasses": 2,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -14.9,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -3.47,
+        "averageGainReductionDb": -0.18,
+        "reducedSampleRatio": 0.4725,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "MIX-75",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 75,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 1695,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/MIX-75.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:57.943Z",
+      "renderMs": 1665,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "MIX-75",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 75,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -15.08,
+        "loudnessRangeLu": 2.83,
+        "maxMomentaryLufs": -10.5,
+        "maxShortTermLufs": -13.84,
+        "samplePeakDbfs": -1.09,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.74,
+        "correlation": 0.94,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.88,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.82,
+            "monoLossDb": -0.5
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.97,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.74,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.85,
+            "monoLossDb": -0.4
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 6.81,
+        "achievedLufs": -15.08,
+        "deltaLu": -0.08,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15.1,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "parallel mix 75 → 70 % (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -1.9,
+        "averageGainReductionDb": -0.19,
+        "reducedSampleRatio": 0.1624,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 75,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "MIX-100",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbMix": 100,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 1700,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/MIX-100.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:14:59.644Z",
+      "renderMs": 1675,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "MIX-100",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 10,
+        "mbHigh": 8,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -15.08,
+        "loudnessRangeLu": 2.83,
+        "maxMomentaryLufs": -10.5,
+        "maxShortTermLufs": -13.84,
+        "samplePeakDbfs": -1.09,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.74,
+        "correlation": 0.94,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.88,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.82,
+            "monoLossDb": -0.5
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.97,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.74,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.85,
+            "monoLossDb": -0.4
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 6.81,
+        "achievedLufs": -15.08,
+        "deltaLu": -0.08,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15.1,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 10 → 7 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "parallel mix 100 → 70 % (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -1.9,
+        "averageGainReductionDb": -0.19,
+        "reducedSampleRatio": 0.1624,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 100,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "AMT-0",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 0,
+        "mbMid": 0,
+        "mbHigh": 0,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 1696,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/AMT-0.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:15:01.336Z",
+      "renderMs": 1660,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "AMT-0",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -15,
+        "loudnessRangeLu": 2.56,
+        "maxMomentaryLufs": -10.56,
+        "maxShortTermLufs": -14.09,
+        "samplePeakDbfs": -1.21,
+        "truePeakDbtp": -1.17,
+        "crestFactorDb": 16.63,
+        "correlation": 0.96,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.92,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.92,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.98,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.93,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.76,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.88,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 5.69,
+        "achievedLufs": -15,
+        "deltaLu": 0,
+        "refinementPasses": 1,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -15,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": ["mono-below 80 → 90 Hz (bass-heavy source)"]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": 0,
+        "averageGainReductionDb": 0,
+        "reducedSampleRatio": 0,
+        "achievedTruePeakDbtp": -1.17,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 0,
+      "mbMid": 0,
+      "mbHigh": 0,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "AMT-12",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 12,
+        "mbMid": 9,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 2255,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/AMT-12.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:15:03.596Z",
+      "renderMs": 2224,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "AMT-12",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 12,
+        "mbMid": 9,
+        "mbHigh": 8,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -14.92,
+        "loudnessRangeLu": 2.67,
+        "maxMomentaryLufs": -10.5,
+        "maxShortTermLufs": -13.56,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.77,
+        "correlation": 0.92,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.9,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.69,
+            "monoLossDb": -0.8
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.96,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.73,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.86,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 10.76,
+        "achievedLufs": -14.92,
+        "deltaLu": 0.08,
+        "refinementPasses": 2,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -14.9,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 12 → 8 (preserving source dynamics)",
+          "mbMid 9 → 6 (preserving source dynamics)",
+          "mbHigh 8 → 6 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -3.46,
+        "averageGainReductionDb": -0.18,
+        "reducedSampleRatio": 0.4717,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 12,
+      "mbMid": 9,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "AMT-30",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 30,
+        "mbMid": 24,
+        "mbHigh": 20,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 2270,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/AMT-30.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:15:05.866Z",
+      "renderMs": 2240,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "AMT-30",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 30,
+        "mbMid": 24,
+        "mbHigh": 20,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -14.92,
+        "loudnessRangeLu": 2.67,
+        "maxMomentaryLufs": -10.51,
+        "maxShortTermLufs": -13.56,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.77,
+        "correlation": 0.92,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.9,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.68,
+            "monoLossDb": -0.8
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.95,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.73,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.86,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 10.83,
+        "achievedLufs": -14.92,
+        "deltaLu": 0.08,
+        "refinementPasses": 2,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -14.9,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 30 → 21 (preserving source dynamics)",
+          "mbMid 24 → 17 (preserving source dynamics)",
+          "mbHigh 20 → 14 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -3.45,
+        "averageGainReductionDb": -0.18,
+        "reducedSampleRatio": 0.4716,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 30,
+      "mbMid": 24,
+      "mbHigh": 20,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "AMT-60",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 60,
+        "mbMid": 49,
+        "mbHigh": 40,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 2331,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/AMT-60.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:15:08.197Z",
+      "renderMs": 2300,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "AMT-60",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 60,
+        "mbMid": 49,
+        "mbHigh": 40,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -14.92,
+        "loudnessRangeLu": 2.68,
+        "maxMomentaryLufs": -10.49,
+        "maxShortTermLufs": -13.56,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.76,
+        "correlation": 0.92,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.9,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.69,
+            "monoLossDb": -0.8
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.96,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.73,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.86,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 10.53,
+        "achievedLufs": -14.92,
+        "deltaLu": 0.08,
+        "refinementPasses": 2,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -14.9,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 60 → 42 (preserving source dynamics)",
+          "mbMid 49 → 34 (preserving source dynamics)",
+          "mbHigh 40 → 28 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -3.4,
+        "averageGainReductionDb": -0.17,
+        "reducedSampleRatio": 0.4642,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 60,
+      "mbMid": 49,
+      "mbHigh": 40,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  },
+  {
+    "job": {
+      "id": "AMT-100",
+      "src": "acoustic.wav",
+      "preset": null,
+      "overrides": {
+        "mbLow": 100,
+        "mbMid": 83,
+        "mbHigh": 67,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80,
+        "targetLUFS": -15
+      },
+      "bypass": null,
+      "meta": {}
+    },
+    "ms": 2283,
+    "output": "/home/user/Signal-Rot-Audio-Mastering-Suite-/qa/results/final/AMT-100.wav",
+    "report": {
+      "engine": {
+        "name": "SIGNAL ROT // MASTER",
+        "version": "7.0.0"
+      },
+      "timestamp": "2026-09-07T20:15:10.481Z",
+      "renderMs": 2252,
+      "source": {
+        "name": "acoustic.wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "durationSeconds": 10
+      },
+      "preset": {
+        "name": "AMT-100",
+        "moduleBypass": {}
+      },
+      "parameters": {
+        "targetLUFS": -15,
+        "mbLow": 100,
+        "mbMid": 83,
+        "mbHigh": 67,
+        "mbMix": 50,
+        "mbSpeed": "slow",
+        "bassMono": 80
+      },
+      "analysisBefore": {
+        "integratedLufs": -20.71,
+        "loudnessRangeLu": 2.6,
+        "maxMomentaryLufs": -16.28,
+        "maxShortTermLufs": -19.8,
+        "samplePeakDbfs": -7.54,
+        "truePeakDbtp": -6.54,
+        "crestFactorDb": 16.03
+      },
+      "analysisAfter": {
+        "integratedLufs": -14.92,
+        "loudnessRangeLu": 2.64,
+        "maxMomentaryLufs": -10.53,
+        "maxShortTermLufs": -13.57,
+        "samplePeakDbfs": -1,
+        "truePeakDbtp": -1,
+        "crestFactorDb": 16.76,
+        "correlation": 0.92,
+        "monoBands": [
+          {
+            "band": "sub",
+            "fromHz": 20,
+            "toHz": 60,
+            "correlation": 0.9,
+            "monoLossDb": -0.7
+          },
+          {
+            "band": "bass",
+            "fromHz": 60,
+            "toHz": 150,
+            "correlation": 0.69,
+            "monoLossDb": -0.8
+          },
+          {
+            "band": "low-mid",
+            "fromHz": 150,
+            "toHz": 400,
+            "correlation": 0.96,
+            "monoLossDb": -0.1
+          },
+          {
+            "band": "mid",
+            "fromHz": 400,
+            "toHz": 1500,
+            "correlation": 0.94,
+            "monoLossDb": -0.2
+          },
+          {
+            "band": "presence",
+            "fromHz": 1500,
+            "toHz": 5000,
+            "correlation": 0.73,
+            "monoLossDb": -0.6
+          },
+          {
+            "band": "air",
+            "fromHz": 5000,
+            "toHz": 16000,
+            "correlation": 0.86,
+            "monoLossDb": -0.3
+          }
+        ]
+      },
+      "loudness": {
+        "targetLufs": -15,
+        "normalizationGainDb": 10.47,
+        "achievedLufs": -14.92,
+        "deltaLu": 0.08,
+        "refinementPasses": 2,
+        "targetReachable": true,
+        "ambitionReduced": false,
+        "effectiveTargetLufs": -15,
+        "crestAware": {
+          "capped": false,
+          "requestedLufs": -15,
+          "deliveredLufs": -14.9,
+          "maxAverageGainReductionDb": 2,
+          "maxPeakGainReductionDb": 6
+        }
+      },
+      "adaptation": {
+        "sourceClass": "quiet+dynamic+bass-heavy",
+        "applied": true,
+        "notes": [
+          "mbLow 100 → 70 (preserving source dynamics)",
+          "mbMid 83 → 58 (preserving source dynamics)",
+          "mbHigh 67 → 47 (preserving source dynamics)",
+          "mono-below 80 → 90 Hz (bass-heavy source)"
+        ]
+      },
+      "limiter": {
+        "ceilingDbtp": -1,
+        "maximumGainReductionDb": -3.5,
+        "averageGainReductionDb": -0.18,
+        "reducedSampleRatio": 0.4673,
+        "achievedTruePeakDbtp": -1,
+        "correctionTrimDb": 0,
+        "ceilingRespected": true
+      },
+      "transientShaper": {
+        "applied": false
+      },
+      "dither": {
+        "mode": "none",
+        "applied": false,
+        "reason": "float output — dither would only add noise"
+      },
+      "format": {
+        "container": "wav",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitDepth": 32,
+        "durationSeconds": 10
+      },
+      "reproducibility": {
+        "textureSeed": 85346839,
+        "note": "Re-rendering with this engine version, these parameters and this texture seed produces an identical file. Browser differences in DynamicsCompressorNode and WaveShaperNode oversampling can change results across engines."
+      },
+      "warnings": []
+    },
+    "parameters": {
+      "normalize": true,
+      "targetLUFS": -15,
+      "ceiling": -1,
+      "drive": 0,
+      "sub": 0,
+      "warm": 0,
+      "body": 0,
+      "harsh": 0,
+      "clarity": 0,
+      "air": 0,
+      "tilt": 0,
+      "sat": 0,
+      "mbLow": 100,
+      "mbMid": 83,
+      "mbHigh": 67,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "mbSolo": "none",
+      "mbBypassLow": false,
+      "mbBypassMid": false,
+      "mbBypassHigh": false,
+      "transAttack": 0,
+      "transSustain": 0,
+      "width": 1,
+      "ms": 0,
+      "bassMono": 80,
+      "haas": 0,
+      "haasSide": 1,
+      "crossfeed": 0,
+      "phaseRot": 0,
+      "widthLow": 1,
+      "widthMid": 1,
+      "widthHigh": 1,
+      "depth": 0,
+      "depthSize": "med",
+      "binaural": false,
+      "spread": 0,
+      "tape": 0,
+      "hiss": 0,
+      "vinyl": 0,
+      "textureSeed": 85346839,
+      "matchStrength": 0,
+      "matchMode": "balanced",
+      "matchGains": [0, 0, 0, 0, 0, 0, 0, 0],
+      "dither": "tpdf"
+    }
+  }
+]

@@ -1,0 +1,54 @@
+[
+  {
+    "layout": "5.1",
+    "order": ["L", "R", "C", "LFE", "Ls", "Rs"],
+    "missing": [],
+    "out": "/home/user/qa/out6/imm_5.1.wav",
+    "channels": 6
+  },
+  {
+    "layout": "7.1",
+    "order": ["L", "R", "C", "LFE", "Lrs", "Rrs", "Lss", "Rss"],
+    "missing": [],
+    "out": "/home/user/qa/out6/imm_7.1.wav",
+    "channels": 8
+  },
+  {
+    "layout": "7.1.2",
+    "order": ["L", "R", "C", "LFE", "Lrs", "Rrs", "Lss", "Rss", "Ltf", "Rtf"],
+    "missing": [],
+    "out": "/home/user/qa/out6/imm_7.1.2.wav",
+    "channels": 10
+  },
+  {
+    "layout": "7.1.4",
+    "order": ["L", "R", "C", "LFE", "Lrs", "Rrs", "Lss", "Rss", "Ltf", "Rtf", "Ltr", "Rtr"],
+    "missing": [],
+    "out": "/home/user/qa/out6/imm_7.1.4.wav",
+    "channels": 12
+  },
+  {
+    "layout": "9.1.6",
+    "order": [
+      "L",
+      "R",
+      "C",
+      "LFE",
+      "Lss",
+      "Rss",
+      "Lrs",
+      "Rrs",
+      "Lw",
+      "Rw",
+      "Ltf",
+      "Rtf",
+      "Ltm",
+      "Rtm",
+      "Ltr",
+      "Rtr"
+    ],
+    "missing": [],
+    "out": "/home/user/qa/out6/imm_9.1.6.wav",
+    "channels": 16
+  }
+]

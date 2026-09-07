@@ -207,6 +207,21 @@ Corrective`, `Broadcast Mono First`).
   loudest clean master at or below the target and the render report states the requested
   vs delivered loudness and why (new `loudness.crestAware` block).
 
+### Added — sonic QA rig and 2026-09-07 audit
+
+- **Headless render-and-measure QA harness** (`qa/`): the real `renderMaster` driven
+  through `node-web-audio-api`'s `OfflineAudioContext` (plus an ALSA stub), with
+  per-stage taps, one-section isolation, loudness-matched A/B, and a Python measurement
+  stack (LUFS, dBTP by exact FFT reconstruction, crest, inter-channel correlation,
+  fold-down, band levels). No rendered audio is committed; the job lists and measurement
+  JSONs under `qa/jobs-*.json` / `qa/results/` reproduce every number quoted.
+- **Sonic audit at `17b77c7`** (`docs/QA-SONIC-AUDIT-2026-09-07.md`): ~400 renders across
+  23 synthetic materials, verdict **HOLD** — with six measured findings written up as
+  ready-to-post issues in `qa/findings/` (SON-1…SON-6; headline: crossover `Q` is set as
+  linear while Web Audio reads it in dB, so every "LR4" section resonates +0.71 dB at its
+  corner and complementary crossover sums land +7.4 dB high). Baseline worth protecting is
+  pinned in `qa/goldens/`.
+
 ## [7.0.0] — 2026-08-18
 
 A full audit, refactor and DSP-reliability pass. The audit that drove it is preserved at

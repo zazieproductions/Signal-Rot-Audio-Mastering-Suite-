@@ -1,0 +1,866 @@
+[
+  {
+    "id": "Reference-HD__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  {
+    "id": "Reference-HD__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  {
+    "id": "Balanced-Modern__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Balanced Modern",
+    "bitDepth": 32
+  },
+  {
+    "id": "Balanced-Modern__rock",
+    "src": "rock.wav",
+    "preset": "Balanced Modern",
+    "bitDepth": 32
+  },
+  {
+    "id": "Modern-Loud__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Modern Loud",
+    "bitDepth": 32
+  },
+  {
+    "id": "Modern-Loud__rock",
+    "src": "rock.wav",
+    "preset": "Modern Loud",
+    "bitDepth": 32
+  },
+  {
+    "id": "Quiet-Dynamics__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Quiet Dynamics",
+    "bitDepth": 32
+  },
+  {
+    "id": "Quiet-Dynamics__rock",
+    "src": "rock.wav",
+    "preset": "Quiet Dynamics",
+    "bitDepth": 32
+  },
+  {
+    "id": "Analog-Womb__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Analog Womb",
+    "bitDepth": 32
+  },
+  {
+    "id": "Analog-Womb__rock",
+    "src": "rock.wav",
+    "preset": "Analog Womb",
+    "bitDepth": 32
+  },
+  {
+    "id": "Crystal-Palace__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Crystal Palace",
+    "bitDepth": 32
+  },
+  {
+    "id": "Crystal-Palace__rock",
+    "src": "rock.wav",
+    "preset": "Crystal Palace",
+    "bitDepth": 32
+  },
+  {
+    "id": "Fourth-Dimension__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Fourth Dimension",
+    "bitDepth": 32
+  },
+  {
+    "id": "Fourth-Dimension__rock",
+    "src": "rock.wav",
+    "preset": "Fourth Dimension",
+    "bitDepth": 32
+  },
+  {
+    "id": "Tape-Ghost__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Tape Ghost",
+    "bitDepth": 32
+  },
+  {
+    "id": "Tape-Ghost__rock",
+    "src": "rock.wav",
+    "preset": "Tape Ghost",
+    "bitDepth": 32
+  },
+  {
+    "id": "Vinyl-S-ance__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Vinyl Séance",
+    "bitDepth": 32
+  },
+  {
+    "id": "Vinyl-S-ance__rock",
+    "src": "rock.wav",
+    "preset": "Vinyl Séance",
+    "bitDepth": 32
+  },
+  {
+    "id": "Hyperreal__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Hyperreal",
+    "bitDepth": 32
+  },
+  {
+    "id": "Hyperreal__rock",
+    "src": "rock.wav",
+    "preset": "Hyperreal",
+    "bitDepth": 32
+  },
+  {
+    "id": "Ferric-Bloom__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Ferric Bloom",
+    "bitDepth": 32
+  },
+  {
+    "id": "Ferric-Bloom__rock",
+    "src": "rock.wav",
+    "preset": "Ferric Bloom",
+    "bitDepth": 32
+  },
+  {
+    "id": "Ray-Field__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Ray Field",
+    "bitDepth": 32
+  },
+  {
+    "id": "Ray-Field__rock",
+    "src": "rock.wav",
+    "preset": "Ray Field",
+    "bitDepth": 32
+  },
+  {
+    "id": "Magnetic-Memory__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Magnetic Memory",
+    "bitDepth": 32
+  },
+  {
+    "id": "Magnetic-Memory__rock",
+    "src": "rock.wav",
+    "preset": "Magnetic Memory",
+    "bitDepth": 32
+  },
+  {
+    "id": "Aperture__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Aperture",
+    "bitDepth": 32
+  },
+  {
+    "id": "Aperture__rock",
+    "src": "rock.wav",
+    "preset": "Aperture",
+    "bitDepth": 32
+  },
+  {
+    "id": "Transparent__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Transparent",
+    "bitDepth": 32
+  },
+  {
+    "id": "Transparent__rock",
+    "src": "rock.wav",
+    "preset": "Transparent",
+    "bitDepth": 32
+  },
+  {
+    "id": "Streaming-14__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Streaming -14",
+    "bitDepth": 32
+  },
+  {
+    "id": "Streaming-14__rock",
+    "src": "rock.wav",
+    "preset": "Streaming -14",
+    "bitDepth": 32
+  },
+  {
+    "id": "Club-EDM__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Club / EDM",
+    "bitDepth": 32
+  },
+  {
+    "id": "Club-EDM__rock",
+    "src": "rock.wav",
+    "preset": "Club / EDM",
+    "bitDepth": 32
+  },
+  {
+    "id": "Hip-Hop__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Hip-Hop",
+    "bitDepth": 32
+  },
+  {
+    "id": "Hip-Hop__rock",
+    "src": "rock.wav",
+    "preset": "Hip-Hop",
+    "bitDepth": 32
+  },
+  {
+    "id": "Ambient-Drone__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Ambient / Drone",
+    "bitDepth": 32
+  },
+  {
+    "id": "Ambient-Drone__rock",
+    "src": "rock.wav",
+    "preset": "Ambient / Drone",
+    "bitDepth": 32
+  },
+  {
+    "id": "Acoustic-Folk__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Acoustic / Folk",
+    "bitDepth": 32
+  },
+  {
+    "id": "Acoustic-Folk__rock",
+    "src": "rock.wav",
+    "preset": "Acoustic / Folk",
+    "bitDepth": 32
+  },
+  {
+    "id": "Industrial__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Industrial",
+    "bitDepth": 32
+  },
+  {
+    "id": "Industrial__rock",
+    "src": "rock.wav",
+    "preset": "Industrial",
+    "bitDepth": 32
+  },
+  {
+    "id": "Classical__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Classical",
+    "bitDepth": 32
+  },
+  {
+    "id": "Classical__rock",
+    "src": "rock.wav",
+    "preset": "Classical",
+    "bitDepth": 32
+  },
+  {
+    "id": "Modern-Country__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Modern Country",
+    "bitDepth": 32
+  },
+  {
+    "id": "Modern-Country__rock",
+    "src": "rock.wav",
+    "preset": "Modern Country",
+    "bitDepth": 32
+  },
+  {
+    "id": "Drum-Bass__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Drum & Bass",
+    "bitDepth": 32
+  },
+  {
+    "id": "Drum-Bass__rock",
+    "src": "rock.wav",
+    "preset": "Drum & Bass",
+    "bitDepth": 32
+  },
+  {
+    "id": "Reggae-Dub__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reggae / Dub",
+    "bitDepth": 32
+  },
+  {
+    "id": "Reggae-Dub__rock",
+    "src": "rock.wav",
+    "preset": "Reggae / Dub",
+    "bitDepth": 32
+  },
+  {
+    "id": "Jazz-Trio__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Jazz Trio",
+    "bitDepth": 32
+  },
+  {
+    "id": "Jazz-Trio__rock",
+    "src": "rock.wav",
+    "preset": "Jazz Trio",
+    "bitDepth": 32
+  },
+  {
+    "id": "Psychological-Horror__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Psychological Horror",
+    "bitDepth": 32
+  },
+  {
+    "id": "Psychological-Horror__rock",
+    "src": "rock.wav",
+    "preset": "Psychological Horror",
+    "bitDepth": 32
+  },
+  {
+    "id": "Synthwave__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Synthwave",
+    "bitDepth": 32
+  },
+  {
+    "id": "Synthwave__rock",
+    "src": "rock.wav",
+    "preset": "Synthwave",
+    "bitDepth": 32
+  },
+  {
+    "id": "Electronic-Experimental__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Electronic Experimental",
+    "bitDepth": 32
+  },
+  {
+    "id": "Electronic-Experimental__rock",
+    "src": "rock.wav",
+    "preset": "Electronic Experimental",
+    "bitDepth": 32
+  },
+  {
+    "id": "Sound-Design-Foley__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Sound Design / Foley",
+    "bitDepth": 32
+  },
+  {
+    "id": "Sound-Design-Foley__rock",
+    "src": "rock.wav",
+    "preset": "Sound Design / Foley",
+    "bitDepth": 32
+  },
+  {
+    "id": "Cinematic-Trailer__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Cinematic Trailer",
+    "bitDepth": 32
+  },
+  {
+    "id": "Cinematic-Trailer__rock",
+    "src": "rock.wav",
+    "preset": "Cinematic Trailer",
+    "bitDepth": 32
+  },
+  {
+    "id": "Dark-Ambient-Score__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Dark Ambient Score",
+    "bitDepth": 32
+  },
+  {
+    "id": "Dark-Ambient-Score__rock",
+    "src": "rock.wav",
+    "preset": "Dark Ambient Score",
+    "bitDepth": 32
+  },
+  {
+    "id": "Drone-Doom__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Drone / Doom",
+    "bitDepth": 32
+  },
+  {
+    "id": "Drone-Doom__rock",
+    "src": "rock.wav",
+    "preset": "Drone / Doom",
+    "bitDepth": 32
+  },
+  {
+    "id": "Noise-Harsh-Wall__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Noise / Harsh Wall",
+    "bitDepth": 32
+  },
+  {
+    "id": "Noise-Harsh-Wall__rock",
+    "src": "rock.wav",
+    "preset": "Noise / Harsh Wall",
+    "bitDepth": 32
+  },
+  {
+    "id": "Trailer-Impact__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Trailer Impact",
+    "bitDepth": 32
+  },
+  {
+    "id": "Trailer-Impact__rock",
+    "src": "rock.wav",
+    "preset": "Trailer Impact",
+    "bitDepth": 32
+  },
+  {
+    "id": "Documentary__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Documentary",
+    "bitDepth": 32
+  },
+  {
+    "id": "Documentary__rock",
+    "src": "rock.wav",
+    "preset": "Documentary",
+    "bitDepth": 32
+  },
+  {
+    "id": "Game-Loop__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Game Loop",
+    "bitDepth": 32
+  },
+  {
+    "id": "Game-Loop__rock",
+    "src": "rock.wav",
+    "preset": "Game Loop",
+    "bitDepth": 32
+  },
+  {
+    "id": "Dialogue-Under-Score__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Dialogue Under Score",
+    "bitDepth": 32
+  },
+  {
+    "id": "Dialogue-Under-Score__rock",
+    "src": "rock.wav",
+    "preset": "Dialogue Under Score",
+    "bitDepth": 32
+  },
+  {
+    "id": "Melancholic-Sunset__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Melancholic Sunset",
+    "bitDepth": 32
+  },
+  {
+    "id": "Melancholic-Sunset__rock",
+    "src": "rock.wav",
+    "preset": "Melancholic Sunset",
+    "bitDepth": 32
+  },
+  {
+    "id": "Anxious-Energy__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Anxious Energy",
+    "bitDepth": 32
+  },
+  {
+    "id": "Anxious-Energy__rock",
+    "src": "rock.wav",
+    "preset": "Anxious Energy",
+    "bitDepth": 32
+  },
+  {
+    "id": "Euphoric-Peak__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Euphoric Peak",
+    "bitDepth": 32
+  },
+  {
+    "id": "Euphoric-Peak__rock",
+    "src": "rock.wav",
+    "preset": "Euphoric Peak",
+    "bitDepth": 32
+  },
+  {
+    "id": "Dark-Meditation__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Dark Meditation",
+    "bitDepth": 32
+  },
+  {
+    "id": "Dark-Meditation__rock",
+    "src": "rock.wav",
+    "preset": "Dark Meditation",
+    "bitDepth": 32
+  },
+  {
+    "id": "Manic-Joy__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Manic Joy",
+    "bitDepth": 32
+  },
+  {
+    "id": "Manic-Joy__rock",
+    "src": "rock.wav",
+    "preset": "Manic Joy",
+    "bitDepth": 32
+  },
+  {
+    "id": "Empty-Void__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Empty Void",
+    "bitDepth": 32
+  },
+  {
+    "id": "Empty-Void__rock",
+    "src": "rock.wav",
+    "preset": "Empty Void",
+    "bitDepth": 32
+  },
+  {
+    "id": "Bittersweet-Glow__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Bittersweet Glow",
+    "bitDepth": 32
+  },
+  {
+    "id": "Bittersweet-Glow__rock",
+    "src": "rock.wav",
+    "preset": "Bittersweet Glow",
+    "bitDepth": 32
+  },
+  {
+    "id": "Uneasy-Calm__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Uneasy Calm",
+    "bitDepth": 32
+  },
+  {
+    "id": "Uneasy-Calm__rock",
+    "src": "rock.wav",
+    "preset": "Uneasy Calm",
+    "bitDepth": 32
+  },
+  {
+    "id": "Suspended__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Suspended",
+    "bitDepth": 32
+  },
+  {
+    "id": "Suspended__rock",
+    "src": "rock.wav",
+    "preset": "Suspended",
+    "bitDepth": 32
+  },
+  {
+    "id": "Hiraeth__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Hiraeth",
+    "bitDepth": 32
+  },
+  {
+    "id": "Hiraeth__rock",
+    "src": "rock.wav",
+    "preset": "Hiraeth",
+    "bitDepth": 32
+  },
+  {
+    "id": "Crimson__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Crimson",
+    "bitDepth": 32
+  },
+  {
+    "id": "Crimson__rock",
+    "src": "rock.wav",
+    "preset": "Crimson",
+    "bitDepth": 32
+  },
+  {
+    "id": "Cobalt__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Cobalt",
+    "bitDepth": 32
+  },
+  {
+    "id": "Cobalt__rock",
+    "src": "rock.wav",
+    "preset": "Cobalt",
+    "bitDepth": 32
+  },
+  {
+    "id": "Gold__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Gold",
+    "bitDepth": 32
+  },
+  {
+    "id": "Gold__rock",
+    "src": "rock.wav",
+    "preset": "Gold",
+    "bitDepth": 32
+  },
+  {
+    "id": "Obsidian__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Obsidian",
+    "bitDepth": 32
+  },
+  {
+    "id": "Obsidian__rock",
+    "src": "rock.wav",
+    "preset": "Obsidian",
+    "bitDepth": 32
+  },
+  {
+    "id": "Pearl__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Pearl",
+    "bitDepth": 32
+  },
+  {
+    "id": "Pearl__rock",
+    "src": "rock.wav",
+    "preset": "Pearl",
+    "bitDepth": 32
+  },
+  {
+    "id": "Rust__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Rust",
+    "bitDepth": 32
+  },
+  {
+    "id": "Rust__rock",
+    "src": "rock.wav",
+    "preset": "Rust",
+    "bitDepth": 32
+  },
+  {
+    "id": "Amber__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Amber",
+    "bitDepth": 32
+  },
+  {
+    "id": "Amber__rock",
+    "src": "rock.wav",
+    "preset": "Amber",
+    "bitDepth": 32
+  },
+  {
+    "id": "Slate__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Slate",
+    "bitDepth": 32
+  },
+  {
+    "id": "Slate__rock",
+    "src": "rock.wav",
+    "preset": "Slate",
+    "bitDepth": 32
+  },
+  {
+    "id": "Iris__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Iris",
+    "bitDepth": 32
+  },
+  {
+    "id": "Iris__rock",
+    "src": "rock.wav",
+    "preset": "Iris",
+    "bitDepth": 32
+  },
+  {
+    "id": "Chartreuse__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Chartreuse",
+    "bitDepth": 32
+  },
+  {
+    "id": "Chartreuse__rock",
+    "src": "rock.wav",
+    "preset": "Chartreuse",
+    "bitDepth": 32
+  },
+  {
+    "id": "Cathedral__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Cathedral",
+    "bitDepth": 32
+  },
+  {
+    "id": "Cathedral__rock",
+    "src": "rock.wav",
+    "preset": "Cathedral",
+    "bitDepth": 32
+  },
+  {
+    "id": "Binaural-Deep__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Binaural Deep",
+    "bitDepth": 32
+  },
+  {
+    "id": "Binaural-Deep__rock",
+    "src": "rock.wav",
+    "preset": "Binaural Deep",
+    "bitDepth": 32
+  },
+  {
+    "id": "Inverse-Phase__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Inverse Phase",
+    "bitDepth": 32
+  },
+  {
+    "id": "Inverse-Phase__rock",
+    "src": "rock.wav",
+    "preset": "Inverse Phase",
+    "bitDepth": 32
+  },
+  {
+    "id": "Holographic__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Holographic",
+    "bitDepth": 32
+  },
+  {
+    "id": "Holographic__rock",
+    "src": "rock.wav",
+    "preset": "Holographic",
+    "bitDepth": 32
+  },
+  {
+    "id": "Tunnel-Vision__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Tunnel Vision",
+    "bitDepth": 32
+  },
+  {
+    "id": "Tunnel-Vision__rock",
+    "src": "rock.wav",
+    "preset": "Tunnel Vision",
+    "bitDepth": 32
+  },
+  {
+    "id": "Panoramic__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Panoramic",
+    "bitDepth": 32
+  },
+  {
+    "id": "Panoramic__rock",
+    "src": "rock.wav",
+    "preset": "Panoramic",
+    "bitDepth": 32
+  },
+  {
+    "id": "Depth-Lens__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Depth Lens",
+    "bitDepth": 32
+  },
+  {
+    "id": "Depth-Lens__rock",
+    "src": "rock.wav",
+    "preset": "Depth Lens",
+    "bitDepth": 32
+  },
+  {
+    "id": "Wide-Awake__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Wide Awake",
+    "bitDepth": 32
+  },
+  {
+    "id": "Wide-Awake__rock",
+    "src": "rock.wav",
+    "preset": "Wide Awake",
+    "bitDepth": 32
+  },
+  {
+    "id": "Binaural-Stage__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Binaural Stage",
+    "bitDepth": 32
+  },
+  {
+    "id": "Binaural-Stage__rock",
+    "src": "rock.wav",
+    "preset": "Binaural Stage",
+    "bitDepth": 32
+  },
+  {
+    "id": "Polar-Maze__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Polar Maze",
+    "bitDepth": 32
+  },
+  {
+    "id": "Polar-Maze__rock",
+    "src": "rock.wav",
+    "preset": "Polar Maze",
+    "bitDepth": 32
+  },
+  {
+    "id": "Dull-Mix-Rescue__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Dull Mix Rescue",
+    "bitDepth": 32
+  },
+  {
+    "id": "Dull-Mix-Rescue__rock",
+    "src": "rock.wav",
+    "preset": "Dull Mix Rescue",
+    "bitDepth": 32
+  },
+  {
+    "id": "Harsh-Sibilance-Tamer__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Harsh / Sibilance Tamer",
+    "bitDepth": 32
+  },
+  {
+    "id": "Harsh-Sibilance-Tamer__rock",
+    "src": "rock.wav",
+    "preset": "Harsh / Sibilance Tamer",
+    "bitDepth": 32
+  },
+  {
+    "id": "Boomy-Room-Corrective__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Boomy Room Corrective",
+    "bitDepth": 32
+  },
+  {
+    "id": "Boomy-Room-Corrective__rock",
+    "src": "rock.wav",
+    "preset": "Boomy Room Corrective",
+    "bitDepth": 32
+  },
+  {
+    "id": "Broadcast-Mono-First__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Broadcast Mono First",
+    "bitDepth": 32
+  },
+  {
+    "id": "Broadcast-Mono-First__rock",
+    "src": "rock.wav",
+    "preset": "Broadcast Mono First",
+    "bitDepth": 32
+  }
+]

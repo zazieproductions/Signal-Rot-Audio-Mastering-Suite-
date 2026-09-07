@@ -1,0 +1,7 @@
+[
+  { "id": "MONOpreset-broadcast", "src": "mono-acoustic.wav", "preset": "Broadcast Mono First" },
+  { "id": "MONOpreset-reference", "src": "mono-acoustic.wav", "preset": "Reference HD" },
+  { "id": "MONOpreset-transparent", "src": "mono-acoustic.wav", "preset": "Transparent" },
+  { "id": "MONOpreset-stereo14", "src": "mono-acoustic.wav", "params": { "targetLUFS": -14 } },
+  { "id": "MONOpreset-club", "src": "mono-acoustic.wav", "preset": "Club / EDM" }
+]

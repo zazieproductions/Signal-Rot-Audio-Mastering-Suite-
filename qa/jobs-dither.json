@@ -1,0 +1,26 @@
+[
+  {
+    "id": "DITHER-none",
+    "src": "fx-quiettone.wav",
+    "params": { "normalize": false, "dither": "none" },
+    "bitDepth": 16
+  },
+  {
+    "id": "DITHER-tpdf",
+    "src": "fx-quiettone.wav",
+    "params": { "normalize": false, "dither": "tpdf" },
+    "bitDepth": 16
+  },
+  {
+    "id": "DITHER-shaped",
+    "src": "fx-quiettone.wav",
+    "params": { "normalize": false, "dither": "shaped" },
+    "bitDepth": 16
+  },
+  {
+    "id": "DITHER-bogus",
+    "src": "fx-quiettone.wav",
+    "params": { "normalize": false, "dither": "off" },
+    "bitDepth": 16
+  }
+]

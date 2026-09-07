@@ -1,0 +1,355 @@
+[
+  {
+    "id": "L-18__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -18 }
+  },
+  {
+    "id": "L-16__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -16 }
+  },
+  {
+    "id": "L-14__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -14 }
+  },
+  {
+    "id": "L-12__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -12 }
+  },
+  {
+    "id": "L-10__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -10 }
+  },
+  {
+    "id": "L-9__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -9 }
+  },
+  {
+    "id": "L-8__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -8 }
+  },
+  {
+    "id": "L-14__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -14 }
+  },
+  {
+    "id": "L-12__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -12 }
+  },
+  {
+    "id": "L-10__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -10 }
+  },
+  {
+    "id": "L-9__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -9 }
+  },
+  {
+    "id": "L-8__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -8 }
+  },
+  {
+    "id": "L-14__bass",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -14 }
+  },
+  {
+    "id": "L-10__bass",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -10 }
+  },
+  {
+    "id": "L-8__bass",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -8 }
+  },
+  {
+    "id": "L-8__already",
+    "src": "already-mastered.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -8 }
+  },
+  {
+    "id": "L-8__bright",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -8 }
+  },
+  {
+    "id": "L-8__trans",
+    "src": "transients.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -8 }
+  },
+
+  {
+    "id": "GR-0__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -20 }
+  },
+  {
+    "id": "GR-1__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -15 }
+  },
+  {
+    "id": "GR-3__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -11 }
+  },
+  {
+    "id": "GR-5__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -9 }
+  },
+  {
+    "id": "GR-8__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -6 }
+  },
+  {
+    "id": "GR-0__bass",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -20 }
+  },
+  {
+    "id": "GR-3__bass",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -11 }
+  },
+  {
+    "id": "GR-8__bass",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -6 }
+  },
+
+  { "id": "SAT-0__rock", "src": "rock.wav", "params": { "sat": 0, "targetLUFS": -14 } },
+  { "id": "SAT-15__rock", "src": "rock.wav", "params": { "sat": 15, "targetLUFS": -14 } },
+  { "id": "SAT-40__rock", "src": "rock.wav", "params": { "sat": 40, "targetLUFS": -14 } },
+  { "id": "SAT-70__rock", "src": "rock.wav", "params": { "sat": 70, "targetLUFS": -14 } },
+  { "id": "SAT-100__rock", "src": "rock.wav", "params": { "sat": 100, "targetLUFS": -14 } },
+  {
+    "id": "SAT-100__bright",
+    "src": "bright-harsh.wav",
+    "params": { "sat": 100, "targetLUFS": -14 }
+  },
+  { "id": "SAT-100__bass", "src": "bass-heavy.wav", "params": { "sat": 100, "targetLUFS": -14 } },
+  { "id": "SAT-100__trans", "src": "transients.wav", "params": { "sat": 100, "targetLUFS": -14 } },
+  {
+    "id": "SAT-100__clipped",
+    "src": "fx-clipped.wav",
+    "params": { "sat": 100, "normalize": false }
+  },
+
+  {
+    "id": "HF-0__bright",
+    "src": "bright-harsh.wav",
+    "params": { "air": 0, "presence": 0, "tilt": 0, "targetLUFS": -14 }
+  },
+  { "id": "HF-air6__bright", "src": "bright-harsh.wav", "params": { "air": 6, "targetLUFS": -14 } },
+  {
+    "id": "HF-max__bright",
+    "src": "bright-harsh.wav",
+    "params": { "air": 12, "presence": 12, "tilt": 6, "sat": 40, "targetLUFS": -14 }
+  },
+  {
+    "id": "HF-max__dark",
+    "src": "dark-dull.wav",
+    "params": { "air": 12, "presence": 12, "tilt": 6, "sat": 40, "targetLUFS": -14 }
+  },
+  { "id": "HF-rescue__dark", "src": "dark-dull.wav", "preset": "Dull Mix Rescue" },
+  { "id": "HF-tamer__bright", "src": "bright-harsh.wav", "preset": "Harsh / Sibilance Tamer" },
+  { "id": "HF-tamer__acoustic", "src": "acoustic.wav", "preset": "Harsh / Sibilance Tamer" },
+
+  { "id": "W-1__acoustic", "src": "acoustic.wav", "params": { "width": 1, "targetLUFS": -14 } },
+  { "id": "W-13__acoustic", "src": "acoustic.wav", "params": { "width": 1.3, "targetLUFS": -14 } },
+  { "id": "W-16__acoustic", "src": "acoustic.wav", "params": { "width": 1.6, "targetLUFS": -14 } },
+  { "id": "W-2__acoustic", "src": "acoustic.wav", "params": { "width": 2, "targetLUFS": -14 } },
+  { "id": "W-0__acoustic", "src": "acoustic.wav", "params": { "width": 0, "targetLUFS": -14 } },
+  { "id": "W-16__wide", "src": "wide-phasey.wav", "params": { "width": 1.6, "targetLUFS": -14 } },
+  { "id": "W-1__wide", "src": "wide-phasey.wav", "params": { "width": 1, "targetLUFS": -14 } },
+  {
+    "id": "BM-120__bass",
+    "src": "bass-heavy.wav",
+    "params": { "bassMono": 120, "targetLUFS": -14 }
+  },
+  { "id": "BM-0__bass", "src": "bass-heavy.wav", "params": { "bassMono": 0, "targetLUFS": -14 } },
+  {
+    "id": "XFD-50__acoustic",
+    "src": "acoustic.wav",
+    "params": { "crossfeed": 0.5, "targetLUFS": -14 }
+  },
+  { "id": "HAAS-12__acoustic", "src": "acoustic.wav", "params": { "haas": 12, "targetLUFS": -14 } },
+  {
+    "id": "PROT-50__acoustic",
+    "src": "acoustic.wav",
+    "params": { "phaseRot": 0.5, "targetLUFS": -14 }
+  },
+  { "id": "DEP-60__acoustic", "src": "acoustic.wav", "params": { "depth": 60, "targetLUFS": -14 } },
+  {
+    "id": "DEP-100__rock",
+    "src": "rock.wav",
+    "params": { "depth": 100, "depthSize": "large", "targetLUFS": -14 }
+  },
+
+  {
+    "id": "TS-0__trans",
+    "src": "transients.wav",
+    "params": { "transAttack": 0, "transSustain": 0, "targetLUFS": -14 }
+  },
+  {
+    "id": "TS+50__trans",
+    "src": "transients.wav",
+    "params": { "transAttack": 50, "transSustain": -30, "targetLUFS": -14 }
+  },
+  {
+    "id": "TS-50__trans",
+    "src": "transients.wav",
+    "params": { "transAttack": -50, "transSustain": 30, "targetLUFS": -14 }
+  },
+  { "id": "TS+80__rock", "src": "rock.wav", "params": { "transAttack": 80, "targetLUFS": -14 } },
+
+  {
+    "id": "MB-0__rock",
+    "src": "rock.wav",
+    "params": { "mbLow": 0, "mbMid": 0, "mbHigh": 0, "targetLUFS": -14 }
+  },
+  {
+    "id": "MB-50__rock",
+    "src": "rock.wav",
+    "params": { "mbLow": 50, "mbMid": 50, "mbHigh": 50, "mbMix": 100, "targetLUFS": -14 }
+  },
+  {
+    "id": "MB-max__rock",
+    "src": "rock.wav",
+    "params": {
+      "mbLow": 100,
+      "mbMid": 100,
+      "mbHigh": 100,
+      "mbMix": 100,
+      "mbAutoMakeup": true,
+      "targetLUFS": -14
+    }
+  },
+  {
+    "id": "MB-50__acoustic",
+    "src": "acoustic.wav",
+    "params": { "mbLow": 50, "mbMid": 50, "mbHigh": 50, "mbMix": 100, "targetLUFS": -14 }
+  },
+  {
+    "id": "MB-mix50__acoustic",
+    "src": "acoustic.wav",
+    "params": { "mbLow": 100, "mbMid": 100, "mbHigh": 100, "mbMix": 50, "targetLUFS": -14 }
+  },
+
+  {
+    "id": "SR-441__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "sampleRate": 44100
+  },
+  { "id": "SR-48__acoustic", "src": "acoustic.wav", "preset": "Reference HD", "sampleRate": 48000 },
+  {
+    "id": "SR-882__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "sampleRate": 88200
+  },
+  { "id": "SR-96__acoustic", "src": "acoustic.wav", "preset": "Reference HD", "sampleRate": 96000 },
+  {
+    "id": "SR-176__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "sampleRate": 176400
+  },
+  {
+    "id": "SR-192__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "sampleRate": 192000
+  },
+  {
+    "id": "SR-441__bright",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "sampleRate": 44100
+  },
+  {
+    "id": "SR-192__bright",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "sampleRate": 192000
+  },
+  {
+    "id": "SR-441__sweep",
+    "src": "fx-sweep.wav",
+    "params": { "normalize": false },
+    "sampleRate": 44100
+  },
+  {
+    "id": "SR-192__sweep",
+    "src": "fx-sweep.wav",
+    "params": { "normalize": false },
+    "sampleRate": 192000
+  },
+
+  { "id": "BIT16__acoustic", "src": "acoustic.wav", "preset": "Reference HD", "bitDepth": 16 },
+  { "id": "BIT24__acoustic", "src": "acoustic.wav", "preset": "Reference HD", "bitDepth": 24 },
+  {
+    "id": "BIT16nod__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bitDepth": 16,
+    "params": { "dither": "off" }
+  },
+  {
+    "id": "BIT16__quiet",
+    "src": "dark-dull.wav",
+    "bitDepth": 16,
+    "params": { "targetLUFS": -40, "normalize": true }
+  },
+
+  { "id": "DET-a1", "src": "acoustic.wav", "preset": "Reference HD" },
+  { "id": "DET-a2", "src": "acoustic.wav", "preset": "Reference HD" },
+  { "id": "FX-sweep-ref", "src": "fx-sweep.wav", "params": { "normalize": false } },
+  { "id": "FX-multitone-ref", "src": "fx-multitone.wav", "params": { "normalize": false } },
+  { "id": "FX-impulse-ref", "src": "fx-impulse.wav", "params": { "normalize": false } },
+  { "id": "FX-tone50-ref", "src": "fx-tone50.wav", "params": { "normalize": false } },
+  { "id": "FX-tone100-ref", "src": "fx-tone100.wav", "params": { "normalize": false } },
+  { "id": "FX-tone40-refhd", "src": "fx-tone40.wav", "preset": "Reference HD" },
+  { "id": "FX-bursts-ref", "src": "fx-bursts.wav", "params": { "normalize": false } }
+]

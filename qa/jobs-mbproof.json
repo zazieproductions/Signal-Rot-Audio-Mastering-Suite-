@@ -1,0 +1,60 @@
+[
+  {
+    "id": "PROOF-min1-wet100",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 1,
+      "mbMid": 1,
+      "mbHigh": 1,
+      "mbMix": 100,
+      "mbSpeed": "slow",
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "PROOF-off-wet100",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 0,
+      "mbMid": 0,
+      "mbHigh": 0,
+      "mbMix": 100,
+      "mbSpeed": "slow",
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "PROOF-min1-wet50",
+    "src": "acoustic.wav",
+    "params": { "mbLow": 1, "mbMid": 1, "mbHigh": 1, "mbMix": 50, "normalize": false },
+    "bitDepth": 32
+  },
+  {
+    "id": "PROOF-ref-wet100",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 100,
+      "mbSpeed": "slow",
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "PROOF-ref-wet0",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 0,
+      "mbSpeed": "slow",
+      "normalize": false
+    },
+    "bitDepth": 32
+  }
+]
