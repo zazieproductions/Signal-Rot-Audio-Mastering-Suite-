@@ -17,12 +17,20 @@
  *
  * ── Size limits ──────────────────────────────────────────────────────────────────────
  * RIFF chunk sizes are unsigned 32-bit. A file above 4 GiB cannot be described by a plain
- * RIFF header; the correct format is RF64/BW64 (EBU Tech 3306), which this encoder does
- * not write. `writeWav` throws rather than emitting a file with a wrapped size field.
+ * RIFF header, so this encoder promotes the container to RF64 (EBU Tech 3306) — or BW64
+ * (ITU-R BS.2088) when asked — writing a `ds64` chunk with the real 64-bit sizes and the
+ * 0xFFFFFFFF sentinel in the 32-bit fields. Small files stay ordinary RIFF, which is what
+ * every player understands. A wrapped 32-bit size is never written: if a size cannot be
+ * represented honestly the writer throws. See `riff-layout.js` for the arithmetic.
  */
 
 import { clamp } from '../dsp/math.js';
-import { LIMITS } from '../../app/constants.js';
+import {
+  CONTAINER,
+  MAX_BUFFERED_BYTES,
+  planRiffContainer,
+  writeRiffHeader,
+} from './riff-layout.js';
 
 /** Standard `WAVEFORMATEXTENSIBLE` channel-mask bits (`ksmedia.h` `SPEAKER_*`). */
 export const SPEAKER_MASK = Object.freeze({
@@ -74,6 +82,9 @@ export function floatToInt(s, bitDepth) {
  * @property {16|24|32} bitDepth
  * @property {number} [channelMask] when present (or channels > 2) writes WAVE_FORMAT_EXTENSIBLE
  * @property {boolean} [forceExtensible]
+ * @property {'auto'|'riff'|'rf64'|'bw64'} [container] default `'auto'` — RIFF while the
+ *   sizes fit in 32 bits, otherwise BW64. Force `'rf64'`/`'bw64'` to test the 64-bit path.
+ * @property {number} [maxBufferedBytes] override the practical ArrayBuffer ceiling
  */
 
 /**
@@ -91,6 +102,27 @@ export function writeWav(data, opts) {
   const ch = data.channels.length;
   const sr = data.sampleRate;
   const n = data.length;
+  // A fmt chunk declaring 0 channels or 0 Hz is structurally parseable and semantically
+  // meaningless: byteRate and blockAlign both collapse to zero and a decoder either
+  // divides by zero or invents a rate. Refuse rather than emit something ambiguous.
+  if (!Number.isInteger(ch) || ch < 1 || ch > 65535) {
+    throw new Error(`writeWav: ${ch} channels cannot be described by a fmt chunk`);
+  }
+  if (!Number.isInteger(sr) || sr < 8000 || sr > 768000) {
+    throw new Error(
+      `writeWav: sample rate ${sr} is not a plausible audio rate. A fmt chunk declaring it ` +
+        'would be ambiguous or unplayable.',
+    );
+  }
+  if (!Number.isInteger(n) || n < 0) {
+    throw new Error(`writeWav: invalid frame count ${n}`);
+  }
+  if (data.channels.some((c) => !c || c.length < n)) {
+    throw new Error(
+      'writeWav: a channel is shorter than the declared frame count. Refusing to write a ' +
+        'file padded with undefined samples.',
+    );
+  }
   const isFloat = bitDepth === 32;
   const bps = bitDepth / 8;
   const blockAlign = ch * bps;
@@ -98,27 +130,21 @@ export function writeWav(data, opts) {
 
   const extensible = opts.forceExtensible || ch > 2 || opts.channelMask !== undefined;
   const fmtLen = extensible ? 40 : 16;
-  // data chunks must be word-aligned; an odd length gets one pad byte that is not counted
-  // in the chunk size but is counted in the RIFF size.
+
+  const plan = planRiffContainer({
+    chunks: [
+      { id: 'fmt ', size: fmtLen },
+      { id: 'data', size: dataLen },
+    ],
+    sampleCount: n,
+    mode: opts.container ?? 'auto',
+    maxBufferedBytes: opts.maxBufferedBytes ?? MAX_BUFFERED_BYTES,
+  });
   const dataPad = dataLen % 2;
-  const riffSize = 4 + (8 + fmtLen) + (8 + dataLen + dataPad);
 
-  if (riffSize + 8 > LIMITS.RIFF_MAX_BYTES) {
-    throw new Error(
-      `WAV would be ${(riffSize / 1e9).toFixed(2)} GB, which exceeds the 4 GB RIFF limit. ` +
-        'Export a shorter region, a lower sample rate, or a smaller bit depth. ' +
-        '(RF64/BW64 is not implemented — see docs/LIMITATIONS.md.)',
-    );
-  }
-
-  const ab = new ArrayBuffer(8 + riffSize);
+  const ab = new ArrayBuffer(plan.totalBytes);
   const v = new DataView(ab);
-  let o = 0;
-
-  o = writeAscii(v, o, 'RIFF');
-  v.setUint32(o, riffSize, true);
-  o += 4;
-  o = writeAscii(v, o, 'WAVE');
+  let o = writeRiffHeader(v, plan);
 
   o = writeAscii(v, o, 'fmt ');
   v.setUint32(o, fmtLen, true);
@@ -150,7 +176,8 @@ export function writeWav(data, opts) {
   }
 
   o = writeAscii(v, o, 'data');
-  v.setUint32(o, dataLen, true);
+  // In an RF64/BW64 file this is the 0xFFFFFFFF sentinel and the real size lives in ds64.
+  v.setUint32(o, plan.chunks.find((c) => c.id === 'data').sizeField >>> 0, true);
   o += 4;
 
   const chans = data.channels;
@@ -181,7 +208,36 @@ export function writeWav(data, opts) {
   }
   if (dataPad) v.setUint8(o++, 0);
 
-  return new Blob([ab], { type: 'audio/wav' });
+  const blob = new Blob([ab], { type: 'audio/wav' });
+  // Non-enumerable so JSON/structured-clone behaviour of the Blob is unchanged; purely a
+  // hint for the delivery-manifest builder and the validation tooling.
+  Object.defineProperty(blob, 'riffContainer', { value: plan.container, enumerable: false });
+  return blob;
+}
+
+/**
+ * Which container `writeWav` would choose, without encoding anything.
+ * @param {import('../dsp/audio-data.js').AudioData} data
+ * @param {16|24|32} bitDepth
+ * @param {{channelMask?: number, forceExtensible?: boolean}} [opts]
+ * @returns {'RIFF'|'RF64'|'BW64'}
+ */
+export function wavContainerFor(data, bitDepth, opts = {}) {
+  const ch = data.channels.length;
+  const extensible = opts.forceExtensible || ch > 2 || opts.channelMask !== undefined;
+  const dataLen = data.length * ch * (bitDepth / 8);
+  try {
+    return planRiffContainer({
+      chunks: [
+        { id: 'fmt ', size: extensible ? 40 : 16 },
+        { id: 'data', size: dataLen },
+      ],
+      sampleCount: data.length,
+      maxBufferedBytes: Infinity,
+    }).container;
+  } catch {
+    return CONTAINER.RIFF;
+  }
 }
 
 /**

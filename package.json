@@ -25,7 +25,11 @@
     "lab:compare": "node tools/audio-regression/compare.js",
     "lab:bench": "node tools/benchmarks/run.js",
     "lab:conformance": "node tools/conformance/run.js",
-    "check": "npm run lint && npm run test && npm run build"
+    "fixtures:export": "node tools/export-validation/generate-fixtures.js",
+    "validate:exports": "node tools/export-validation/validate-exports.js",
+    "validate:adm": "node tools/export-validation/validate-adm-cli.js",
+    "inspect:export": "node tools/export-validation/inspect-cli.js",
+    "check": "npm run lint && npm run test && npm run validate:exports -- --quiet && npm run build"
   },
   "dependencies": {
     "@breezystack/lamejs": "1.2.7"
@@ -35,6 +39,7 @@
     "@playwright/test": "1.62.1",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "9.39.1",
+    "ffprobe-static": "^3.1.0",
     "globals": "16.5.0",
     "jsdom": "^27.0.0",
     "prettier": "3.6.2",

@@ -11,3 +11,7 @@ lab-results/
 .env
 .env.*
 !.env.example
+
+# Generated export-validation fixtures and reports (tools/export-validation).
+.fixtures/
+export-validation-report.json
