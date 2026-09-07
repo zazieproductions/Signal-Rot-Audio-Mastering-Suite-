@@ -1,0 +1,187 @@
+[
+  {
+    "id": "RATE-48",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  {
+    "id": "RATE-nomb-48",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "multiband": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "RATE-96",
+    "src": "acoustic-96k.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  {
+    "id": "RATE-nomb-96",
+    "src": "acoustic-96k.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "multiband": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "RATE-192",
+    "src": "acoustic-192k.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  {
+    "id": "RATE-nomb-192",
+    "src": "acoustic-192k.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "multiband": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "MIX-0",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 0,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "MIX-25",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 25,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "MIX-50",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "MIX-75",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 75,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "MIX-100",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 100,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "AMT-0",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 0,
+      "mbMid": 0,
+      "mbHigh": 0,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "AMT-12",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 9,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "AMT-30",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 30,
+      "mbMid": 24,
+      "mbHigh": 20,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "AMT-60",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 60,
+      "mbMid": 49,
+      "mbHigh": 40,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "AMT-100",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 100,
+      "mbMid": 83,
+      "mbHigh": 67,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "bassMono": 80,
+      "targetLUFS": -15
+    },
+    "bitDepth": 32
+  }
+]

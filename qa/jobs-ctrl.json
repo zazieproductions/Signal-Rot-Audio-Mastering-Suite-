@@ -1,0 +1,66 @@
+[
+  { "id": "PINK-raw", "src": "stat-pink.wav", "params": { "normalize": false } },
+  { "id": "PINK-hd", "src": "stat-pink.wav", "preset": "Reference HD" },
+  {
+    "id": "PINK-mb",
+    "src": "stat-pink.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "targetLUFS": -15
+    }
+  },
+  {
+    "id": "PINK-mbauto",
+    "src": "stat-pink.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": true,
+      "targetLUFS": -15
+    }
+  },
+  {
+    "id": "PINK-stereo",
+    "src": "stat-pink.wav",
+    "params": { "widthLow": 1, "widthMid": 1, "widthHigh": 1, "normalize": false }
+  },
+  {
+    "id": "PINK-nostereo",
+    "src": "stat-pink.wav",
+    "params": { "widthLow": 0, "widthMid": 0, "widthHigh": 0, "normalize": false }
+  },
+  { "id": "PSIDE-hd", "src": "stat-pink-side.wav", "preset": "Reference HD" },
+  { "id": "PSIDE-raw", "src": "stat-pink-side.wav", "params": { "normalize": false } },
+  {
+    "id": "PSIDE-nostereo",
+    "src": "stat-pink-side.wav",
+    "params": { "widthLow": 0, "widthMid": 0, "widthHigh": 0, "normalize": false }
+  },
+  {
+    "id": "PSIDE-lronly",
+    "src": "stat-pink-side.wav",
+    "params": { "widthLow": 1, "widthMid": 0, "widthHigh": 0, "normalize": false }
+  },
+  {
+    "id": "PSIDE-midonly",
+    "src": "stat-pink-side.wav",
+    "params": { "widthLow": 0, "widthMid": 1, "widthHigh": 0, "normalize": false }
+  },
+  {
+    "id": "PSIDE-highonly",
+    "src": "stat-pink-side.wav",
+    "params": { "widthLow": 0, "widthMid": 0, "widthHigh": 1, "normalize": false }
+  },
+  {
+    "id": "PSIDE-allbands",
+    "src": "stat-pink-side.wav",
+    "params": { "widthLow": 1, "widthMid": 1, "widthHigh": 1, "normalize": false }
+  }
+]

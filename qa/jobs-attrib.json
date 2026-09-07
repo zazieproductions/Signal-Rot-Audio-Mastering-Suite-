@@ -1,0 +1,528 @@
+[
+  {
+    "id": "null__acoustic",
+    "src": "acoustic.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__rock",
+    "src": "rock.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__bass-heavy",
+    "src": "bass-heavy.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__bright-harsh",
+    "src": "bright-harsh.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__dark-dull",
+    "src": "dark-dull.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__transients",
+    "src": "transients.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__already-mastered",
+    "src": "already-mastered.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__mono-acoustic",
+    "src": "mono-acoustic.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__wide-phasey",
+    "src": "wide-phasey.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "null__lofi",
+    "src": "lofi.wav",
+    "params": {
+      "normalize": false
+    },
+    "bypass": {
+      "match": true,
+      "tone": true,
+      "multiband": true,
+      "stereo": true,
+      "character": true,
+      "depth": true,
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__acoustic",
+    "src": "acoustic.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__rock",
+    "src": "rock.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__bass-heavy",
+    "src": "bass-heavy.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__bright-harsh",
+    "src": "bright-harsh.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__dark-dull",
+    "src": "dark-dull.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__transients",
+    "src": "transients.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__already-mastered",
+    "src": "already-mastered.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__mono-acoustic",
+    "src": "mono-acoustic.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__wide-phasey",
+    "src": "wide-phasey.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "rawdef__lofi",
+    "src": "lofi.wav",
+    "params": {
+      "normalize": false
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_match__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "match": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_tone__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "tone": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_multiband__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "multiband": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_stereo__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "stereo": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_character__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "character": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_depth__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "depth": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_saturation__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_match__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "match": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_tone__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "tone": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_multiband__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "multiband": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_stereo__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "stereo": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_character__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "character": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_depth__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "depth": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_saturation__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_match__bass-heavy",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "match": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_tone__bass-heavy",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "tone": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_multiband__bass-heavy",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "multiband": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_stereo__bass-heavy",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "stereo": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_character__bass-heavy",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "character": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_depth__bass-heavy",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "depth": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_saturation__bass-heavy",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_match__bright-harsh",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "match": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_tone__bright-harsh",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "tone": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_multiband__bright-harsh",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "multiband": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_stereo__bright-harsh",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "stereo": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_character__bright-harsh",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "character": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_depth__bright-harsh",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "depth": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "mb_saturation__bright-harsh",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "bypass": {
+      "saturation": true
+    },
+    "bitDepth": 32
+  },
+  {
+    "id": "full__acoustic",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  {
+    "id": "full__rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  {
+    "id": "full__bass-heavy",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  {
+    "id": "full__bright-harsh",
+    "src": "bright-harsh.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  }
+]

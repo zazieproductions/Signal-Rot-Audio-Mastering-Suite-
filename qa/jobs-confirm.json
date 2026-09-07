@@ -1,0 +1,81 @@
+[
+  { "id": "MONO-bm0", "src": "mono-acoustic.wav", "params": { "bassMono": 0, "targetLUFS": -15 } },
+  {
+    "id": "MONO-bm80",
+    "src": "mono-acoustic.wav",
+    "params": { "bassMono": 80, "targetLUFS": -15 }
+  },
+  { "id": "MONO-w1", "src": "mono-acoustic.wav", "params": { "width": 1.0, "targetLUFS": -15 } },
+  { "id": "MONO-hiss", "src": "mono-acoustic.wav", "params": { "hiss": 5, "targetLUFS": -15 } },
+  { "id": "ST-mono-hd", "src": "mono-acoustic.wav", "preset": "Reference HD" },
+  { "id": "STereo-ac-hd", "src": "acoustic.wav", "preset": "Reference HD" },
+  {
+    "id": "NB-all0",
+    "src": "acoustic.wav",
+    "params": { "widthLow": 1, "widthMid": 1, "widthHigh": 1, "normalize": false }
+  },
+  {
+    "id": "NB-flat",
+    "src": "acoustic.wav",
+    "params": { "widthLow": 0, "widthMid": 0, "widthHigh": 0, "normalize": false }
+  },
+  { "id": "W15-acoustic", "src": "acoustic.wav", "params": { "width": 1.5, "targetLUFS": -15 } },
+  {
+    "id": "MB-auto__acoustic",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": true,
+      "targetLUFS": -15
+    }
+  },
+  {
+    "id": "MB-noauto__acoustic",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 50,
+      "mbSpeed": "slow",
+      "mbAutoMakeup": false,
+      "targetLUFS": -15
+    }
+  },
+  {
+    "id": "MB-wet100__acoustic",
+    "src": "acoustic.wav",
+    "params": {
+      "mbLow": 12,
+      "mbMid": 10,
+      "mbHigh": 8,
+      "mbMix": 100,
+      "mbSpeed": "slow",
+      "targetLUFS": -15
+    }
+  },
+  {
+    "id": "SR441-mb0",
+    "src": "acoustic.wav",
+    "params": { "mbLow": 0, "mbMid": 0, "mbHigh": 0, "targetLUFS": -15 },
+    "sampleRate": 44100
+  },
+  {
+    "id": "SR192-mb0",
+    "src": "acoustic.wav",
+    "params": { "mbLow": 0, "mbMid": 0, "mbHigh": 0, "targetLUFS": -15 },
+    "sampleRate": 192000
+  },
+  { "id": "SR441-full", "src": "acoustic.wav", "preset": "Reference HD", "sampleRate": 44100 },
+  { "id": "SR192-full", "src": "acoustic.wav", "preset": "Reference HD", "sampleRate": 192000 },
+  {
+    "id": "CEIL-hot",
+    "src": "rock.wav",
+    "params": { "targetLUFS": -8, "ceiling": -0.1, "sat": 30 }
+  },
+  { "id": "CEIL-cold", "src": "rock.wav", "params": { "targetLUFS": -14, "ceiling": -3 } }
+]

@@ -60,7 +60,9 @@ export default [
     // `tools/` is Node-only developer tooling: CLIs, fixture generators and the
     // independent validators. It runs outside the browser, so it gets Node globals —
     // but it is still linted, because a broken validator is a validator that lies.
-    files: ['tools/**/*.js'],
+    // `qa/scripts` is the sonic-QA rig (see qa/README.md): real renders driven headlessly,
+    // measured with independent meters. Node-only, and linted for the same reason.
+    files: ['tools/**/*.js', 'qa/scripts/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',

@@ -1,0 +1,54 @@
+[
+  { "id": "refhd__acoustic", "src": "acoustic.wav", "preset": "Reference HD", "bitDepth": 32 },
+  { "id": "refhd__rock", "src": "rock.wav", "preset": "Reference HD", "bitDepth": 32 },
+  { "id": "refhd__bassheavy", "src": "bass-heavy.wav", "preset": "Reference HD", "bitDepth": 32 },
+  { "id": "refhd__bright", "src": "bright-harsh.wav", "preset": "Reference HD", "bitDepth": 32 },
+  { "id": "refhd__dark", "src": "dark-dull.wav", "preset": "Reference HD", "bitDepth": 32 },
+  { "id": "refhd__transients", "src": "transients.wav", "preset": "Reference HD", "bitDepth": 32 },
+  {
+    "id": "refhd__already",
+    "src": "already-mastered.wav",
+    "preset": "Reference HD",
+    "bitDepth": 32
+  },
+  { "id": "refhd__mono", "src": "mono-acoustic.wav", "preset": "Reference HD", "bitDepth": 32 },
+  { "id": "refhd__wide", "src": "wide-phasey.wav", "preset": "Reference HD", "bitDepth": 32 },
+  { "id": "refhd__lofi", "src": "lofi.wav", "preset": "Reference HD", "bitDepth": 32 },
+  {
+    "id": "defaults__acoustic",
+    "src": "acoustic.wav",
+    "params": { "normalize": false },
+    "bitDepth": 32
+  },
+  {
+    "id": "defaults__wide",
+    "src": "wide-phasey.wav",
+    "params": { "normalize": false },
+    "bitDepth": 32
+  },
+  {
+    "id": "defaults__bright",
+    "src": "bright-harsh.wav",
+    "params": { "normalize": false },
+    "bitDepth": 32
+  },
+  {
+    "id": "fx__impulse",
+    "src": "fx-impulse.wav",
+    "params": { "normalize": false, "targetLUFS": -14 },
+    "bitDepth": 32
+  },
+  {
+    "id": "fx__anti",
+    "src": "fx-anticorrelated.wav",
+    "params": { "normalize": false },
+    "bitDepth": 32
+  },
+  {
+    "id": "fx__clipped",
+    "src": "fx-clipped.wav",
+    "params": { "normalize": false },
+    "bitDepth": 32
+  },
+  { "id": "fx__tone40", "src": "fx-tone40.wav", "params": { "normalize": false }, "bitDepth": 32 }
+]

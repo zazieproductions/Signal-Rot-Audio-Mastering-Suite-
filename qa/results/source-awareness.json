@@ -1,0 +1,138 @@
+[
+  {
+    "id": "SA-bright-hfmax",
+    "src": "bright-harsh.wav",
+    "preset": null,
+    "sourceClass": "bright",
+    "notes": [
+      "saturation 40 \u2192 24 (source already near the target)",
+      "air +12 \u2192 +0.5 dB (source already bright)",
+      "tilt +6 \u2192 +0 dB (source already bright)"
+    ],
+    "target": -14,
+    "delivered": -14,
+    "ceiling": -1,
+    "tp": -6.27,
+    "grAvg": 0,
+    "grMax": 0,
+    "crestBefore": 13.82,
+    "crestAfter": 13.57,
+    "corrAfter": -0.38,
+    "warnings": ["Mono fold-down loses -11 dB in the low-mid band (150\u2013400 Hz)."]
+  },
+  {
+    "id": "SA-dark-hfmax",
+    "src": "dark-dull.wav",
+    "preset": null,
+    "sourceClass": "dense+bass-heavy+forward",
+    "notes": [
+      "saturation 40 \u2192 10 (already dense/crushed)",
+      "mono-below 0 \u2192 90 Hz (bass-heavy source)"
+    ],
+    "target": -14,
+    "delivered": -14,
+    "ceiling": -1,
+    "tp": -1,
+    "grAvg": -0.01,
+    "grMax": -0.04,
+    "crestBefore": 8.23,
+    "crestAfter": 11.75,
+    "corrAfter": 0.39,
+    "warnings": ["Mono fold-down loses -9.2 dB in the low-mid band (150\u2013400 Hz)."]
+  },
+  {
+    "id": "SA-already-loud",
+    "src": "already-mastered.wav",
+    "preset": null,
+    "sourceClass": "loud+hot+bass-heavy",
+    "notes": [
+      "input drive 4 \u2192 0 dB (already at mastering loudness)",
+      "saturation 40 \u2192 10 (already at mastering loudness)",
+      "mbLow 60 \u2192 27 (already at mastering loudness)",
+      "mbMid 60 \u2192 27 (already at mastering loudness)",
+      "mbHigh 60 \u2192 27 (already at mastering loudness)",
+      "saturation 10 \u2192 5 (very hot source peaks)",
+      "mono-below 0 \u2192 90 Hz (bass-heavy source)"
+    ],
+    "target": -8,
+    "delivered": -8.98,
+    "ceiling": -1,
+    "tp": -1,
+    "grAvg": -0.87,
+    "grMax": -4.18,
+    "crestBefore": 10.16,
+    "crestAfter": 9.98,
+    "corrAfter": -0.32,
+    "warnings": [
+      "Loudness ambition was reduced to protect the sound: the -8 LUFS target would have needed constant heavy limiting, so the master settled at -9 LUFS instead. Transparency over loudness.",
+      "The -8 LUFS target is not reachable on this material at a -1 dBTP ceiling: the limiter saturated at -9 LUFS (-1 LU short). Beyond this point more gain produces only more gain reduction. Getting louder needs clipping, a lower ceiling, or a denser mix.",
+      "Mono fold-down loses -8.6 dB in the low-mid band (150\u2013400 Hz)."
+    ]
+  },
+  {
+    "id": "SA-acoustic-ref",
+    "src": "acoustic.wav",
+    "preset": "Reference HD",
+    "sourceClass": "quiet+dynamic+bass-heavy",
+    "notes": [
+      "mbLow 12 \u2192 8 (preserving source dynamics)",
+      "mbMid 10 \u2192 7 (preserving source dynamics)",
+      "mbHigh 8 \u2192 6 (preserving source dynamics)",
+      "mono-below 80 \u2192 90 Hz (bass-heavy source)"
+    ],
+    "target": -15,
+    "delivered": -14.92,
+    "ceiling": -1,
+    "tp": -1,
+    "grAvg": -0.18,
+    "grMax": -3.47,
+    "crestBefore": 16.03,
+    "crestAfter": 16.77,
+    "corrAfter": 0.92,
+    "warnings": []
+  },
+  {
+    "id": "SA-bass-ref",
+    "src": "bass-heavy.wav",
+    "preset": "Reference HD",
+    "sourceClass": "bass-heavy",
+    "notes": [
+      "mbLow 12 \u2192 8 (source already near the target)",
+      "mbMid 10 \u2192 7 (source already near the target)",
+      "mbHigh 8 \u2192 6 (source already near the target)",
+      "mono-below 80 \u2192 90 Hz (bass-heavy source)"
+    ],
+    "target": -15,
+    "delivered": -15,
+    "ceiling": -1,
+    "tp": -2.18,
+    "grAvg": 0,
+    "grMax": 0,
+    "crestBefore": 12.03,
+    "crestAfter": 11.53,
+    "corrAfter": 1,
+    "warnings": []
+  },
+  {
+    "id": "SA-wide-ref",
+    "src": "wide-phasey.wav",
+    "preset": "Reference HD",
+    "sourceClass": "dynamic+bass-heavy",
+    "notes": [
+      "mbLow 12 \u2192 8 (preserving source dynamics)",
+      "mbMid 10 \u2192 7 (preserving source dynamics)",
+      "mbHigh 8 \u2192 6 (preserving source dynamics)",
+      "mono-below 80 \u2192 90 Hz (bass-heavy source)"
+    ],
+    "target": -15,
+    "delivered": -15,
+    "ceiling": -1,
+    "tp": -4.98,
+    "grAvg": 0,
+    "grMax": 0,
+    "crestBefore": 14.11,
+    "crestAfter": 13.58,
+    "corrAfter": -0.46,
+    "warnings": ["Mono fold-down loses -15.6 dB in the presence band (1500\u20135000 Hz)."]
+  }
+]

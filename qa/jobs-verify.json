@@ -1,0 +1,14 @@
+[
+  {
+    "id": "V-hfmax-dark",
+    "src": "dark-dull.wav",
+    "params": { "air": 12, "presence": 12, "tilt": 6, "sat": 40, "targetLUFS": -14 }
+  },
+  {
+    "id": "V-l8-rock",
+    "src": "rock.wav",
+    "preset": "Reference HD",
+    "params": { "targetLUFS": -8 }
+  },
+  { "id": "V-sat-trans", "src": "transients.wav", "params": { "sat": 100, "targetLUFS": -14 } }
+]
