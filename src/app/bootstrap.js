@@ -60,6 +60,16 @@ import { getScratch, invalidateCssCache } from '../visualizers/canvas-util.js';
 
 import { createExportController } from './export-controller.js';
 import { createImmersiveController } from './immersive-controller.js';
+import { initExportSummary } from '../ui/export-summary.js';
+
+import { initWorkspace } from '../ui/workspace.js';
+import { initSourceHero } from '../ui/source-analysis.js';
+import { initMasterStatus } from '../ui/master-status.js';
+import { initSonicSummary } from '../ui/sonic-summary.js';
+import { initMacroControls } from '../ui/macro-controls.js';
+import { initAbEnhanced } from '../ui/ab-enhanced.js';
+import { initPresetBrowserEnhanced } from '../ui/preset-browser-enhanced.js';
+import { initSpatialLab } from '../ui/spatial-lab.js';
 
 export function bootstrap() {
   const store = createStore();
@@ -414,6 +424,7 @@ export function bootstrap() {
     updateLiveMeters(dt);
     updateGainReductionMeters();
 
+    // Immersive legacy map (kept for compatibility)
     if (state.ui.tab === 'immersive' && state.immersive.layout !== 'off') {
       drawSpeakerMap($('#spkmap'), {
         layoutId: state.immersive.layout,
@@ -423,6 +434,23 @@ export function bootstrap() {
         params: state.immersive,
       });
     }
+
+    // Spatial Lab tick — runs when lab is visible or when spatial energy is displayed
+    try {
+      const labCard = document.querySelector('#spatialLabCard');
+      if (labCard && !labCard.hidden) spatialLab.tick();
+      // Keep master status in sync with live loudness for crest display
+      masterStatus.sync();
+    } catch { void 0; }
+
+    // Keep limiter reduction in UI state for status card (cheap poll)
+    try {
+      const reduction = readGainReduction(live.chain);
+      const worst = Math.min(reduction.low ?? 0, reduction.mid ?? 0, reduction.high ?? 0);
+      if (Number.isFinite(worst) && Math.abs((store.getState().ui.limiterReduction ?? 0) - worst) > 0.08) {
+        store.setUi({ limiterReduction: worst });
+      }
+    } catch { void 0; }
   }
 
   function updateLiveMeters(dt) {
@@ -548,7 +576,18 @@ export function bootstrap() {
 
   /* ────────────────────────────── UI wiring ──────────────────────────────── */
 
+  initWorkspace({ store });
+
   const tabs = initTabs({ onChange: (tab) => store.setUi({ tab }) });
+  initSourceHero({ store });
+  const masterStatus = initMasterStatus({ store });
+  initSonicSummary({ store });
+  initAbEnhanced({ store, pushParameters, getLiveGraph: () => live });
+  initMacroControls({ store, pushParameters });
+  initPresetBrowserEnhanced({ store });
+  const spatialLab = initSpatialLab({ store, getLiveGraph: () => live });
+   initExportSummary({ store });
+
   const controls = initControls({
     store,
     onChange: (key) => {
