@@ -157,7 +157,8 @@ fourth-order pairing is what produces the cancellation. Cascading two all-pass s
 the dry path (an easy mistake, and one made and caught during this refactor) doubles the
 phase rotation and reintroduces the comb.
 
-**Measured reconstruction**, `tests/dsp/multiband-crossover.test.js`:
+**Ideal-filter reconstruction**, `tests/dsp/multiband-crossover.test.js` (Node maths,
+not a real Web Audio render):
 
 | Parallel mix | Pre-7.0 topology      | Current topology |
 | ------------ | --------------------- | ---------------- |
@@ -165,6 +166,11 @@ phase rotation and reintroduces the comb.
 | 75 %         | −6.04 dB @ 3.26 kHz   | **0.00000 dB**   |
 | 50 %         | **−58.9 dB @ 137 Hz** | **0.00000 dB**   |
 | 25 %         | −6.01 dB @ 137 Hz     | **0.00000 dB**   |
+
+The browser lab does **not** confirm a flat wet sum: Chromium measured about +7.39 dB
+at the crossovers with inactive compressors. Keep the 1.5 dB browser contract intact;
+see [finding A-6](FINDINGS-FOR-AGENT-A.md#measured-in-a-real-browser). The analytical
+results above are not evidence that this remaining DSP defect is resolved.
 
 The pre-7.0 build mixed the all-pass band sum against an unfiltered dry wire. At the 50 %
 mix its own UI called "the audiophile move", that is a complete null at both crossover
@@ -176,15 +182,18 @@ audio.
 | Amount | Threshold | Ratio   |
 | ------ | --------- | ------- |
 | 0      | 0 dB      | 1.0 : 1 |
-| 25     | −9 dB     | 2.0 : 1 |
-| 50     | −18 dB    | 3.0 : 1 |
-| 75     | −27 dB    | 4.0 : 1 |
-| 100    | −36 dB    | 5.0 : 1 |
+| 25     | −6 dB     | 1.5 : 1 |
+| 50     | −12 dB    | 2.0 : 1 |
+| 75     | −18 dB    | 2.5 : 1 |
+| 100    | −24 dB    | 3.0 : 1 |
 
-**Ballistics.** fast 3 ms / 100 ms · medium 10 ms / 250 ms · slow 30 ms / 400 ms.
+**Knee and ballistics.** The knee is 12 dB. Attack/release values are defined in
+`MB_BALLISTICS` in `src/audio/graph/multiband.js`; use that table rather than old preset-era timings.
 
 **The compressors are `DynamicsCompressorNode`s.** Fixed topology, implementation-defined
-internals, a small amount of undocumented look-ahead. They are used because they are the
+internals. The dry path carries `MB_COMPRESSOR_LOOKAHEAD_S` (6 ms) to match the
+compressors' latency. Each compressor's fixed make-up is cancelled by its own
+`specMakeup*` node; optional `mbAutoMakeup` remains separate. They are used because they are the
 only per-sample dynamics processor available without an `AudioWorklet`. Per-band gain
 reduction is metered so you can see exactly how much is happening.
 
@@ -267,18 +276,22 @@ colouration rather than a cancellation.
 
 ### Saturation
 
-A `WaveShaperNode` with a generated 4096-point transfer curve:
+A `WaveShaperNode` with an 8192-point engaged transfer curve and a 1024-point
+identity curve at `sat = 0` (`src/audio/graph/tone.js`):
 
-- Drive scales 1 … 2.2, not 1 … 4 — gentle enough to stay in the "density" region.
-- Asymmetry is `x + a·(x² − x⁴)`, whose integral over [−1, 1] is approximately zero, so
-  even harmonics appear without a DC shift.
-- Residual DC is measured and subtracted from the curve.
-- The curve is peak-normalised, so **saturation adds harmonics but not level**. Gain and
-  character stay independent controls.
+- The curve domain is ±`SATURATION_HEADROOM` (4). The input is divided by the same
+  factor, moving the node's input clamp from 0 dBFS to about +12 dBFS at zero drive.
+- Drive scales 1 … 1.8. Asymmetry is confined to the ±1 design region; residual
+  table DC is removed.
+- Normalisation is by **small-signal slope**, not by peak. Quiet signals stay at
+  unity gain; saturation changes harmonics and peak rounding, not hidden make-up.
 
-**Gain staging:** up to −3.1 dB into the shaper at full drive, with +1.9 dB of make-up
-after — the analogue trick that produces density rather than crunch. A 5 Hz DC-blocking
-high-pass sits in front, and a low-pass tightens from 22 kHz to 17.5 kHz as drive rises.
+**Gain staging:** with `p = 1 - 0.35·amount`, the input node receives `p / 4` and
+make-up receives `1 / p`. The curve's domain scaling supplies the remaining factor
+of 4. Do **not** replace make-up with the inverse of the returned `preGain` (`p / 4`):
+that would add 12 dB. A 5 Hz DC-blocking high-pass precedes the shaper, and the
+post low-pass tightens from 22 kHz to 17.5 kHz as drive rises. Headroom and unity gain
+are protected by `tests/dsp/saturation.test.js`.
 
 **Aliasing.** `oversample = '4x'` is set, but the Web Audio specification does not define
 the quality of that oversampling and implementations differ. A tanh-family curve generates
@@ -333,34 +346,34 @@ to all of them. Per-channel detection would move the image on every snare hit.
 
 ## Gain staging summary
 
-| Stage         | Can it change level?                  | Compensation                                              |
-| ------------- | ------------------------------------- | --------------------------------------------------------- |
-| Input drive   | yes, deliberately                     | none — it is a level control                              |
-| Match EQ      | no net change                         | curve is mean-removed twice, before and after tapering    |
-| Tone          | yes                                   | none — EQ is a level decision                             |
-| Multiband     | yes                                   | optional auto make-up, off by default                     |
-| Stereo        | side energy only                      | mid path is untouched by the width control                |
-| Character     | slight, from head bump and noise beds | none                                                      |
-| Depth         | adds up to 0.28 of a delayed copy     | none                                                      |
-| Saturation    | **no**                                | curve is peak-normalised; pre-gain and make-up are paired |
-| Transient     | yes                                   | accounted for by normalisation, which runs after          |
-| Normalisation | yes, to the target                    | iterated and verified                                     |
-| Limiter       | downward only                         | reported as gain reduction                                |
+| Stage         | Can it change level?                   | Compensation                                                           |
+| ------------- | -------------------------------------- | ---------------------------------------------------------------------- |
+| Input drive   | yes, deliberately                      | none — it is a level control                                           |
+| Match EQ      | no net change                          | curve is mean-removed twice, before and after tapering                 |
+| Tone          | yes                                    | none — EQ is a level decision                                          |
+| Multiband     | yes                                    | fixed browser make-up cancelled; optional auto make-up off by default  |
+| Stereo        | side energy only                       | mid path is untouched by the width control                             |
+| Character     | slight, from head bump and noise beds  | none                                                                   |
+| Depth         | adds up to 0.28 of a delayed copy      | none                                                                   |
+| Saturation    | peak rounding; unity small-signal gain | slope-normalised curve, headroom scaling and inverse drive attenuation |
+| Transient     | yes                                    | accounted for by normalisation, which runs after                       |
+| Normalisation | yes, to the target                     | iterated and verified                                                  |
+| Limiter       | downward only                          | reported as gain reduction                                             |
 
 ## Phase behaviour
 
-| Stage               | Phase                                                    | Mono-compatible    |
-| ------------------- | -------------------------------------------------------- | ------------------ |
-| Match EQ, Tone      | minimum phase (IIR)                                      | yes                |
-| Multiband (any mix) | all-pass, ~720° across the band                          | yes                |
-| Bass mono           | minimum phase on the side only                           | improves it        |
-| Per-band width      | LR4 split, all-pass reconstruction                       | yes at unity gains |
-| Side comb blend     | **comb filter**                                          | no, by design      |
-| Haas                | pure delay on one channel                                | no above ~8 ms     |
-| Crossfeed           | delayed low-passed bleed                                 | yes                |
-| Depth               | comb against the direct signal                           | mild colouration   |
-| Saturation          | zero phase (memoryless) plus a 5 Hz HP and a variable LP | yes                |
-| Limiter             | zero phase (gain multiplication)                         | yes                |
+| Stage                   | Phase                                                    | Mono-compatible    |
+| ----------------------- | -------------------------------------------------------- | ------------------ |
+| Match EQ, Tone          | minimum phase (IIR)                                      | yes                |
+| Multiband (ideal model) | all-pass; real wet reconstruction still tracked as A-6   | yes in model       |
+| Bass mono               | minimum phase on the side only                           | improves it        |
+| Per-band width          | LR4 split, all-pass reconstruction                       | yes at unity gains |
+| Side comb blend         | **comb filter**                                          | no, by design      |
+| Haas                    | pure delay on one channel                                | no above ~8 ms     |
+| Crossfeed               | delayed low-passed bleed                                 | yes                |
+| Depth                   | comb against the direct signal                           | mild colouration   |
+| Saturation              | zero phase (memoryless) plus a 5 Hz HP and a variable LP | yes                |
+| Limiter                 | zero phase (gain multiplication)                         | yes                |
 
 ## Oversampling
 

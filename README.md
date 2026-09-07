@@ -56,8 +56,9 @@ correctly and the strange things done deliberately.
 - A **true-peak limiter** whose detector is a band-limited polyphase interpolator, whose
   gain curve is continuous rather than stepped, and which **re-measures the finished file
   and tells you whether the ceiling actually held**.
-- A **multiband crossover** that reconstructs to 0.00000 dB at every parallel-mix
-  position, with an on-screen diagnostic so you can watch it do so.
+- A **multiband crossover** with phase/delay-matched paths and an analytical diagnostic.
+  The ideal filter model sums flat; the real-browser wet sum still has an
+  [open reconstruction finding](docs/FINDINGS-FOR-AGENT-A.md#measured-in-a-real-browser).
 - **Deterministic exports.** Same project, same texture seed, byte-identical file.
 - A **render report** — downloadable JSON — recording the analysis before and after, the
   normalisation gain, the maximum gain reduction, the achieved true peak, and whether
@@ -108,7 +109,7 @@ Full detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 |               | Transient shaper                        |      ✗       |   ✓    | Needs per-sample gain — offline only                                 |
 |               | Look-ahead true-peak limiter            |      ✗       |   ✓    | Monitor uses a `DynamicsCompressorNode` safety limiter               |
 | **Tone**      | 6-band EQ + tilt                        |      ✓       |   ✓    | Labels generated from the filter definitions                         |
-|               | Waveshaper saturation                   |      ✓       |   ✓    | Peak-normalised: adds harmonics, not level                           |
+|               | Waveshaper saturation                   |      ✓       |   ✓    | Unity small-signal slope; +12 dB structural headroom                 |
 | **Stereo**    | Width, M/S balance, bass mono (LR4)     |      ✓       |   ✓    |                                                                      |
 |               | Per-band width (250 Hz / 4 kHz)         |      ✓       |   ✓    | Side channel only                                                    |
 |               | Haas, crossfeed, side comb blend        |      ✓       |   ✓    | Phase warnings on all three                                          |
@@ -229,7 +230,7 @@ src/
 │   ├── render/                 render-master · transient · normalize · limiter · dither · report
 │   ├── immersive/              layouts · sonic-lab · speaker-feeds · binaural · adm
 │   └── encode/                 wav · aiff · mp3 · download
-├── presets/                    dimension · genre · cinematic · mood · color · spatial · restoration
+├── presets/                    mastering · dimension · genre · cinematic · mood · color · spatial · restoration
 ├── ui/                         dom · controls · tabs · transport · signal-flow · palette · …
 ├── visualizers/                waveform · spectrum · vectorscope · speaker-map · …
 ├── workers/                    analysis worker + client with in-thread fallback
@@ -306,8 +307,8 @@ npm run dev            # http://localhost:5173
 | `npm run preview`          | Serve the production build                                                      |
 | `npm run lint`             | ESLint over `src`, `tests` and `tools`                                          |
 | `npm run format`           | Prettier, write                                                                 |
-| `npm run format:check`     | Prettier, check only (used by CI)                                               |
-| `npm run test`             | Vitest: 971 unit, DSP, format, interoperability and integration tests           |
+| `npm run format:check`     | Prettier, check only (separate from `check`)                                    |
+| `npm run test`             | Vitest: unit, DSP, format, interoperability, runtime and integration tests      |
 | `npm run test:watch`       | Vitest in watch mode                                                            |
 | `npm run test:coverage`    | Coverage report                                                                 |
 | `npm run test:e2e`         | Playwright browser tests (needs `npx playwright install chromium`)              |
@@ -354,7 +355,7 @@ and shows what it actually found, which is more reliable than any table.
 
 ## Presets
 
-Sixty-eight presets in seven groups. Every one carries a review note recording what was
+Seventy-two presets in eight groups, led by `Reference HD` in the Mastering group. Every one carries a review note recording what was
 checked and anything you should know before reaching for it, and a risk level:
 
 - **safe** — no mono-compatibility or level hazard
@@ -366,6 +367,10 @@ The catalogue is enforced by tests, not by good intentions
 none may widen past 130 % without a bass-mono anchor, none may stack more than 6 dB of
 overlapping low shelves, and a preset whose description promises compression must actually
 compress.
+
+The `mastering` and `creative` families are independent of those groups. Mastering
+presets scrub tape, hiss, vinyl, Haas and side-comb processing; creative presets keep
+their intentional degradation. Family guardrails live in `tests/app/preset-families.test.js`.
 
 Preset files are JSON, versioned, and validated on load — a hand-edited file cannot set
 `width: 1e9`. Pre-7.0 files are migrated automatically. Format:
@@ -392,25 +397,26 @@ channel map.
 ## Testing
 
 ```bash
-npm run test              # 971 tests, ~170 s
-npm run test:e2e          # 37 browser tests (install Chromium first)
-npm run validate:exports  # real exports, checked by parsers that are not ours
+npm run test              # Node + jsdom regression suites
+npm run test:e2e          # UI browser tests (install Chromium first)
+npm run test:conformance  # real Web Audio: Chromium / Firefox / WebKit
+npm run validate:exports  # production exports checked by independent tools
 ```
 
-> **Note on the browser suite.** The Playwright specs are written and configured but were
-> **not executed** during the 7.0 refactor: the development sandbox had no network access
-> to the Playwright browser CDN. The Vitest suite, which includes a jsdom boot test against
-> the real `index.html`, was run in full. CI runs both.
+The active export workflow validates formats and interoperability. Full application
+CI and browser conformance workflows are still templates in `ci/`, not active gates;
+see [`ci/README.md`](ci/README.md). Passing `npm run check` does **not** establish
+browser conformance: the wet multiband reconstruction finding remains open in
+[`docs/FINDINGS-FOR-AGENT-A.md`](docs/FINDINGS-FOR-AGENT-A.md).
 
-| Suite                     | Tests | What it proves                                                                                                                                                                                         |
-| ------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tests/dsp/`              | 179   | K-weighting matches the BS.1770-4 tables to 1e-12; the crossover reconstructs to 0.00000 dB; the limiter holds every ceiling on every pathological signal; dither is triangular and decorrelating      |
-| `tests/format/`           | 159   | RIFF and IFF chunk sizes, padding, endianness, channel masks, ADM ID cross-references, `chna` entry widths, RF64/BW64 `ds64` planning at the 4 GiB boundary                                            |
-| `tests/interoperability/` | 333   | Multichannel round trips through an **independent** decoder; channel order recovered from the audio itself; RF64/BW64 write path; hostile-metadata fuzzing; delivery profiles, manifests and checksums |
-| `tests/app/`              | 74    | Schema integrity, clamping, hostile preset files, catalogue safety review                                                                                                                              |
-| `tests/integration/`      | 116   | Graph topology against a recording fake context; the full post-render pipeline                                                                                                                         |
-| `tests/ui/`               | 40    | Schema-driven controls, ARIA tab pattern, DOM-injection safety, application boot against the real `index.html`                                                                                         |
-| `e2e/`                    | 37    | Real browser: import, decode, render, download, verify header bytes                                                                                                                                    |
+| Suite                                           | Scope                                                                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `tests/dsp/`                                    | Loudness, true-peak ceilings, saturation headroom/unity gain, source-aware guardrails, ideal crossover maths      |
+| `tests/format/`, `tests/interoperability/`      | Independent container/ADM checks, channel ordering, RF64/BW64 boundaries, hostile metadata and delivery manifests |
+| `tests/app/`, `tests/integration/`, `tests/ui/` | Preset families, schema/state, graph topology, render pipeline and real-markup boot                               |
+| `tests/runtime/`                                | Scheduler, worker RPC, memory preflight, waveform and chunk-processing primitives                                 |
+| `tests/fixtures/`, `tests/conformance/`         | Deterministic goldens and baseline/candidate classification                                                       |
+| `tests/browser/`, `e2e/`                        | Real Web Audio measurements and UI/import/export browser checks, separate from Vitest                             |
 
 All test signals are generated programmatically (`tests/helpers/signals.js`) — no
 copyrighted audio in the repository, and every result reproducible on any machine.

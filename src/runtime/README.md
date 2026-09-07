@@ -1,5 +1,10 @@
 # Runtime contracts
 
+These are opt-in primitives, not a completed runtime migration. The application still
+uses `createAnalysisScheduler()` and the analysis worker protocol in
+`src/workers/analysis-client.js`; mastering/export remains full-buffer. Adopt the helpers
+with their consumers and regression tests before removing those existing paths.
+
 - `createJobScheduler()` is the shared bounded scheduler. Jobs expose `cancel()`, `run({ isCancelled, report })`, and observable states. Use `key` for latest-wins/backpressure. Heavy render jobs should use concurrency 1.
 - `createWorkerRpc(worker)` is the common worker protocol. Transfer only disposable buffers; transferred buffers are detached and must never be reused by the caller.
 - `estimateRender(shape)` and `estimateImmersiveRender(shape)` provide structured preflight results for UI consumers.

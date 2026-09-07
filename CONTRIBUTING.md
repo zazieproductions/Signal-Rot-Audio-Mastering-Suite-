@@ -15,10 +15,13 @@ That is the failure mode this project is organised against.
 ## Getting started
 
 ```bash
-npm install
+npm ci
 npm run dev
-npm run check    # lint + test + build — run this before opening a PR
+npm run check    # lint + test + export validation + build — run before opening a PR
 ```
+
+Read [continuity notes](docs/CONTINUITY.md) before rebasing or changing a protected
+baseline, and [CI status](ci/README.md) before claiming a pull request is fully gated.
 
 ## Where things go
 

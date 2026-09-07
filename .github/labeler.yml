@@ -1,0 +1,4 @@
+# actions/labeler@v4 uses arrays of path globs. Keep this in sync with label.yml.
+# Use the existing repository label; do not infer feature/bug labels from paths alone.
+documentation:
+  - '**/*.md'

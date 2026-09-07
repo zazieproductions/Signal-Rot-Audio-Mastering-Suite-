@@ -754,12 +754,7 @@ export function bootstrap() {
     store.setUi({ audition: event.target.value });
     pushParameters();
   });
-  $('#matchLoudBtn').addEventListener('click', () => {
-    const next = !store.getState().ui.matchLoudness;
-    store.setUi({ matchLoudness: next });
-    $('#matchLoudBtn').setAttribute('aria-pressed', String(next));
-    pushParameters();
-  });
+  // initAbEnhanced owns both loudness-match controls; a second listener cancels the toggle.
   $('#reanalyzeBtn').addEventListener('click', () => {
     toast('Re-analysing…');
     runAnalysis({ immediate: true });

@@ -51,7 +51,10 @@ A preset file is untrusted input. Loading it:
 5. Runs `validateParameters`, which **drops unknown keys** rather than merging them, fills
    missing keys with defaults, coerces every type and clamps every number to its range.
 6. Type-checks the immersive block field by field against the defaults.
-7. Returns the warnings so the UI can report what it changed.
+7. For files explicitly declaring `family: "mastering"`, zeros `tape`, `hiss`, `vinyl`,
+   `haas` and `phaseRot` via `sanitizeForFamily`, with warnings. Creative or untagged
+   files are not family-scrubbed.
+8. Returns the warnings so the UI can report what it changed.
 
 A hand-edited file cannot set `width: 1e9`, `ceiling: +40` or inject a key. A
 `{"__proto__": {...}}` payload is inert.
@@ -63,7 +66,7 @@ A hand-edited file cannot set `width: 1e9`, `ceiling: +40` or inject a key. A
 | `normalize`     | loudness  | boolean | true     | true · false               | —    |    ✓    |   ✓    |
 | `targetLUFS`    | loudness  | number  | -14      | -30 … -5                   | LUFS |    ✓    |   ✓    |
 | `ceiling`       | loudness  | number  | -1       | -3 … -0.1                  | dBTP |    ✗    |   ✓    |
-| `drive`         | loudness  | number  | 0        | 0 … 12                     | dB   |    ✓    |   ✓    |
+| `drive`         | loudness  | number  | 0        | -6 … 9                     | dB   |    ✓    |   ✓    |
 | `sub`           | tone      | number  | 0        | -12 … 12                   | dB   |    ✓    |   ✓    |
 | `warm`          | tone      | number  | 0        | -12 … 12                   | dB   |    ✓    |   ✓    |
 | `body`          | tone      | number  | 0        | -12 … 12                   | dB   |    ✓    |   ✓    |
@@ -149,12 +152,13 @@ so that switching presets does not silently change your noise.
 
 ## The catalogue
 
-Sixty-eight presets in seven groups. Each entry:
+Seventy-two presets in eight groups, including the Mastering group led by `Reference HD`. Each entry:
 
 ```js
 preset({
   name: 'Vinyl Séance',
   tag: 'dimension',
+  family: 'creative',
   description: 'Crackle, rumble, narrowed low end. A record that remembers being played.',
   risk: 'safe', // 'safe' | 'caution' | 'destructive'
   parameters: { vinyl: 45, warm: 2, widthLow: 0.5, bassMono: 100 /* … */ },
@@ -165,6 +169,15 @@ preset({
 
 `audit` is not a comment — it is shown in the interface when the preset is applied, and a
 test asserts every preset has one.
+
+### Families
+
+Catalogue groups organise the browser; `mastering` / `creative` families constrain DSP.
+`presetFamily(preset)` honours an explicit family, otherwise infers `creative` from
+non-zero degradation controls and `mastering` from their absence. The apply path uses
+`sanitizeForFamily` before applying a mastering preset. A family is optional in saved
+schema-v3 files (`serializePreset({ family, ... })`); it is not a schema-version bump.
+See [`tests/app/preset-families.test.js`](../tests/app/preset-families.test.js).
 
 ### Risk levels
 

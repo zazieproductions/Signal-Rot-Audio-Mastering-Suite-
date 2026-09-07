@@ -98,8 +98,9 @@ export function initAbEnhanced(opts) {
     if (pushParameters) pushParameters();
     sync();
   };
-  matchChip?.addEventListener('click', toggleMatch);
-  $('#matchLoudBtn')?.addEventListener('click', toggleMatch);
+  for (const button of new Set([matchChip, $('#matchLoudBtn')])) {
+    button?.addEventListener('click', toggleMatch);
+  }
 
   dimChip?.addEventListener('click', () => {
     dim = !dim;

@@ -45,8 +45,11 @@ The suite targets three engines:
 - **Firefox** (Playwright `firefox`)
 - **WebKit** (Playwright `webkit` — the Safari-compatible engine)
 
-A missing browser binary skips that project only if you pass `--project`. CI
-installs all three. Cross-browser deltas are **notes**, not defects, except for
+Use `--project chromium` to run only Chromium; requesting a project whose binary is
+missing fails at launch, not as a skipped/passed measurement. The workflow template in
+`ci/conformance.yml` installs each engine in a matrix, but is **not active** until installed
+in `.github/workflows/` (see [CI status](../ci/README.md)). Cross-browser deltas are
+**notes**, not defects, except for
 NaN / Infinity: native compressor, shaper and HRTF internals are
 implementation-defined (`docs/BROWSER-COMPATIBILITY.md`).
 
