@@ -59,6 +59,7 @@ writers.
 | No unexpected silence                   | A channel written with signal must read back with signal                | `validate-exports.js`       |
 | External decodability                   | The file is opened by FFmpeg and its report compared                    | `ffprobe`                   |
 | RF64/BW64 `ds64`                        | Sentinel, 64-bit fields, chunk position, `sampleCount` agreement        | `riff-inspect.js`           |
+| Streaming/in-memory writer identity     | Streaming encoder output is **byte-identical** to the in-memory writer, per layout × bit depth, then independently parsed and decoded | `stream-round-trip.test.js` |
 
 **What is not established** is in [Remaining limitations](#remaining-limitations). That
 section is the important one.
@@ -264,16 +265,33 @@ point, one byte either side, the padding interaction, and the ds64 field values.
 (no other chunk this project writes can overflow 32 bits). The 32-bit fields carry the
 `0xFFFFFFFF` sentinel. **A wrapped 32-bit size is never written.**
 
-> ### The honest caveat
+> ### The browser ceiling, and how it is lifted
 >
-> Writing RF64 headers is necessary but **not sufficient** for a genuinely huge export.
-> Every export path materialises the whole file in a single `ArrayBuffer` before handing
-> it to `Blob`, and browsers cap that well below 4 GiB — Chromium's default is around
-> 2 GiB and Safari's is lower. The planner therefore refuses above ~2 GiB with a message
-> that says plainly that the _container_ supports the size and the _browser_ does not.
+> Writing RF64 headers is necessary but **not sufficient** on its own: a writer that
+> materialises the whole file in a single `ArrayBuffer` is capped well below 4 GiB by the
+> browser — Chromium's default maximum is around 2 GiB and Safari's is lower. The
+> container planner refuses in that situation with a message that says plainly the
+> _container_ supports the size and the _browser_ does not.
 >
-> A truly streaming writer (File System Access API, incremental chunk emission) would lift
-> that. It is not implemented.
+> The direct export paths (the main stereo/master export and every immersive bed export,
+> including ADM BWF) now have a **streaming writer** (`src/audio/encode/wav-stream.js`,
+> `src/audio/immersive/adm-stream.js`, sinks in `src/audio/encode/stream-sinks.js`). When
+> an export is estimated above 256 MiB and the browser exposes the File System Access
+> API (`showSaveFilePicker` — Chromium-based browsers), the file is written straight to
+> the user-chosen location in 4 MiB blocks. Peak live memory is one block plus a tiny
+> header, the planner's ArrayBuffer ceiling is bypassed (only the container's 64-bit
+> limit remains), and a failure mid-stream aborts the partial file rather than leaving a
+> truncated master behind. Browsers without the API (Firefox, Safari) keep the instant
+> download, which stays subject to the ≈2 GiB ceiling; the delivery-package builder also
+> stays on the in-memory path (its files are sidecars and metadata, not album-length
+> masters).
+>
+> The streaming and in-memory paths share every byte-producing helper — container plan,
+> `fmt `/`bext`/`chna` writers and PCM encoders — so their outputs are byte-identical by
+> construction, and that identity is asserted in
+> `tests/interoperability/stream-round-trip.test.js` for every layout × bit depth, plus a
+> forced-BW64 case, with the assembled streams validated by the same independent parser
+> and decoder used for everything else in this document.
 
 Small files continue to use ordinary `RIFF`. There is no standards reason to promote them
 and every reason not to: an `RF64` FourCC turns away readers that predate Tech 3306.
@@ -506,12 +524,26 @@ Stated plainly, because a limitation you know about is a risk you can manage.
 
 ### Format and platform limits
 
-6. **~2 GiB practical export ceiling**, regardless of container. The whole file is
-   materialised in one `ArrayBuffer`. RF64/BW64 headers are written correctly; the browser
-   is the binding constraint. See [RF64 / BW64](#rf64--bw64).
+6. **~2 GiB practical ceiling remains on the in-memory paths.** The delivery-package
+   builder and downloads in browsers without the File System Access API (Firefox,
+   Safari) still materialise the whole file in one `ArrayBuffer`; RF64/BW64 headers are
+   correct, but the browser is the binding constraint there. See
+   [RF64 / BW64](#rf64--bw64). Direct exports on Chromium-based browsers stream to disk
+   and are not subject to this ceiling (though see limitation 6a).
 
-7. **No streaming writer.** Exports are all-in-memory. A File System Access API path with
-   incremental chunk emission would lift limitation 6.
+   **6a. Streaming lifts the *encoder* ceiling, not the *renderer* ceiling.** Decode and
+   render still hold the full programme as 32-bit float (see
+   `docs/LIMITATIONS.md` — "Everything is in memory"). A file that streams out in 4 MiB
+   blocks was still rendered into a buffer of `channels × frames × 4` bytes several
+   times over. The streaming writer removes the last and largest of the encoding copies;
+   it is not itself a streaming renderer.
+
+7. **Streaming is only on the single-file direct exports.** The delivery-package builder
+   assembles each package as in-memory Blobs. Its master WAV is the same bytes a direct
+   export streams, but the package path is used for documented bundles of sidecars; at
+   album lengths, use the direct master export and add the sidecars individually if you
+   need them on disk beyond the browser's ceiling. A future chunk-collecting sink (Blob
+   parts without one backing buffer) can close this gap without any new encoding.
 
 8. **No `ds64` chunk-size table.** `tableLength` is always 0 because no chunk this project
    writes other than `data` can overflow 32 bits. The parser handles a populated table on

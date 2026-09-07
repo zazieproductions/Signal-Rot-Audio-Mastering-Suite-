@@ -89,6 +89,19 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   28-byte `ds64` chunk and the `0xFFFFFFFF` sentinel. Small files stay ordinary RIFF. A
   wrapped 32-bit size is never written. The boundary is tested exhaustively without
   allocating a 4 GiB buffer.
+- **Streaming writer lifts the ~2 GiB browser export ceiling.** Direct WAV and
+  immersive/ADM exports estimated above 256 MiB now stream straight to a user-chosen
+  file via the File System Access API (`showSaveFilePicker`, Chromium-based browsers),
+  writing in 4 MiB blocks through new `StreamSink`/`CollectSink` byte sinks. Peak live
+  memory is one block plus the header instead of the whole file, the planner's
+  ArrayBuffer ceiling is bypassed on disk streams (only RF64/BW64 64-bit limits
+  remain), and a failure mid-stream aborts the partial file. Browsers without the API
+  keep the instant download. The streaming encoders share their container plan, chunk
+  writers and PCM encoders with the in-memory encoders, and the outputs are asserted
+  byte-identical for every layout × bit depth (plus forced BW64), then re-validated by
+  the independent RIFF/ADM parser and decoder — 56 new tests in
+  `tests/format/wav-stream.test.js` and
+  `tests/interoperability/stream-round-trip.test.js`.
 - **Delivery profiles** (`stereo-distribution`, `film-video`, `high-res-archive`,
   `bed-714`, `sonic-lab-204`, `adm-ingest`) that alter format and metadata only — a test
   asserts no profile carries a DSP field.

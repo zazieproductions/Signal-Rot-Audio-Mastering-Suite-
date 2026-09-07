@@ -22,6 +22,13 @@
  * 0xFFFFFFFF sentinel in the 32-bit fields. Small files stay ordinary RIFF, which is what
  * every player understands. A wrapped 32-bit size is never written: if a size cannot be
  * represented honestly the writer throws. See `riff-layout.js` for the arithmetic.
+ *
+ * The `writeWav` path below materialises the whole file in one `ArrayBuffer`; that is
+ * fine for ordinary exports but is capped by the browser to roughly 2 GiB. The streaming
+ * path (`writeWavStreamed` in `wav-stream.js`, backed by `stream-sinks.js`) emits the same
+ * bytes in fixed-size blocks and lifts that ceiling to whatever the container and disk
+ * allow — the two paths share every byte-producing helper in this module, so they cannot
+ * drift apart.
  */
 
 import { clamp } from '../dsp/math.js';
@@ -56,6 +63,7 @@ export const SPEAKER_MASK = Object.freeze({
 
 /** KSDATAFORMAT_SUBTYPE_PCM / _IEEE_FLOAT GUID tails (bytes 4..15, shared). */
 const GUID_TAIL = [0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71];
+export { GUID_TAIL };
 
 /**
  * Write an ASCII FourCC / string into a DataView.
@@ -78,24 +86,143 @@ export function floatToInt(s, bitDepth) {
 }
 
 /**
- * @typedef {object} WavOptions
- * @property {16|24|32} bitDepth
- * @property {number} [channelMask] when present (or channels > 2) writes WAVE_FORMAT_EXTENSIBLE
- * @property {boolean} [forceExtensible]
- * @property {'auto'|'riff'|'rf64'|'bw64'} [container] default `'auto'` — RIFF while the
- *   sizes fit in 32 bits, otherwise BW64. Force `'rf64'`/`'bw64'` to test the 64-bit path.
- * @property {number} [maxBufferedBytes] override the practical ArrayBuffer ceiling
+ * Sequential little-endian byte writer.
+ *
+ * The minimal surface every RIFF chunk writer needs, backed by a `DataView` over either
+ * one big allocation (`writeWav`) or a small header-sized buffer that is then streamed
+ * (`writeWavStreamed`). Sharing this interface is what lets the in-memory and streaming
+ * encoders call the *same* chunk- and PCM-writing code.
+ *
+ * @typedef {object} ByteWriter
+ * @property {(s: string) => void} ascii  write a FourCC / ASCII string verbatim
+ * @property {(x: number) => void} u32    unsigned 32-bit little-endian
+ * @property {(x: number) => void} u16    unsigned 16-bit little-endian
+ * @property {(x: number) => void} i16    signed 16-bit little-endian
+ * @property {(x: number) => void} f32    32-bit IEEE float, little-endian
+ * @property {(b: number) => void} u8     one byte
  */
 
 /**
- * Encode `AudioData` as a RIFF/WAVE file.
+ * Adapt a `DataView` to the {@link ByteWriter} interface, tracking the write offset.
+ * @param {DataView} view
+ * @param {number} [startOffset]
+ * @returns {ByteWriter & {view: DataView, offset: number}}
+ */
+export function dataViewWriter(view, startOffset = 0) {
+  const w = {
+    view,
+    offset: startOffset,
+    ascii(s) {
+      for (let i = 0; i < s.length; i++) view.setUint8(w.offset + i, s.charCodeAt(i) & 0x7f);
+      w.offset += s.length;
+    },
+    u32(x) {
+      view.setUint32(w.offset, x, true);
+      w.offset += 4;
+    },
+    u16(x) {
+      view.setUint16(w.offset, x, true);
+      w.offset += 2;
+    },
+    i16(x) {
+      view.setInt16(w.offset, x, true);
+      w.offset += 2;
+    },
+    f32(x) {
+      view.setFloat32(w.offset, x, true);
+      w.offset += 4;
+    },
+    u8(x) {
+      view.setUint8(w.offset, x & 0xff);
+      w.offset += 1;
+    },
+  };
+  return w;
+}
+
+/**
+ * Write a `fmt ` chunk (16-byte PCM/float or 40-byte WAVE_FORMAT_EXTENSIBLE).
+ *
+ * Shared by the plain WAVE writer and the ADM BWF writer so there is exactly one
+ * implementation of the WAVEFORMATEXTENSIBLE layout to get wrong.
+ *
+ * @param {ByteWriter} w positioned where the chunk should begin
+ * @param {object} spec
+ * @param {number} spec.channels
+ * @param {number} spec.sampleRate
+ * @param {16|24|32} spec.bitDepth
+ * @param {boolean} spec.extensible
+ * @param {number} [spec.channelMask]
+ * @returns {number} the payload size written (16 or 40)
+ */
+export function writeFmtChunk(w, { channels, sampleRate, bitDepth, extensible, channelMask = 0 }) {
+  const isFloat = bitDepth === 32;
+  const bps = bitDepth / 8;
+  const blockAlign = channels * bps;
+  const fmtLen = extensible ? 40 : 16;
+  w.ascii('fmt ');
+  w.u32(fmtLen);
+  w.u16(extensible ? 0xfffe : isFloat ? 3 : 1);
+  w.u16(channels);
+  w.u32(sampleRate);
+  w.u32(sampleRate * blockAlign);
+  w.u16(blockAlign);
+  w.u16(bitDepth);
+  if (extensible) {
+    w.u16(22); // cbSize
+    w.u16(bitDepth); // wValidBitsPerSample
+    w.u32(channelMask >>> 0);
+    w.u16(isFloat ? 3 : 1); // KSDATAFORMAT_SUBTYPE data1 low word
+    w.u16(0); // data1 high word
+    for (const b of GUID_TAIL) w.u8(b);
+  }
+  return fmtLen;
+}
+
+/**
+ * Encode one frame (one sample per channel, interleaved) into a DataView.
+ *
+ * @param {DataView} v
+ * @param {number} offset byte offset of the frame's first sample
+ * @param {Float32Array[]} channels
+ * @param {number} frame
+ * @param {number} ch channel count
+ * @param {16|24|32} bitDepth
+ * @returns {number} the number of bytes written (`ch * bitDepth/8`)
+ */
+export function encodePcmFrame(v, offset, channels, frame, ch, bitDepth) {
+  let o = offset;
+  if (bitDepth === 32) {
+    for (let c = 0; c < ch; c++) {
+      v.setFloat32(o, channels[c][frame], true);
+      o += 4;
+    }
+  } else if (bitDepth === 16) {
+    for (let c = 0; c < ch; c++) {
+      v.setInt16(o, floatToInt(channels[c][frame], 16), true);
+      o += 2;
+    }
+  } else {
+    for (let c = 0; c < ch; c++) {
+      const iv = floatToInt(channels[c][frame], 24);
+      v.setUint8(o, iv & 0xff);
+      v.setUint8(o + 1, (iv >> 8) & 0xff);
+      v.setUint8(o + 2, (iv >> 16) & 0xff);
+      o += 3;
+    }
+  }
+  return o - offset;
+}
+
+/**
+ * Validate the inputs every RIFF/WAVE writer needs. Throws on anything a `fmt ` chunk
+ * cannot honestly describe; returns the derived geometry otherwise.
  *
  * @param {import('../dsp/audio-data.js').AudioData} data
- * @param {WavOptions} opts
- * @returns {Blob}
+ * @param {16|24|32} bitDepth
+ * @returns {{ch: number, sr: number, n: number, bps: number, blockAlign: number, dataLen: number, extensible: boolean, fmtLen: number}}
  */
-export function writeWav(data, opts) {
-  const { bitDepth } = opts;
+export function prepareWav(data, bitDepth, opts = {}) {
   if (![16, 24, 32].includes(bitDepth)) {
     throw new Error(`writeWav: unsupported bit depth ${bitDepth}`);
   }
@@ -123,13 +250,43 @@ export function writeWav(data, opts) {
         'file padded with undefined samples.',
     );
   }
-  const isFloat = bitDepth === 32;
   const bps = bitDepth / 8;
   const blockAlign = ch * bps;
   const dataLen = n * blockAlign;
-
   const extensible = opts.forceExtensible || ch > 2 || opts.channelMask !== undefined;
-  const fmtLen = extensible ? 40 : 16;
+  return {
+    ch,
+    sr,
+    n,
+    bps,
+    blockAlign,
+    dataLen,
+    extensible,
+    fmtLen: extensible ? 40 : 16,
+  };
+}
+
+/**
+ * @typedef {object} WavOptions
+ * @property {16|24|32} bitDepth
+ * @property {number} [channelMask] when present (or channels > 2) writes WAVE_FORMAT_EXTENSIBLE
+ * @property {boolean} [forceExtensible]
+ * @property {'auto'|'riff'|'rf64'|'bw64'} [container] default `'auto'` — RIFF while the
+ *   sizes fit in 32 bits, otherwise BW64. Force `'rf64'`/`'bw64'` to test the 64-bit path.
+ * @property {number} [maxBufferedBytes] override the practical ArrayBuffer ceiling
+ */
+
+/**
+ * Encode `AudioData` as a RIFF/WAVE file.
+ *
+ * @param {import('../dsp/audio-data.js').AudioData} data
+ * @param {WavOptions} opts
+ * @returns {Blob}
+ */
+export function writeWav(data, opts) {
+  const { bitDepth } = opts;
+  const g = prepareWav(data, bitDepth, opts);
+  const { ch, sr, n, dataLen, extensible, fmtLen } = g;
 
   const plan = planRiffContainer({
     chunks: [
@@ -143,70 +300,28 @@ export function writeWav(data, opts) {
   const dataPad = dataLen % 2;
 
   const ab = new ArrayBuffer(plan.totalBytes);
-  const v = new DataView(ab);
-  let o = writeRiffHeader(v, plan);
+  const view = new DataView(ab);
+  let o = writeRiffHeader(view, plan);
+  const w = dataViewWriter(view, o);
 
-  o = writeAscii(v, o, 'fmt ');
-  v.setUint32(o, fmtLen, true);
-  o += 4;
-  v.setUint16(o, extensible ? 0xfffe : isFloat ? 3 : 1, true);
-  o += 2;
-  v.setUint16(o, ch, true);
-  o += 2;
-  v.setUint32(o, sr, true);
-  o += 4;
-  v.setUint32(o, sr * blockAlign, true);
-  o += 4;
-  v.setUint16(o, blockAlign, true);
-  o += 2;
-  v.setUint16(o, bitDepth, true);
-  o += 2;
-  if (extensible) {
-    v.setUint16(o, 22, true); // cbSize
-    o += 2;
-    v.setUint16(o, bitDepth, true); // wValidBitsPerSample
-    o += 2;
-    v.setUint32(o, (opts.channelMask ?? 0) >>> 0, true);
-    o += 4;
-    v.setUint16(o, isFloat ? 3 : 1, true); // GUID Data1 low word
-    o += 2;
-    v.setUint16(o, 0, true); // GUID Data1 high word
-    o += 2;
-    for (const b of GUID_TAIL) v.setUint8(o++, b);
-  }
+  writeFmtChunk(w, {
+    channels: ch,
+    sampleRate: sr,
+    bitDepth,
+    extensible,
+    channelMask: opts.channelMask ?? 0,
+  });
+  o = w.offset;
 
-  o = writeAscii(v, o, 'data');
+  o = writeAscii(view, o, 'data');
   // In an RF64/BW64 file this is the 0xFFFFFFFF sentinel and the real size lives in ds64.
-  v.setUint32(o, plan.chunks.find((c) => c.id === 'data').sizeField >>> 0, true);
+  view.setUint32(o, plan.chunks.find((c) => c.id === 'data').sizeField >>> 0, true);
   o += 4;
 
-  const chans = data.channels;
-  if (isFloat) {
-    for (let i = 0; i < n; i++) {
-      for (let c = 0; c < ch; c++) {
-        v.setFloat32(o, chans[c][i], true);
-        o += 4;
-      }
-    }
-  } else if (bitDepth === 16) {
-    for (let i = 0; i < n; i++) {
-      for (let c = 0; c < ch; c++) {
-        v.setInt16(o, floatToInt(chans[c][i], 16), true);
-        o += 2;
-      }
-    }
-  } else {
-    for (let i = 0; i < n; i++) {
-      for (let c = 0; c < ch; c++) {
-        const iv = floatToInt(chans[c][i], 24);
-        v.setUint8(o, iv & 0xff);
-        v.setUint8(o + 1, (iv >> 8) & 0xff);
-        v.setUint8(o + 2, (iv >> 16) & 0xff);
-        o += 3;
-      }
-    }
+  for (let i = 0; i < n; i++) {
+    o += encodePcmFrame(view, o, data.channels, i, ch, bitDepth);
   }
-  if (dataPad) v.setUint8(o++, 0);
+  if (dataPad) view.setUint8(o++, 0);
 
   const blob = new Blob([ab], { type: 'audio/wav' });
   // Non-enumerable so JSON/structured-clone behaviour of the Blob is unchanged; purely a

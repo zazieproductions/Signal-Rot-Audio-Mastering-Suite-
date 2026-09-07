@@ -43,7 +43,7 @@
  */
 
 import { clamp } from '../dsp/math.js';
-import { floatToInt, writeAscii } from '../encode/wav.js';
+import { dataViewWriter, floatToInt, prepareWav, writeFmtChunk } from '../encode/wav.js';
 import { MAX_BUFFERED_BYTES, planRiffContainer, writeRiffHeader } from '../encode/riff-layout.js';
 import { LAYOUTS, SPEAKERS, wavChannelOrder } from './layouts.js';
 
@@ -303,6 +303,168 @@ function loudnessField(value) {
 }
 
 /**
+ * Write a fixed-length ASCII field, NUL-padded (EBU Tech 3285 §2 style).
+ *
+ * A non-ASCII code point would silently become mojibake under a naive `& 0x7f` mask, and a
+ * NUL inside the field would terminate the string early for every reader, so anything
+ * outside printable ASCII becomes '?' and control characters are dropped. Over-long input
+ * is truncated, not wrapped.
+ *
+ * @param {import('../encode/wav.js').ByteWriter} w
+ * @param {string|undefined|null} input
+ * @param {number} len
+ */
+function writeFixedField(w, input, len) {
+  const text = String(input ?? '');
+  let written = 0;
+  for (let i = 0; i < text.length && written < len; i++) {
+    const code = text.charCodeAt(i);
+    if (code === 0) continue; // never embed a NUL inside the field
+    w.u8(code >= 0x20 && code <= 0x7e ? code : 0x3f);
+    written++;
+  }
+  for (; written < len; written++) w.u8(0);
+}
+
+/**
+ * Validate the inputs and derive the geometry/metadata for an ADM BWF. Shared by the
+ * in-memory writer and the streaming writer so the two paths cannot disagree about what
+ * a valid ADM export is.
+ *
+ * @param {import('../dsp/audio-data.js').AudioData} data
+ * @param {AdmWriteOptions} opts
+ * @returns {object} every pre-computed value the chunk writers need
+ */
+export function prepareAdmBwf(data, opts) {
+  const layout = LAYOUTS[opts.layoutId];
+  if (!layout) throw new Error(`writeAdmBwf: unknown layout "${opts.layoutId}"`);
+
+  const bitDepth = opts.bitDepth ?? 24;
+  const order = opts.order ?? wavChannelOrder(opts.layoutId).order;
+  // prepareWav covers the rate/depth/frame/channel-length guard rails; the count check
+  // is ADM-specific (channels must match the declared layout order exactly).
+  const g = prepareWav(data, bitDepth, { forceExtensible: true });
+  if (g.ch !== order.length) {
+    throw new Error(`writeAdmBwf: buffer has ${g.ch} channels but layout needs ${order.length}`);
+  }
+  const { ch, sr, n, blockAlign } = g;
+  const dataLen = n * blockAlign;
+
+  const xml = buildAdmXml({
+    layoutId: opts.layoutId,
+    sampleRate: sr,
+    bitDepth,
+    durationSeconds: n / sr,
+    lfeCrossoverHz: opts.lfeCrossoverHz,
+    programmeName: opts.programmeName,
+    order,
+  });
+  const xmlBytes = new TextEncoder().encode(xml);
+
+  const chnaLen = 4 + 40 * ch; // 4-byte header + 40 bytes per UID entry
+  const chunks = [
+    { id: 'bext', size: BEXT_SIZE },
+    { id: 'fmt ', size: 40 },
+    { id: 'chna', size: chnaLen },
+    { id: 'data', size: dataLen },
+    { id: 'axml', size: xmlBytes.length },
+  ];
+
+  return {
+    layout,
+    order,
+    bitDepth,
+    isFloat: bitDepth === 32,
+    ch,
+    sr,
+    n,
+    blockAlign,
+    dataLen,
+    xml,
+    xmlBytes,
+    chnaLen,
+    chunks,
+    date: opts.date ?? new Date(),
+    loudness: opts.loudness ?? {},
+    description: opts.description ?? `SIGNAL ROT // MASTER - ADM BWF ${layout.name}`,
+    originator: opts.originator ?? 'SIGNAL ROT // MASTER',
+    container: opts.container ?? 'auto',
+    maxBufferedBytes: opts.maxBufferedBytes ?? MAX_BUFFERED_BYTES,
+  };
+}
+
+/**
+ * Write the `bext` chunk (EBU Tech 3285 v2, 602 bytes). Returns nothing; the caller knows
+ * the size. Shared by the in-memory and streaming writers.
+ *
+ * @param {import('../encode/wav.js').ByteWriter} w
+ * @param {object} spec
+ * @param {string} spec.description
+ * @param {string} spec.originator
+ * @param {Date} spec.date
+ * @param {object} spec.loudness `{integrated, range, truePeak, maxMomentary, maxShortTerm}`
+ */
+export function writeBextChunk(w, spec) {
+  const L = spec.loudness;
+  const d = spec.date;
+  const pad2 = (x) => String(x).padStart(2, '0');
+  w.ascii('bext');
+  w.u32(BEXT_SIZE);
+  const start = w.offset;
+  writeFixedField(w, spec.description, 256); // Description
+  writeFixedField(w, spec.originator, 32); // Originator
+  writeFixedField(w, '', 32); // OriginatorReference
+  writeFixedField(
+    w,
+    `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`,
+    10,
+  );
+  writeFixedField(
+    w,
+    `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`,
+    8,
+  );
+  w.u32(0); // TimeReferenceLow
+  w.u32(0); // TimeReferenceHigh
+  w.u16(2); // Version 2 — loudness fields only have meaning at v2
+  // The 64-byte UMID follows (offset 348..411); this project writes none, so it is left
+  // as the buffer's zero fill and the offset jumps straight to the loudness fields.
+  w.offset = start + 348 + 64;
+  w.i16(loudnessField(L.integrated)); // LoudnessValue
+  w.i16(loudnessField(L.range)); // LoudnessRange
+  w.i16(loudnessField(L.truePeak)); // MaxTruePeakLevel
+  w.i16(loudnessField(L.maxMomentary)); // MaxMomentaryLoudness
+  w.i16(loudnessField(L.maxShortTerm)); // MaxShortTermLoudness
+  // Reserved (180 bytes) + CodingHistory (none): jump to the end of the payload.
+  w.offset = start + BEXT_SIZE;
+}
+
+/**
+ * Write the `chna` chunk (BS.2088 / Tech 3285 Supplement 5): a 4-byte header followed by
+ * 40-byte track-UID entries, one per channel. Shared by the in-memory and streaming
+ * writers.
+ *
+ * @param {import('../encode/wav.js').ByteWriter} w
+ * @param {object} spec
+ * @param {number} spec.channels
+ * @param {string[]} spec.order delivery-order speaker keys
+ */
+export function writeChnaChunk(w, { channels, order }) {
+  w.ascii('chna');
+  w.u32(4 + 40 * channels);
+  w.u16(channels); // numTracks
+  w.u16(channels); // numUIDs
+  order.forEach((key, i) => {
+    const id = admIdsFor(i + 1);
+    w.u16(i + 1); // trackIndex, 1-based
+    writeFixedField(w, id.trackUid, 12);
+    writeFixedField(w, id.trackFormat, 14);
+    writeFixedField(w, ADM_PACK_FORMAT_ID, 11);
+    w.u8(0); // pad → 40 bytes per entry
+  });
+}
+
+/**
  * @typedef {object} AdmWriteOptions
  * @property {string} layoutId
  * @property {16|24|32} [bitDepth] default 24
@@ -318,207 +480,101 @@ function loudnessField(value) {
  */
 
 /**
- * Write an ADM BWF file.
+ * Write an ADM BWF file into a single in-memory buffer.
+ *
+ * This is the all-in-memory path (kept synchronous and Blob-returning for the delivery
+ * package builder and the fixture tooling). The streaming twin is
+ * `writeAdmBwfStreamed` in `adm-stream.js`; both pass through {@link prepareAdmBwf},
+ * {@link writeBextChunk}, {@link writeChnaChunk} and the shared `fmt `/PCM helpers, so
+ * their bytes cannot diverge.
  *
  * @param {import('../dsp/audio-data.js').AudioData} data channels must already be in delivery order
  * @param {AdmWriteOptions} opts
  * @returns {Blob}
  */
 export function writeAdmBwf(data, opts) {
-  const layout = LAYOUTS[opts.layoutId];
-  if (!layout) throw new Error(`writeAdmBwf: unknown layout "${opts.layoutId}"`);
-
-  const bitDepth = opts.bitDepth ?? 24;
-  if (![16, 24, 32].includes(bitDepth)) {
-    throw new Error(`writeAdmBwf: unsupported bit depth ${bitDepth}`);
-  }
-  const order = opts.order ?? wavChannelOrder(opts.layoutId).order;
-  const ch = data.channels.length;
-  if (ch !== order.length) {
-    throw new Error(`writeAdmBwf: buffer has ${ch} channels but layout needs ${order.length}`);
-  }
-
-  const sr = data.sampleRate;
-  const n = data.length;
-  if (!Number.isInteger(sr) || sr < 8000 || sr > 768000) {
-    throw new Error(
-      `writeAdmBwf: sample rate ${sr} is not a plausible audio rate. A fmt chunk declaring ` +
-        'it would be ambiguous or unplayable.',
-    );
-  }
-  if (!Number.isInteger(n) || n < 0) {
-    throw new Error(`writeAdmBwf: invalid frame count ${n}`);
-  }
-  const isFloat = bitDepth === 32;
-  const bps = bitDepth / 8;
-  const blockAlign = ch * bps;
-  const dataLen = n * blockAlign;
-  const dataPad = dataLen % 2;
-
-  const xml = buildAdmXml({
-    layoutId: opts.layoutId,
-    sampleRate: sr,
-    bitDepth,
-    durationSeconds: n / sr,
-    lfeCrossoverHz: opts.lfeCrossoverHz,
-    programmeName: opts.programmeName,
-    order,
-  });
-  const xmlBytes = new TextEncoder().encode(xml);
-  const axmlPad = xmlBytes.length % 2;
-
-  // chna: 4-byte header (numTracks, numUIDs) + 40 bytes per UID entry.
-  const chnaLen = 4 + 40 * ch;
-  const fmtLen = 40;
+  const p = prepareAdmBwf(data, opts);
 
   // BS.2088 BW64 is the ADM-facing 64-bit container; ADM exports promote to BW64 (never
   // RF64) when the sizes no longer fit in 32 bits. Small files stay ordinary RIFF.
   const plan = planRiffContainer({
-    chunks: [
-      { id: 'bext', size: BEXT_SIZE },
-      { id: 'fmt ', size: fmtLen },
-      { id: 'chna', size: chnaLen },
-      { id: 'data', size: dataLen },
-      { id: 'axml', size: xmlBytes.length },
-    ],
-    sampleCount: n,
-    mode: opts.container ?? 'auto',
-    maxBufferedBytes: opts.maxBufferedBytes ?? MAX_BUFFERED_BYTES,
+    chunks: p.chunks,
+    sampleCount: p.n,
+    mode: p.container,
+    maxBufferedBytes: p.maxBufferedBytes,
   });
+  const dataPad = p.dataLen % 2;
+  const axmlPad = p.xmlBytes.length % 2;
 
   const ab = new ArrayBuffer(plan.totalBytes);
-  const v = new DataView(ab);
-  let o = 0;
-  const ascii = (s) => {
-    o = writeAscii(v, o, s);
-  };
-  const u32 = (x) => {
-    v.setUint32(o, x, true);
-    o += 4;
-  };
-  const u16 = (x) => {
-    v.setUint16(o, x, true);
-    o += 2;
-  };
-  // `bext` fields are fixed-length ASCII, NUL-padded (EBU Tech 3285 §2). Masking a
-  // non-ASCII code point with `& 0x7f` would silently turn "Ünïcode" into mojibake and a
-  // NUL into a premature string terminator, so anything outside printable ASCII becomes
-  // '?' and control characters are dropped. Over-long input is truncated, not wrapped.
-  const fixedStr = (input, len) => {
-    const text = String(input ?? '');
-    let w = 0;
-    for (let i = 0; i < text.length && w < len; i++) {
-      const code = text.charCodeAt(i);
-      if (code === 0) continue; // never embed a NUL inside the field
-      v.setUint8(o + w, code >= 0x20 && code <= 0x7e ? code : 0x3f);
-      w++;
-    }
-    for (; w < len; w++) v.setUint8(o + w, 0);
-    o += len;
-  };
+  const view = new DataView(ab);
+  const headerEnd = writeRiffHeader(view, plan);
+  const w = dataViewWriter(view, headerEnd);
 
-  o = writeRiffHeader(v, plan);
-
-  // ── bext ──
-  ascii('bext');
-  u32(BEXT_SIZE);
-  const bextStart = o;
-  fixedStr(opts.description ?? `SIGNAL ROT // MASTER - ADM BWF ${layout.name}`, 256);
-  fixedStr(opts.originator ?? 'SIGNAL ROT // MASTER', 32);
-  fixedStr('', 32); // OriginatorReference
-  const d = opts.date ?? new Date();
-  const pad2 = (x) => String(x).padStart(2, '0');
-  fixedStr(`${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`, 10);
-  fixedStr(`${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`, 8);
-  u32(0); // TimeReferenceLow
-  u32(0); // TimeReferenceHigh
-  v.setUint16(o, 2, true); // Version 2 — required for the loudness fields to be meaningful
-  o += 2;
-  o = bextStart + 348 + 64; // skip UMID (64 bytes of zero)
-  const L = opts.loudness ?? {};
-  v.setInt16(o, loudnessField(L.integrated), true);
-  o += 2; // LoudnessValue
-  v.setInt16(o, loudnessField(L.range), true);
-  o += 2; // LoudnessRange
-  v.setInt16(o, loudnessField(L.truePeak), true);
-  o += 2; // MaxTruePeakLevel
-  v.setInt16(o, loudnessField(L.maxMomentary), true);
-  o += 2; // MaxMomentaryLoudness
-  v.setInt16(o, loudnessField(L.maxShortTerm), true);
-  o += 2; // MaxShortTermLoudness
-  o = bextStart + BEXT_SIZE; // Reserved (180 bytes) + CodingHistory (none)
-
-  // ── fmt (extensible; mask 0 because ADM describes routing via chna/axml) ──
-  ascii('fmt ');
-  u32(fmtLen);
-  u16(0xfffe);
-  u16(ch);
-  u32(sr);
-  u32(sr * blockAlign);
-  u16(blockAlign);
-  u16(bitDepth);
-  u16(22);
-  u16(bitDepth);
-  u32(0);
-  u16(isFloat ? 3 : 1);
-  u16(0);
-  for (const b of [0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71]) {
-    v.setUint8(o++, b);
-  }
-
-  // ── chna (before data, so streaming parsers see the routing first) ──
-  ascii('chna');
-  u32(chnaLen);
-  u16(ch); // numTracks
-  u16(ch); // numUIDs
-  order.forEach((key, i) => {
-    const id = admIdsFor(i + 1);
-    u16(i + 1); // trackIndex, 1-based
-    fixedStr(id.trackUid, 12);
-    fixedStr(id.trackFormat, 14);
-    fixedStr(ADM_PACK_FORMAT_ID, 11);
-    v.setUint8(o++, 0); // pad → 40 bytes total
+  writeBextChunk(w, {
+    description: p.description,
+    originator: p.originator,
+    date: p.date,
+    loudness: p.loudness,
   });
+  // fmt is always WAVE_FORMAT_EXTENSIBLE with mask 0: ADM describes routing via chna/axml,
+  // and a competing mask would be a second source of truth.
+  writeFmtChunk(w, {
+    channels: p.ch,
+    sampleRate: p.sr,
+    bitDepth: p.bitDepth,
+    extensible: true,
+    channelMask: 0,
+  });
+  writeChnaChunk(w, { channels: p.ch, order: p.order });
 
-  // ── data ──
-  ascii('data');
+  // data (before axml, so streaming parsers learn the routing without seeking past audio)
+  w.ascii('data');
   // 0xFFFFFFFF sentinel in a BW64 file; the real size is in ds64.
-  u32(plan.chunks.find((c) => c.id === 'data').sizeField >>> 0);
-  const chans = data.channels;
-  if (isFloat) {
-    for (let i = 0; i < n; i++) {
-      for (let c = 0; c < ch; c++) {
-        v.setFloat32(o, chans[c][i], true);
-        o += 4;
-      }
-    }
-  } else if (bitDepth === 16) {
-    for (let i = 0; i < n; i++) {
-      for (let c = 0; c < ch; c++) {
-        v.setInt16(o, floatToInt(chans[c][i], 16), true);
-        o += 2;
-      }
-    }
-  } else {
-    for (let i = 0; i < n; i++) {
-      for (let c = 0; c < ch; c++) {
-        const iv = floatToInt(chans[c][i], 24);
-        v.setUint8(o, iv & 0xff);
-        v.setUint8(o + 1, (iv >> 8) & 0xff);
-        v.setUint8(o + 2, (iv >> 16) & 0xff);
-        o += 3;
-      }
-    }
+  w.u32(plan.chunks.find((c) => c.id === 'data').sizeField >>> 0);
+  for (let i = 0; i < p.n; i++) {
+    encodePcmFrameIntoWriter(w, data.channels, i, p.ch, p.bitDepth);
   }
-  if (dataPad) v.setUint8(o++, 0);
+  if (dataPad) w.u8(0);
 
-  // ── axml ──
-  ascii('axml');
-  u32(xmlBytes.length);
-  for (let i = 0; i < xmlBytes.length; i++) v.setUint8(o++, xmlBytes[i]);
-  if (axmlPad) v.setUint8(o++, 0);
+  // axml
+  w.ascii('axml');
+  w.u32(p.xmlBytes.length);
+  for (let i = 0; i < p.xmlBytes.length; i++) w.u8(p.xmlBytes[i]);
+  if (axmlPad) w.u8(0);
+
+  if (w.offset !== plan.totalBytes) {
+    throw new Error(
+      `writeAdmBwf: wrote ${w.offset} bytes but the plan says ${plan.totalBytes}. ` +
+        'Refusing to return a file whose header and payload disagree.',
+    );
+  }
 
   const blob = new Blob([ab], { type: 'audio/wav' });
   Object.defineProperty(blob, 'riffContainer', { value: plan.container, enumerable: false });
   return blob;
+}
+
+/**
+ * Encode one interleaved frame through a {@link import('../encode/wav.js').ByteWriter}.
+ *
+ * The DataView-based `encodePcmFrame` cannot be used directly once the writer has moved
+ * past the data payload (chunks follow), and streaming does not have one contiguous view
+ * at all — so this mirrors it for the writer surface. Kept here (not exported) because
+ * the PCM loop in `writeAdmBwf` and the streaming twin must stay identical; both call
+ * this.
+ */
+export function encodePcmFrameIntoWriter(w, channels, frame, ch, bitDepth) {
+  if (bitDepth === 32) {
+    for (let c = 0; c < ch; c++) w.f32(channels[c][frame]);
+  } else if (bitDepth === 16) {
+    for (let c = 0; c < ch; c++) w.i16(floatToInt(channels[c][frame], 16));
+  } else {
+    for (let c = 0; c < ch; c++) {
+      const iv = floatToInt(channels[c][frame], 24);
+      w.u8(iv & 0xff);
+      w.u8((iv >> 8) & 0xff);
+      w.u8((iv >> 16) & 0xff);
+    }
+  }
 }

@@ -20,9 +20,12 @@ import {
 import { buildSpeakerFeeds } from '../audio/immersive/speaker-feeds.js';
 import { buildBinauralFold } from '../audio/immersive/binaural.js';
 import { writeAdmBwf } from '../audio/immersive/adm.js';
+import { writeAdmBwfStreamed } from '../audio/immersive/adm-stream.js';
 import { sonicLabChannelMapText, sonicLabChannelMapJson } from '../audio/immersive/sonic-lab.js';
-import { writeWav } from '../audio/encode/wav.js';
+import { writeWav, estimateWavBytes } from '../audio/encode/wav.js';
+import { writeWavStreamed } from '../audio/encode/wav-stream.js';
 import { downloadBlob, downloadJson, downloadText, baseNameOf } from '../audio/encode/download.js';
+import { exportWithStreaming } from './streaming-export.js';
 import { renderMaster } from '../audio/render/render-master.js';
 import { fromAudioBuffer, createAudioData } from '../audio/dsp/audio-data.js';
 import { limitTruePeak } from '../audio/render/limiter.js';
@@ -204,7 +207,6 @@ export function createImmersiveController(opts) {
       setProgress(0.5, 'up-mixing');
       const stereoBuffer = toBuffer(stereo, sr);
 
-      let blob;
       let name;
       let channelData;
 
@@ -219,8 +221,18 @@ export function createImmersiveController(opts) {
         channelData = fromAudioBuffer(rendered);
         setProgress(0.85, 'limiting');
         limitTruePeak(channelData, { ceilingDb: store.getParameters().ceiling });
-        blob = writeWav(channelData, { bitDepth });
         name = `${baseNameOf(state.source.name)}_${layoutLabel(layoutId)}_binaural.wav`;
+        const outcome = await exportWithStreaming({
+          filename: name,
+          estimatedBytes: estimateWavBytes(channelData, bitDepth),
+          onProgress: (fraction) => setProgress(0.9 + fraction * 0.1, 'writing file'),
+          stream: (sink) => writeWavStreamed(channelData, { bitDepth }, sink),
+          encodeBlob: () => writeWav(channelData, { bitDepth }),
+        });
+        if (outcome.mode === 'cancelled') {
+          toast('Save cancelled — no file written.');
+          return;
+        }
       } else {
         const { order, mask } = wavChannelOrder(layoutId);
         const channelCount = order.length;
@@ -246,16 +258,20 @@ export function createImmersiveController(opts) {
         });
 
         setProgress(0.9, 'writing file');
+        const loudnessOpts = {
+          layoutId,
+          bitDepth: target === 'adm' ? 24 : bitDepth,
+          order,
+          lfeCrossoverHz: state.immersive.lfeFreqHz,
+          programmeName: `${baseNameOf(state.source.name)} — ${LAYOUTS[layoutId].name}`,
+        };
         if (target === 'adm') {
           const weights = order.map((k) => CHANNEL_WEIGHTS[k] ?? (SPEAKERS[k]?.lfe ? 0 : 1));
           const loudness = analyseLoudness(channelData, { weights });
           const peaks = analysePeaks(channelData);
-          blob = writeAdmBwf(channelData, {
-            layoutId,
+          const admOpts = {
+            ...loudnessOpts,
             bitDepth: 24,
-            order,
-            lfeCrossoverHz: state.immersive.lfeFreqHz,
-            programmeName: `${baseNameOf(state.source.name)} — ${LAYOUTS[layoutId].name}`,
             loudness: {
               integrated: loudness.integrated,
               range: loudness.lra,
@@ -263,16 +279,50 @@ export function createImmersiveController(opts) {
               maxMomentary: loudness.maxMomentary,
               maxShortTerm: loudness.maxShortTerm,
             },
-          });
+          };
           name = `${baseNameOf(state.source.name)}_${layoutLabel(layoutId)}_ADM.wav`;
+          const outcome = await exportWithStreaming({
+            filename: name,
+            estimatedBytes: estimateWavBytes(channelData, 24) + 4096,
+            onProgress: (fraction) => setProgress(0.9 + fraction * 0.1, 'writing file'),
+            stream: (sink) =>
+              writeAdmBwfStreamed(
+                channelData,
+                {
+                  ...admOpts,
+                  onProgress: (fraction) => setProgress(0.9 + fraction * 0.1, 'writing file'),
+                },
+                sink,
+              ),
+            encodeBlob: () => writeAdmBwf(channelData, admOpts),
+          });
+          if (outcome.mode === 'cancelled') {
+            toast('Save cancelled — no file written.');
+            return;
+          }
         } else {
-          blob = writeWav(channelData, { bitDepth, channelMask: mask, forceExtensible: true });
           name = `${baseNameOf(state.source.name)}_${layoutLabel(layoutId)}.wav`;
+          const outcome = await exportWithStreaming({
+            filename: name,
+            estimatedBytes: estimateWavBytes(channelData, bitDepth),
+            onProgress: (fraction) => setProgress(0.9 + fraction * 0.1, 'writing file'),
+            stream: (sink) =>
+              writeWavStreamed(
+                channelData,
+                { bitDepth, channelMask: mask, forceExtensible: true },
+                sink,
+              ),
+            encodeBlob: () =>
+              writeWav(channelData, { bitDepth, channelMask: mask, forceExtensible: true }),
+          });
+          if (outcome.mode === 'cancelled') {
+            toast('Save cancelled — no file written.');
+            return;
+          }
         }
       }
 
       setProgress(1, 'saving');
-      downloadBlob(blob, name);
 
       const messages = [
         `${LAYOUTS[layoutId].name} · ${channelData.channels.length} channels · ${sr / 1000} kHz.`,

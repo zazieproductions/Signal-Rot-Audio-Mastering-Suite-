@@ -221,15 +221,30 @@ RIFF header. Signal Rot now **promotes the container** rather than refusing: `BW
 fields. Small files stay ordinary `RIFF`, because an `RF64` FourCC turns away readers that
 predate Tech 3306. **A wrapped 32-bit size is never written.**
 
-That said, writing RF64 headers is necessary but not sufficient. Every export path
-materialises the whole file in a single `ArrayBuffer` before handing it to `Blob`, and
-browsers cap that well below 4 GiB — Chromium's default is around 2 GiB and Safari's is
-lower. The writer therefore refuses above roughly 2 GiB with a message that says plainly
-that the _container_ supports the size and the _browser_ does not.
+That said, writing RF64 headers is necessary but not sufficient on its own: a writer that
+materialises the whole file in a single `ArrayBuffer` is capped well below 4 GiB by the
+browser — Chromium's default maximum is around 2 GiB and Safari's is lower.
 
-Practical ceiling: about 10 minutes of 32-bit float stereo at 192 kHz, or about
-25 minutes of 24-bit 7.1.4 at 48 kHz. Lifting it needs a streaming writer (File System
-Access API with incremental chunk emission), which is not implemented.
+**The direct export paths now stream to disk.** When an export is estimated above
+256 MiB on a browser with the File System Access API (Chromium-based browsers), the save
+dialog writes the WAV/BWF straight to the chosen location in 4 MiB blocks
+(`src/audio/encode/wav-stream.js`, `src/audio/immersive/adm-stream.js`). Peak extra
+memory is one block, not the whole file, the ≈2 GiB ArrayBuffer ceiling no longer
+applies, and a failure mid-stream aborts the partial file. The streaming encoder shares
+every byte-producing helper with the in-memory encoder and their outputs are asserted
+byte-identical (`tests/interoperability/stream-round-trip.test.js`). What streaming does
+not change is the render itself: decode and render still hold the full programme as
+32-bit float (see below), so the practical limit moves from "encoded file" to "working
+set" — roughly the size where `channels × frames × 4` bytes of intermediates exhaust the
+tab, which is the same class of limit at a more generous point.
+
+Browsers without the File System Access API (Firefox, Safari) and the delivery-package
+builder still use the in-memory path, which refuses above roughly 2 GiB with a message
+that says plainly that the _container_ supports the size and the _browser_ does not.
+
+Practical ceiling on the in-memory path: about 10 minutes of 32-bit float stereo at
+192 kHz, or about 25 minutes of 24-bit 7.1.4 at 48 kHz. Streaming to disk removes the
+encoding-side cap; the render-side cap is the next binding constraint.
 
 ### Everything is in memory
 
