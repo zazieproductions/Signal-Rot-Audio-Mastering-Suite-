@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { openLab, callLab, writeResult } from './helpers.js';
 import { THRESHOLDS } from '../conformance/thresholds.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-test.describe('Preview / export graph parity', () => {
+test.describe(`${mark(SCOPE.REAL_WEB_AUDIO)} Preview / export graph parity`, () => {
   test('quantifies RMS, peak and spectral divergence between the two graphs', async ({
     page,
   }, testInfo) => {

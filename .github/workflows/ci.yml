@@ -1,8 +1,16 @@
 name: CI
 
-# Release gate for the engine: lint, the full Vitest suite, and a production build.
-# Failures are failures — this workflow does not continue-on-error and does not
-# skip known-broken tests (issue #15).
+# ─────────────────────────────────────────────────────────────────────────────────────
+# The fast, always-on gate.
+#
+# Lint, the full Vitest suite, the independent export validation pipeline, and a
+# production build. Designed to be the green/red a PR author sees in seconds; a
+# separate, slower workflow (`.github/workflows/conformance.yml`) handles the
+# browser matrix.
+#
+# Path filters intentionally leave documentation-only changes out of the matrix,
+# while DSP / runtime / preset / dependency changes run the full suite.
+# ─────────────────────────────────────────────────────────────────────────────────────
 
 on:
   push:
@@ -11,14 +19,14 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Lint, unit tests, build
+  check:
+    name: Lint, test, build
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -37,11 +45,66 @@ jobs:
       - name: Install ALSA (node-web-audio-api native binding)
         run: sudo apt-get update && sudo apt-get install -y libasound2 libasound2t64 || true
 
+      # ── Lint ──
       - name: Lint
         run: npm run lint
 
-      - name: Unit / integration / DSP tests
+      # ── Unit, DSP, integration, conformance, regression locks, sample-rate matrix,
+      #    true-peak oracle, A/B/C contract. Everything except the format cleanup,
+      #    which is intentionally separate (see ci/README.md).
+      - name: Unit, DSP, format and integration tests
         run: npm test
 
-      - name: Production build
+      # ── Independent export validation ──
+      # Generates fixtures with the production writers and attacks them with
+      # independent parsers + ffprobe. Exits non-zero on any disagreement.
+      - name: Install ffmpeg for independent decoding
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg libxml2-utils
+
+      - name: Independent export validation
+        run: |
+          npm run validate:exports -- --quiet
+          # Tool versions logged for the record.
+          node --version
+          ffprobe -version | head -1
+          ffmpeg -version | head -1
+          xmllint --version 2>&1 | head -1
+
+      - name: Assert the validation report makes no false claim
+        run: |
+          node --input-type=module -e '
+            import { readFile } from "node:fs/promises";
+            const r = JSON.parse(await readFile("export-validation-report.json", "utf8"));
+            const fail = (m) => { console.error("::error::" + m); process.exitCode = 1; };
+            if (r.summary.failed > 0) fail(`${r.summary.failed} fixtures failed validation.`);
+            if (r.summary.total < 25) fail(`Only ${r.summary.total} fixtures — the matrix shrank.`);
+            if (!r.tooling.externalDecoderAvailable) fail("No external decoder ran.");
+            if (!r.claims.riffStructurallyValidated) fail("RIFF validation did not pass.");
+            if (!r.claims.admStructurallyValidated) fail("ADM validation did not pass.");
+            if (!r.claims.interoperabilityTested) fail("Interoperability was not established.");
+            const multi = r.results.filter((x) => x.channelCount > 1);
+            for (const x of multi) {
+              if (!x.checks.channelOrder) fail(`${x.fixture}: channel order was never checked.`);
+              else if (!x.checks.channelOrder.matches) fail(`${x.fixture}: CHANNELS REORDERED.`);
+            }
+            console.log(`OK — ${r.summary.passed}/${r.summary.total} fixtures validated.`);
+          '
+
+      - name: Upload the validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-validation-report
+          path: export-validation-report.json
+          retention-days: 30
+
+      # ── Build ──
+      - name: Build
         run: npm run build
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7

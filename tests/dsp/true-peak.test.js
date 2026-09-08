@@ -9,6 +9,7 @@ import {
   truePeakEstimate,
 } from '../../src/audio/analysis/true-peak.js';
 import { fadedSine, sine, silence, make } from '../helpers/signals.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
 const SR = 48000;
 const db = (v) => 20 * Math.log10(v);
@@ -52,7 +53,7 @@ function fsOverFour(n = 8192, fade = 1024) {
   return x;
 }
 
-describe('polyphase interpolation filter', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} polyphase interpolation filter`, () => {
   it('builds `factor` branches with unity DC gain each', () => {
     for (const factor of [2, 4, 8]) {
       const phases = buildPolyphaseFilter(factor, 12, 8.6);
@@ -78,7 +79,7 @@ describe('polyphase interpolation filter', () => {
   });
 });
 
-describe('true-peak measurement', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} true-peak measurement`, () => {
   it('beats cubic interpolation by ~0.9 dB on the fs/4 worst case', () => {
     const x = fsOverFour();
     let samplePeak = 0;
@@ -157,7 +158,7 @@ describe('true-peak measurement', () => {
   });
 });
 
-describe('independent FFT interpolator (issue #21)', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} independent FFT interpolator (issue #21)`, () => {
   it('reads the fs/4 ±45° worst case at 0 dBTP', () => {
     const x = fsOverFour(8192);
     const exact = db(truePeakChannelExact(x, 4));
@@ -183,7 +184,7 @@ describe('independent FFT interpolator (issue #21)', () => {
   });
 });
 
-describe('real-time estimate', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} real-time estimate`, () => {
   it('is close to the full measurement on steady material', () => {
     const data = fadedSine({ amplitude: 0.7, frequency: 3000, seconds: 0.1, channels: 1 });
     const full = truePeakChannel(data.channels[0], SR);

@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { openLab, callLab, writeResult } from './helpers.js';
 import { SAMPLE_RATES } from '../conformance/thresholds.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
-test.describe('OfflineAudioContext sample rates', () => {
+test.describe(`${mark(SCOPE.REAL_WEB_AUDIO)} OfflineAudioContext sample rates`, () => {
   test('probes 44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz and records refusals honestly', async ({
     page,
   }, testInfo) => {

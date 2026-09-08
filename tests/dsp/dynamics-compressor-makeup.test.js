@@ -4,6 +4,7 @@ import {
   dynamicsCompressorMakeupCompensation,
 } from '../../src/audio/dsp/dynamics-compressor.js';
 import { bandAmountToSettings } from '../../src/audio/graph/multiband.js';
+import { SCOPE, mark } from '../conformance/scope.js';
 
 /**
  * These expectations were produced by replicating the engine algorithm
@@ -27,7 +28,7 @@ const ENGINE_REFERENCE_DB = {
   100: 15.395,
 };
 
-describe('dynamics compressor fixed make-up (engine model)', () => {
+describe(`${mark(SCOPE.IDEAL_MATH)} dynamics compressor fixed make-up (engine model)`, () => {
   it('applies no make-up at 1:1 or when disabled', () => {
     // amount 0 → threshold 0 dB, ratio 1:1
     expect(dynamicsCompressorMakeupDb(0, 9, 1)).toBe(0);

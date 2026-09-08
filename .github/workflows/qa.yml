@@ -1,0 +1,132 @@
+name: QA structural checks
+
+# ─────────────────────────────────────────────────────────────────────────────────────
+# Structural checks that are not behavioural DSP tests but still gate merges:
+#
+#   · The QA "jobs" JSON files validate (every preset, every stress case parses).
+#   · The qa/findings folder structure is intact (one issue per file, dated headers).
+#   · The Node-side true-peak oracle (`tests/dsp/true-peak-oracle.test.js`) runs on
+#     its own so the fix to #21 has a red/green signal the moment it lands.
+#
+# Path filters exclude pure documentation so a typo in CONTRIBUTING.md does not
+# turn the matrix red. Preset and DSP changes do trigger this — those are the
+# cases that have historically moved the QA contract.
+# ─────────────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/audio/**'
+      - 'src/presets/**'
+      - 'src/app/parameters.js'
+      - 'src/app/constants.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'qa/**'
+      - 'tools/**'
+      - 'tests/dsp/true-peak-oracle.test.js'
+      - 'tests/dsp/regression-locks.test.js'
+      - 'tests/integration/sample-rate-matrix.test.js'
+      - '.github/workflows/qa.yml'
+  pull_request:
+    paths:
+      - 'src/audio/**'
+      - 'src/presets/**'
+      - 'src/app/parameters.js'
+      - 'src/app/constants.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'qa/**'
+      - 'tools/**'
+      - 'tests/dsp/true-peak-oracle.test.js'
+      - 'tests/dsp/regression-locks.test.js'
+      - 'tests/integration/sample-rate-matrix.test.js'
+      - '.github/workflows/qa.yml'
+
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  true-peak-oracle:
+    name: Independent true-peak oracle
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: True-peak oracle (issue #21 acceptance target)
+        # The oracle is independent of the limiter's own detector. The fix to #21
+        # must make `ceilingRespected: true` correspond to a file the oracle
+        # proves is under the ceiling. This job is the red/green the fix lands
+        # against.
+        run: npx vitest run tests/dsp/true-peak-oracle.test.js
+
+  regression-locks:
+    name: Regression locks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Specific regressions that must not return
+        run: npx vitest run tests/dsp/regression-locks.test.js
+
+  sample-rate-matrix:
+    name: Sample-rate matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz
+        run: npx vitest run tests/integration/sample-rate-matrix.test.js
+
+  structural:
+    name: QA structural checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Every QA job JSON is well-formed
+        run: |
+          set -euo pipefail
+          ok=0
+          for f in qa/jobs-*.json; do
+            if [ -f "$f" ]; then
+              node -e "JSON.parse(require('fs').readFileSync('$f', 'utf8'))" && echo "OK $f"
+              ok=$((ok+1))
+            fi
+          done
+          if [ "$ok" -lt 5 ]; then
+            echo "::error::Only $ok qa/jobs-*.json files found (expected ≥ 5)"
+            exit 1
+          fi
+      - name: Findings folder structure
+        run: |
+          test -d qa/findings || (echo "qa/findings missing" && exit 1)
+          # Each SON-* file must reference its issue number in the title. The
+          # existing files use either `#` (h1) or `##` (h2) for the title; the
+          # first line just has to mention SON-N.
+          for f in qa/findings/SON-*.md; do
+            head -1 "$f" | grep -qE "^#+ SON-[0-9]+" || (echo "Bad header in $f" && head -1 "$f" && exit 1)
+          done
+          echo "OK qa/findings structure"
