@@ -171,29 +171,47 @@ export function initShortcuts(handlers) {
         event.preventDefault();
         handlers.playPause?.(event);
         break;
+      // Listening keys. One binding each, here and nowhere else: A/B/C select, X cycles
+      // (or flips the hidden slot while blind), H blind, M mono, S side, L workspace.
       case 'x':
       case 'X':
+        event.preventDefault();
         handlers.toggleAb?.(event);
         break;
       case 'a':
       case 'A':
+        event.preventDefault();
         handlers.auditionA?.(event);
         break;
       case 'b':
       case 'B':
+        event.preventDefault();
         handlers.auditionB?.(event);
         break;
       case 'c':
       case 'C':
+        event.preventDefault();
         handlers.auditionC?.(event);
+        break;
+      case 'h':
+      case 'H':
+        event.preventDefault();
+        handlers.toggleBlind?.(event);
         break;
       case 'm':
       case 'M':
+        event.preventDefault();
         handlers.monoAudition?.(event);
         break;
       case 's':
       case 'S':
+        event.preventDefault();
         handlers.sideAudition?.(event);
+        break;
+      case 'l':
+      case 'L':
+        event.preventDefault();
+        handlers.toggleWorkspace?.(event);
         break;
       case '?':
         handlers.help?.(event);

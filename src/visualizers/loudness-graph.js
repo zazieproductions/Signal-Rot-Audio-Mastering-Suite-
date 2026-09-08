@@ -16,6 +16,7 @@ import { resizeCanvas, cssVar, withAlpha } from './canvas-util.js';
  * @param {number} opts.integrated
  * @param {number} opts.target
  * @param {'A'|'B'} opts.abMode
+ * @param {string} [opts.emptyLabel] shown instead of the default when there is no series
  */
 export function drawLoudnessGraph(canvas, opts) {
   const surface = resizeCanvas(canvas, 120);
@@ -46,7 +47,11 @@ export function drawLoudnessGraph(canvas, opts) {
   if (!series.length) {
     ctx.fillStyle = cssVar('--faint');
     ctx.font = '10px monospace';
-    ctx.fillText('No short-term data — programme shorter than 3 s.', 40, height / 2);
+    ctx.fillText(
+      opts.emptyLabel ?? 'No short-term data — programme shorter than 3 s.',
+      40,
+      height / 2,
+    );
     return;
   }
 

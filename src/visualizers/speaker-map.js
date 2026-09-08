@@ -24,12 +24,18 @@ const TAU = Math.PI * 2;
  * @param {AnalyserNode|null} [opts.analyserL]
  * @param {AnalyserNode|null} [opts.analyserR]
  * @param {object} opts.params immersive parameters, for level estimation
+ * @param {Set<string>} [opts.solo] highlighted speakers (drawn brighter, others dimmed)
+ * @param {number} [opts.yaw] listener orientation in degrees — rotates the view only
  */
 export function drawSpeakerMap(canvas, opts) {
   const surface = resizeCanvas(canvas, 240);
   if (!surface) return;
   const { ctx, width, height } = surface;
   ctx.clearRect(0, 0, width, height);
+
+  // View rotation for the listener-orientation dial. Purely a reading aid: the rendered
+  // bed is listener-independent, so this must never feed anything but the projection.
+  const yawRad = ((opts.yaw || 0) * Math.PI) / 180;
 
   const layout = LAYOUTS[opts.layoutId];
   const cx = width / 2;
@@ -106,7 +112,9 @@ export function drawSpeakerMap(canvas, opts) {
     if (!sp) continue;
     // Screen placement uses the HRTF convention (positive = right), which matches the
     // canvas x axis. Elevation pulls the marker toward the centre of the plan view.
-    const az = (sp.azimuthHrtf * Math.PI) / 180;
+    // `yawRad` rotates the whole projection for the listener-orientation dial (view aid
+    // only — speaker metadata and audio are untouched).
+    const az = (sp.azimuthHrtf * Math.PI) / 180 + yawRad;
     const elFactor = 1 - Math.min(0.45, Math.max(0, sp.elevation) / 90);
     const radius = R * elFactor * (sp.elevation < 0 ? 1.02 : 1);
     const x = cx + Math.sin(az) * radius;
@@ -141,7 +149,9 @@ export function drawSpeakerMap(canvas, opts) {
     ctx.fillText(label, x - ctx.measureText(label).width / 2, y + 16);
     if (isSolo) {
       ctx.fillStyle = withAlpha(color, 0.18);
-      ctx.beginPath(); ctx.arc(x, y, 12, 0, TAU); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, TAU);
+      ctx.fill();
     }
   }
 

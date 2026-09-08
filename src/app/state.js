@@ -47,7 +47,7 @@ function defaultUi() {
     abMode: 'B',
     audition: 'stereo',
     matchLoudness: false,
-    blindAb: false,
+    abDim: false,
     listenerYaw: 0,
     presetName: 'Transparent',
     moduleBypass: {},
@@ -87,7 +87,6 @@ function initialState() {
       /** @type {object|null} */ processed: null,
       /** @type {object|null} */ match: null,
       running: false,
-      staleness: 0,
     },
   };
 }

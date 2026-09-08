@@ -28,7 +28,7 @@
             data-ws="master"
             aria-selected="true"
             role="tab"
-            title="Master — tonal balance, dynamics, loudness, export (M)"
+            title="Master — tonal balance, dynamics, loudness, export (L toggles workspaces)"
           >
             Master
           </button>
@@ -37,12 +37,12 @@
             data-ws="spatial"
             aria-selected="false"
             role="tab"
-            title="Spatial Lab — immersive layouts, speaker map, binaural (L)"
+            title="Spatial Lab — immersive layouts, speaker map, binaural (L toggles workspaces)"
           >
             Spatial Lab
           </button>
         </div>
-        <span class="ws-hint" id="wsHint" aria-hidden="true">M → Master · L → Lab</span>
+        <span class="ws-hint" id="wsHint" aria-hidden="true">L ⇄ Spatial Lab</span>
         <span class="spacer"></span>
         <button class="btn ghost" id="undoBtn" title="Undo (Ctrl/Cmd+Z)" disabled>↶</button>
         <button class="btn ghost" id="redoBtn" title="Redo (Ctrl/Cmd+Shift+Z)" disabled>↷</button>
@@ -98,7 +98,7 @@
               class="btn ghost"
               id="matchLoudBtn"
               aria-pressed="false"
-              title="Level-match the A/B comparison"
+              title="Level-match the A/B comparison (click; C is the matched audition)"
             >
               Match loudness
             </button>
@@ -186,6 +186,7 @@
           The meters above the fold are live and frame-rate driven; the true-peak reading is an
           estimate. <b>Integrated LUFS</b> and <b>loudness range</b> come from a gated offline pass
           that re-runs after each change.
+          <span id="analysisState" class="badge" style="margin-left:6px" hidden>analysing…</span>
           <button class="btn ghost" id="reanalyzeBtn" style="padding: 3px 9px">Re-analyse</button>
         </div>
         <div id="phaseNotice" hidden></div>
@@ -260,13 +261,13 @@
               <button id="abBlindenh" class="ab-blind" aria-pressed="false" title="Blind A/C — hide which is which (H)">Blind</button>
             </div>
             <div class="ab-actions">
-              <button class="ab-chip" id="abMatchChip" aria-pressed="false" title="Loudness-matched A/B (click — M is mono audition)">⟺ Match</button>
+              <button class="ab-chip" id="abMatchChip" aria-pressed="false" title="Loudness-matched A/B (click; M is mono monitoring)">⟺ Match</button>
               <button class="ab-chip" id="abDimChip" aria-pressed="false" title="Dim 12 dB for late-night checks">Dim</button>
               <span class="ab-hint" id="abHint">B · Mastered</span>
             </div>
           </div>
           <div class="hint" id="abHelp" style="margin-top: 6px">
-            <b>A</b> Original · <b>B</b> Mastered · <b>C</b> Matched (same loudness as the source) · <b>X</b> Cycle A/B/C · <b>H</b> Blind A/C · <b>Space</b> Play/pause. C is the honest comparison — louder is not better.
+            <b>A</b> Original · <b>B</b> Mastered · <b>C</b> Matched (same loudness as the source) · <b>X</b> Cycle A/B/C · <b>H</b> Blind A/C · <b>M</b> Mono · <b>S</b> Side · <b>Space</b> Play/pause. C is the honest comparison — louder is not better.
           </div>
         </section>
 
@@ -320,23 +321,23 @@
                 <div class="hd">
                   <span>Speaker field</span>
                   <span class="sp">
-                    <span class="hint" style="margin: 0">top-down · click to solo · shift-click multi</span>
+                    <span class="hint" style="margin: 0">top-down · click to highlight · shift-click multi</span>
                   </span>
                 </div>
                 <div class="spatial-map-wrap">
                   <canvas id="spatialMapMain" aria-label="Interactive speaker map — top-down view"></canvas>
                   <div class="ab-blinder" id="spatialMapBlinder" aria-hidden="true"></div>
                 </div>
-                <div class="spatial-controls-strip" id="spatialGroupStrip" role="group" aria-label="Speaker group audition">
+                <div class="spatial-controls-strip" id="spatialGroupStrip" role="group" aria-label="Speaker group highlight">
                   <button class="spatial-group-btn" data-group="front" aria-pressed="false">Front</button>
                   <button class="spatial-group-btn" data-group="centre" aria-pressed="false">Centre</button>
                   <button class="spatial-group-btn" data-group="surround" aria-pressed="false">Surround</button>
                   <button class="spatial-group-btn" data-group="rear" aria-pressed="false">Rear</button>
                   <button class="spatial-group-btn" data-group="height" aria-pressed="false">Height</button>
                   <button class="spatial-group-btn" data-group="sub" aria-pressed="false">Sub</button>
-                  <button class="btn ghost" id="spatialSoloClear" style="padding: 3px 8px; margin-left: auto">Clear solo</button>
+                  <button class="btn ghost" id="spatialSoloClear" style="padding: 3px 8px; margin-left: auto">Clear highlight</button>
                 </div>
-                <div class="hint" id="spatialMapHint" style="padding: 8px 12px 10px; margin: 0">Solo is monitoring only — it does not change the exported file.</div>
+                <div class="hint" id="spatialMapHint" style="padding: 8px 12px 10px; margin: 0">Highlight dims the map for reading. Per-speaker audition is not available yet — audio and exports are unaffected.</div>
               </div>
               <div style="display: flex; flex-direction: column; gap: 12px">
                 <div class="elevation-view">
@@ -382,7 +383,7 @@
                       style="height: 88px; margin-top: 10px"
                       aria-label="Motion trajectory preview"
                     ></canvas>
-                    <div class="hint">Motion is monitoring visualization — it does not add automation unless rendering a motion-aware layout.</div>
+                    <div class="hint">Trajectory preview only — no layout bakes motion; every export is a static bed.</div>
                   </div>
                 </div>
                 <div class="card" style="margin: 0">

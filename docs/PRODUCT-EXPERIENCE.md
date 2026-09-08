@@ -20,13 +20,13 @@ Design tokens live in `src/styles/tokens.css`. Two product modes share the same 
 
 ## Two Product Modes
 
-### MASTER (default — `M` key)
+### MASTER (default — `L` toggles Master ⇄ Spatial Lab)
 For conventional mastering. Emphasizes **source → tonal → dynamics → stereo → loudness → listen → export**.
 - Calm, reference-focused palette (warm accent).
 - Mastering status strip (integrated, true peak, LRA, crest, limiter) answers “is this deliverable?”
 - Sonic summary translates real parameters into human lines — no AI claims.
 
-### SPATIAL LAB (`L` key)
+### SPATIAL LAB (`L` toggles back)
 For immersive / experimental spatial. Emphasizes **room → speakers → depth → height → motion → energy → binaural → bed export**.
 - Technical, periphonic palette (cyan accent).
 - Speaker field is the signature: top-down plan + elevation side view, both derived from `audio/immersive/layouts.js` so the map cannot disagree with the channel map.
@@ -83,10 +83,10 @@ Seven safe macros map onto existing parameter combinations (no new DSP). Impleme
 
 Transport shows **Original / Mastered** segmented pill; the enhanced strip `ab-enhanced.js` adds:
 
-- **Original (A)**, **Mastered (B)**, **Blind A/B** toggle.
-- **Match loudness (M)** — both sides play at `target` (or at processed integrated if normalisation is off). The only honest comparison.
+- **Original (A)**, **Mastered (B)**, **Matched (C)** — the master level-matched to the source — and a **Blind A/C** toggle.
+- **Match loudness** (chip/button, no key) — legacy level-matched A/B; `C` is the dedicated matched audition and the honest comparison.
 - **Dim (−12 dB)** for late-night checks.
-- Keyboard: `A` / `B` / `X` (toggle), `M` (match), `H` (blind), `Space` (play/pause). Blind mode hides which is which; labels show “◈ Blind A/B”.
+- Keyboard: `A` / `B` / `C` (select), `X` (cycle, blind-safe), `H` (blind), `M` (mono monitor), `S` (side monitor), `Space` (play/pause). Blind mode hides which is which and always alternates the two *different* signals (A vs C); labels show “◈ Blind 1/2”. All keys bind once, in `initShortcuts` — no per-module window listeners (duplicate bindings used to double-fire A/B/C/X/M).
 
 Active state is unmistakable: active pill gets colored border + tinted background (cyan for A, orange for B). Level-matched mastered buttons do not look “louder-better”.
 
@@ -129,7 +129,7 @@ Signature interface (`speaker-map.js` + `elevation-view.js` + `spatial-lab.js`).
 - **Plan view** (top-down): listener faces ▲. Outer ring bed (orange), inner height ring (cyan), sub squares. Radius ~38% of canvas. Solos get white halo + larger dot.
 - **Elevation view**: side projection, y maps elevation 0…60°, x maps azimuth. Shows why height feels “above” vs “around”.
 - Both read `azimuthHrtf` (positive = right) for screen, ADM azimuth (positive = left) for labels — conventions never conflated.
-- **Interaction:** click speaker → solo (monitoring only); `Shift`-click → multi; group strip **Front/Centre/Surround/Rear/Height/Sub** → audition; **Clear solo** resets. Solo never touches export — hint states it.
+- **Interaction:** click speaker → highlight on the map; `Shift`-click → multi; group strip **Front/Centre/Surround/Rear/Height/Sub** → highlight group; **Clear highlight** resets. Highlighting is display-only: there is no audible per-speaker audition yet and exports are never touched — the hint states both.
 
 Canvas approach (no heavy 3D lib), pooled scratch arrays, stops when hidden, honors `prefers-reduced-motion`.
 
@@ -163,7 +163,7 @@ All use real levels; no disco.
 
 - Yaw −180…180°, draggable dial (`--yaw` CSS var rotates the needle), arrow keys ±15°, `Home` → 0°.
 - Presets: **FRONT (0°) · LEFT (90°) · RIGHT (−90°) · REAR (180°) · RESET**.
-- Dial is `role="slider"` with `aria-valuenow`, keyboard operable, hint shows “0° — facing front.”
+- Dial is `role="slider"` with `aria-valuenow`, keyboard operable (`←/→` 15° steps, `Home` reset), hint shows “0° — facing front.” It rotates the map *view* (`ui.listenerYaw`, shared by both speaker maps); the rendered bed is listener-independent, and the copy says so.
 - State persists as `store.ui.listenerYaw` (adapter boundary for future HRTF yaw). Never called “head tracking” unless `EXPERIMENTAL HEAD TRACKING: OFF / PERMISSION REQUIRED / ACTIVE / UNAVAILABLE` is wired.
 
 ---
@@ -261,7 +261,7 @@ Progress bar + `progtext`, cancel where supported, queue if relevant. Distinguis
 
 - **Desktop/laptop primary** — spatial needs space. Tablet workable; phone not a mastering target but never broken.
 - Breakpoints: `980 px` scopes stack, `760 px` header wraps, `520 px` grids collapse, `pointer: coarse` enlarges thumbs to 24 px.
-- Shortcuts: `Space` play/pause, `A`/`B`/`X` A/B, `M` match, `H` blind, `⌘K`/`CtrlK` palette, `M`/`L` workspace, `⌘Z`/`⇧⌘Z` undo/redo, `1/2/3` workspace/comparison, `Esc` close palette, arrows navigate tabs (WAI-ARIA pattern), `←/→` dial yaw.
+- Shortcuts (one owner, `initShortcuts`): `Space` play/pause, `A`/`B`/`C` audition select, `X` cycle audition, `H` blind, `M` mono monitor, `S` side monitor, `L` toggle Master ⇄ Spatial Lab, `⌘K`/`Ctrl+K` palette, `⌘Z`/`⇧⌘Z` undo/redo, `Esc` close palette, arrows navigate tabs (WAI-ARIA pattern), `←/→` dial yaw.
 
 All hints appear in tooltips/menus.
 
@@ -329,8 +329,8 @@ Mark integration points with comment `// adapter boundary` where appropriate.
 
 ## Remaining Degradation
 
-- Speaker solo is monitoring-only today — export mute/solo requires Agent A routing flag.
-- Motion trajectory is visualization unless renderer consumes `motionMode`.
+- Speaker highlight is map-only: there is no per-speaker audition (monitor or export) yet; the UI says so instead of calling it “solo”.
+- Motion trajectory is visualization only — no renderer consumes `motionMode`, every export is a static bed, and the copy says exactly that.
 - 20.4 channel map needs manual delivery — no auto-zip bundle yet (Agent C).
 
 All degraded states fail gracefully with an info notice rather than a blocker.
