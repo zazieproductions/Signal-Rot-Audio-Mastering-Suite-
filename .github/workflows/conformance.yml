@@ -108,22 +108,33 @@ jobs:
       - run: npm ci
       - name: Install ${{ matrix.browser }}
         run: npx playwright install --with-deps ${{ matrix.browser }}
-      - name: Warm Vite (pre-transform modules + probe harness URL)
+      - name: Warm Vite (keep running for Playwright to reuse)
         # Cold-starting Vite against the full lab + production DSP graph on a
-        # fresh runner can exceed the 60 s webServer probe budget that
-        # Playwright ships with. We start the dev server in the background,
-        # poll the harness URL until it answers 200, and shut it back down so
-        # Playwright can take over. This both pre-warms Vite's on-disk
-        # transform cache and surfaces a clearer failure if the harness can
-        # not be served at all.
+        # fresh runner can exceed the webServer probe budget Playwright ships
+        # with. We start the dev server here and leave it running so the next
+        # step's Playwright webServer can reuse it via reuseExistingServer:
+        # true. The transform cache is populated while Playwright is still
+        # booting, so the first request is fast and we surface a clearer
+        # failure (with the vite log tail) if the harness can not be served
+        # at all.
+        #
+        # `setsid` puts vite in its own session so it survives the step's
+        # shell, and we explicitly avoid a cleanup trap: leaving the process
+        # alive across steps is the whole point. The runner will tear it
+        # down at job end.
         run: |
           set -euo pipefail
-          npx vite --port 5174 --strictPort --host 0.0.0.0 >/tmp/vite.log 2>&1 &
+          rm -rf node_modules/.vite
+          setsid node_modules/.bin/vite --port 5174 --strictPort --host 0.0.0.0 \
+            </dev/null >/tmp/vite.log 2>&1 &
           VITE_PID=$!
           for i in $(seq 1 180); do
             if curl -fsS -o /dev/null http://127.0.0.1:5174/tests/browser/harness.html; then
-              echo "vite ready after ${i}s"
-              break
+              echo "vite ready after ${i}s (pid ${VITE_PID}); leaving it running for Playwright"
+              # Hit the harness.js chain so the lab modules are transformed
+              # and cached before Playwright's first request.
+              curl -fsS -o /dev/null http://127.0.0.1:5174/tests/browser/harness.js || true
+              exit 0
             fi
             if ! kill -0 "$VITE_PID" 2>/dev/null; then
               echo "::error::vite exited before serving harness.html"
@@ -132,27 +143,10 @@ jobs:
             fi
             sleep 1
           done
-          if ! curl -fsS -o /dev/null http://127.0.0.1:5174/tests/browser/harness.html; then
-            echo "::error::vite did not serve harness.html within 180 s"
-            tail -n 50 /tmp/vite.log
-            pkill -P "$VITE_PID" 2>/dev/null || true
-            kill "$VITE_PID" 2>/dev/null || true
-            exit 1
-          fi
-          # Kill the whole process group (npx spawns a child vite process that
-          # would survive killing only the npx parent), and wait for the port
-          # to actually be released so the next Playwright webServer probe
-          # does not see "URL is already used".
-          pkill -P "$VITE_PID" 2>/dev/null || true
-          kill "$VITE_PID" 2>/dev/null || true
-          for _ in $(seq 1 30); do
-            if ! curl -fsS -o /dev/null http://127.0.0.1:5174/tests/browser/harness.html 2>/dev/null; then
-              break
-            fi
-            sleep 1
-          done
-          pkill -f 'vite --port 5174' 2>/dev/null || true
-          true
+          echo "::error::vite did not serve harness.html within 180 s"
+          tail -n 50 /tmp/vite.log
+          pkill -KILL -f "vite --port 5174" 2>/dev/null || true
+          exit 1
       - name: Conformance suite
         run: npx playwright test --config tests/browser/playwright.config.js --project ${{ matrix.browser }}
       - uses: actions/upload-artifact@v4

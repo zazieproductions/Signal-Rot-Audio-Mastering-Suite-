@@ -65,7 +65,22 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx vite --port 5174 --strictPort --host 0.0.0.0',
+    // Resolve the vite binary directly from node_modules rather than going
+    // through `npx`. npx shells out to npm which on a fresh runner can
+    // spend several seconds resolving and downloading the package even when
+    // it's already installed. Going direct skips that whole path and gives
+    // us the same binary.
+    //
+    // `cwd` is set explicitly to the repo root because Playwright defaults
+    // the webServer working directory to the directory of the configuration
+    // file (this one, i.e. `tests/browser/`), where there is no
+    // `node_modules/.bin/vite`. With the wrong cwd the command exits
+    // immediately and Playwright reports the opaque
+    // "Timed out waiting ... from config.webServer" message. Anchoring
+    // cwd to the project root makes the path resolve the same way
+    // `npx vite` would have.
+    command: 'node_modules/.bin/vite --port 5174 --strictPort --host 0.0.0.0',
+    cwd: '../..',
     url: 'http://127.0.0.1:5174/tests/browser/harness.html',
     // The conformance workflow's 'Warm Vite' step leaves a dev server bound to
     // 5174 with a fully populated on-disk transform cache. We want Playwright
