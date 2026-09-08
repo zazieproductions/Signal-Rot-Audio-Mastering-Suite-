@@ -36,9 +36,10 @@ import { computeMatchCurve } from '../audio/analysis/spectral-match.js';
 import { randomSeed } from '../audio/dsp/prng.js';
 import { renderChain } from '../audio/render/render-master.js';
 import { baseNameOf, downloadJson, sanitizeFilename } from '../audio/encode/download.js';
+import { decodeAudioFile, looksLikeAudio } from './import-audio.js';
 import { analyseBuffer, createAnalysisScheduler } from '../workers/analysis-client.js';
 
-import { $, $$, el, replaceChildren, formatTime, formatBytes } from '../ui/dom.js';
+import { $, $$, el, replaceChildren, formatTime } from '../ui/dom.js';
 import { toast, renderNotice, announce } from '../ui/notifications.js';
 import { applyTheme, initialTheme } from '../ui/theme.js';
 import { initTabs } from '../ui/tabs.js';
@@ -298,51 +299,31 @@ export function bootstrap() {
   /* ────────────────────────────── file loading ───────────────────────────── */
 
   async function loadFile(file) {
-    if (!file) return;
-    if (file.size > LIMITS.MAX_FILE_BYTES) {
-      toast(
-        `${sanitizeFilename(file.name)} is ${formatBytes(file.size)} — the limit is ` +
-          `${formatBytes(LIMITS.MAX_FILE_BYTES)}. Decoding it would exhaust this tab's memory.`,
-        { level: 'error' },
-      );
-      return;
-    }
+    if (!file) return null;
+    const base = sanitizeFilename(file.name);
     let ctx;
     try {
       ctx = await resumeAudioContext();
     } catch (error) {
       toast(String(error.message ?? error), { level: 'error' });
-      return;
+      return null;
     }
 
-    let buffer;
-    try {
-      const bytes = await file.arrayBuffer();
-      buffer = await ctx.decodeAudioData(bytes);
-    } catch (error) {
-      toast(
-        `Could not decode "${sanitizeFilename(file.name)}". Browser codec support varies — ` +
-          'WAV and MP3 work everywhere; FLAC, M4A and Opus do not.',
-        { level: 'error' },
-      );
-      console.warn('[signal-rot] decode failed:', error);
-      return;
+    const outcome = await decodeAudioFile(ctx, file, {
+      maxDurationS: LIMITS.MAX_DURATION_S,
+      warnDurationS: LIMITS.WARN_DURATION_S,
+    });
+
+    if (!outcome.ok) {
+      // Every refusal is specific: the reason, the decoded numbers and what to do
+      // instead — never a bare "could not decode". The structured errors already
+      // name the file and the cause; surface all of them.
+      for (const message of outcome.errors) toast(message, { level: 'error' });
+      console.warn('[signal-rot] import refused:', base, outcome.errors.join(' | '));
+      return null;
     }
 
-    if (buffer.duration > LIMITS.MAX_DURATION_S) {
-      toast(
-        `That file is ${formatTime(buffer.duration)} long; the limit is ` +
-          `${formatTime(LIMITS.MAX_DURATION_S)}.`,
-        { level: 'error' },
-      );
-      return;
-    }
-    if (buffer.duration > LIMITS.WARN_DURATION_S) {
-      toast(
-        `${formatTime(buffer.duration)} at ${(buffer.sampleRate / 1000).toFixed(1)} kHz — renders ` +
-          'will be slow and memory-hungry in a browser tab.',
-      );
-    }
+    const { buffer, warnings, notes } = outcome;
 
     // ── Staleness barrier ───────────────────────────────────────────────────────────
     // Any result in flight belongs to the PREVIOUS file and must never touch state after
@@ -380,6 +361,7 @@ export function bootstrap() {
       durationSeconds: buffer.duration,
       sampleRate: buffer.sampleRate,
       channels: buffer.numberOfChannels,
+      sourceNotes: notes,
     });
     // Re-derive the monitor gain now that the source changed (the old figure was a
     // loudness match against the previous file's numbers).
@@ -396,10 +378,74 @@ export function bootstrap() {
       `${file.name}  ·  ${buffer.numberOfChannels} ch · ` +
       `${(buffer.sampleRate / 1000).toFixed(1)} kHz · ${formatTime(buffer.duration)}`;
     $('#fileName').title = file.name;
+    setSourceNotes(notes);
 
     populateSampleRates(buffer.sampleRate);
-    toast('Loaded — measuring and preview-rendering this takes a moment…');
+    // The pass measures AND preview-renders the chain, so say so — "analysing" alone
+    // makes a multi-second wait on long files look like a hang.
+    toast(`Loaded — ${formatTime(buffer.duration)} — measuring and preview-rendering…`);
+    for (const message of warnings) toast(message, { level: 'warning' });
     runAnalysis({ immediate: true });
+    return buffer;
+  }
+
+  function setSourceNotes(notes) {
+    const node = $('#sourceNotes');
+    if (!node) return;
+    const list = (notes || []).map((n) => n.trim()).filter(Boolean);
+    node.innerHTML = '';
+    if (!list.length) {
+      node.hidden = true;
+      return;
+    }
+    const ul = el('ul', { class: 'source-notes-list' });
+    for (const note of list) ul.appendChild(el('li', { text: note }));
+    node.appendChild(ul);
+    node.hidden = false;
+  }
+
+  /**
+   * Single entry point for "the user gave us one or more files" (picker or window
+   * drop). Rules, documented in docs/INPUT-COMPATIBILITY.md:
+   * - one file -> load it now;
+   * - several files -> load the first, queue the rest through the batch export
+   *   controller (sequential, per-file status, cancel/retry);
+   * - while an export or batch is running we refuse to load a new file (a half
+   *   rendered output must never attach to a different source) and say so.
+   */
+  function importFiles(fileList) {
+    const files = Array.from(fileList || []);
+    const audio = files.filter((f) => looksLikeAudio(f));
+    const skipped = files.length - audio.length;
+    if (skipped > 0) {
+      toast(
+        `Skipped ${skipped} ${skipped === 1 ? 'file' : 'files'} that do not look like audio ` +
+          '(no audio extension or MIME type).',
+        { level: 'warning' },
+      );
+    }
+    if (!audio.length) return;
+    if (exportController.isBusy() || exportController.isRunning()) {
+      toast(
+        'An export or batch is already running. Wait for it to finish or cancel it before ' +
+          'loading a new file — a half rendered output must not attach to a different source.',
+        { level: 'error' },
+      );
+      return;
+    }
+    if (audio.length === 1) {
+      loadFile(audio[0]);
+      return;
+    }
+    loadFile(audio[0]);
+    const queued = exportController.enqueueFiles(audio.slice(1));
+    if (queued > 0) {
+      toast(
+        `Loaded ${audio[0].name.split('/').pop()}; queued ${queued} more for batch export ` +
+          '(see the Export tab — they process one at a time, cancel or retry any item).',
+        { level: 'info', duration: 6000 },
+      );
+    }
   }
 
   /* ────────────────────────────── analysis ───────────────────────────────── */
@@ -958,8 +1004,7 @@ export function bootstrap() {
   $('#importBtn').addEventListener('click', () => $('#fileInput').click());
   $('#dropzone').addEventListener('click', () => $('#fileInput').click());
   $('#fileInput').addEventListener('change', (event) => {
-    const file = event.target.files?.[0];
-    if (file) loadFile(file);
+    importFiles(event.target.files);
     event.target.value = '';
   });
   const dropzone = $('#dropzone');
@@ -976,11 +1021,13 @@ export function bootstrap() {
     });
   }
   dropzone.addEventListener('drop', (event) => {
-    const file = event.dataTransfer?.files?.[0];
-    if (file) loadFile(file);
+    importFiles(event.dataTransfer?.files);
   });
   window.addEventListener('dragover', (event) => event.preventDefault());
-  window.addEventListener('drop', (event) => event.preventDefault());
+  window.addEventListener('drop', (event) => {
+    event.preventDefault();
+    importFiles(event.dataTransfer?.files);
+  });
 
   /* ---- theme, undo/redo, reset ---- */
   $('#themeBtn').addEventListener('click', () => {

@@ -53,10 +53,23 @@ tests/
 ├── runtime/            6 tests ● RUNTIME  scheduler · rpc · memory plan · pyramid · stream
 ├── fixtures/          13 tests ● DSP      golden bank snapshots
 ├── conformance/       20 tests ● TESTING  lab classification + immersive catalog fixtures
+├── corpus/            71 tests ● TESTING  input-corpus self-tests (generator round-trips, determinism)
 └── ui/                54 tests ● UI       controls · tabs · signal-flow · presets · boot · UX
 e2e/                 37 specs   ● TESTING  Playwright · import · controls · export · responsive · a11y
-tests/browser/        7 specs   ● TESTING  OfflineAudioContext conformance lab (3 engines)
+tests/browser/        8 specs   ● TESTING  OfflineAudioContext conformance lab (3 engines)
+                                          · input-corpus (real decoder × 48-case corpus)
+tools/corpus/          —       ● TESTING  deterministic input fixtures (WAV/AIFF/MP3, seeded, legal)
 ```
+
+The **input corpus** (`tools/corpus/`) is a deterministic, fully synthesised set of
+awkward real-world files — every rate, bit depth, channel layout, duration, metadata
+blob and corruption mode the import path must survive. Its self-tests
+(`tests/corpus/`) prove the generator is stable and round-trips; the browser spec
+`tests/browser/input-corpus.spec.js` feeds the same bytes through the real decoder and
+real import path in each engine, asserting loaded / specifically-refused / never-crashed.
+Browser tests read the app's actual store through the read-only `window.__signalRot`
+surface (set in `main.js`) rather than scraping pixels, so the fidelity checks compare
+samples, not labels. See [`INPUT-COMPATIBILITY.md`](INPUT-COMPATIBILITY.md).
 
 ## Test signals
 

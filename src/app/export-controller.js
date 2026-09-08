@@ -1,13 +1,29 @@
 /**
  * Export and batch controller.
  *
- * Owns every path from "finished audio" to "file on disk": format selection, encoding,
- * the render report, the render-history panel and the batch queue.
+ * Owns every path from "finished audio" to "file on disk": format selection,
+ * encoding, the render report, the render-history panel and the batch queue.
  *
- * ── Render-state locking ─────────────────────────────────────────────────────────────
- * A render mutates a large buffer and takes seconds. While one is running every control
- * that could change the result is disabled, and the progress text says which stage is
- * running rather than showing a bar that jumps from 45 % to 75 %.
+ * ── Render-state locking ─────────────────────────────────────────────────────
+ * A render mutates a large buffer and takes seconds. While one is running every
+ * control that could change the result is disabled, and the progress text says
+ * which stage is running rather than showing a bar that jumps from 45 % to
+ * 75 %.
+ *
+ * ── Batch queue ──────────────────────────────────────────────────────────────
+ * The queue is a *workflow*, not a list of filenames. Every item carries its own
+ * state (decoding → ready → rendering → done / failed / cancelled), its own
+ * failure reason, its own loudness, its own render report and its own output
+ * name. Files are processed **sequentially** — the render graph is full-buffer
+ * by design, so two concurrent renders would double the peak memory with zero
+ * speed benefit. Cancellation stops the *next* file (a running offline render
+ * cannot be interrupted); it never stops the current one halfway, so a partial
+ * file is never written.
+ *
+ * A bad file in the queue fails *that row* with a reason the user can act on
+ * (and retry); it never aborts the rest of the batch, and it never lets a stale
+ * result attach to a different file — each render consumes the exact
+ * `AudioBuffer` the item decoded, and each report is stored on that item.
  */
 
 import { renderMaster } from '../audio/render/render-master.js';
@@ -20,9 +36,12 @@ import { supportsStreamingSave } from '../audio/encode/stream-sinks.js';
 import { exportWithStreaming } from './streaming-export.js';
 import { summariseReport } from '../audio/render/report.js';
 import { analyseBuffer } from '../workers/analysis-client.js';
-import { getAudioContext, resumeAudioContext } from '../audio/context.js';
+import { resumeAudioContext } from '../audio/context.js';
+import { estimateRender } from '../runtime/render-preflight.js';
+import { formatBytes } from '../runtime/memory-budget.js';
+import { decodeAudioFile, preflightFile, buildMasterName, uniqueName } from './import-audio.js';
 import { LIMITS } from './constants.js';
-import { $, $$, el, replaceChildren, formatBytes } from '../ui/dom.js';
+import { $, $$, el, replaceChildren, formatBytes as uiFormatBytes } from '../ui/dom.js';
 import { renderNotice } from '../ui/notifications.js';
 
 /** Format descriptors: container, bit depth and file extension. */
@@ -34,6 +53,8 @@ export const EXPORT_FORMATS = Object.freeze({
   aif24: { container: 'aiff', bitDepth: 24, ext: 'aif', label: 'AIFF 24-bit' },
   mp3: { container: 'mp3', bitDepth: 16, ext: 'mp3', label: 'MP3 320 kbit/s' },
 });
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * @param {object} opts
@@ -114,12 +135,36 @@ export function createExportController(opts) {
               class: 'btn ghost',
               style: 'padding:2px 8px',
               text: '⤓ report',
+              'aria-label': `Download render report for ${entry.name}`,
               onclick: () =>
                 downloadJson(entry.report, `${baseNameOf(entry.name)}_render-report.json`),
             }),
           ]),
         ),
     );
+  }
+
+  /**
+   * Honest memory preflight for a full-buffer render. The DSP graph is not
+   * streaming, so this estimate is the real budget — when it says a render
+   * will not fit, it will not fit.
+   *
+   * @param {AudioBuffer} source
+   * @param {number} sampleRate 0 = source rate
+   * @returns {{classification:string, expectedPeakBytes:number, effectiveRate:number}}
+   */
+  function renderPreflight(source, sampleRate) {
+    const effectiveRate = sampleRate || source.sampleRate;
+    const frames = Math.ceil(source.duration * effectiveRate);
+    const plan = estimateRender(
+      { channels: source.numberOfChannels, frames },
+      { dsp: 1, output: 1 },
+    );
+    return {
+      classification: plan.classification,
+      expectedPeakBytes: plan.expectedPeakBytes,
+      effectiveRate,
+    };
   }
 
   /**
@@ -140,13 +185,27 @@ export function createExportController(opts) {
     const format = EXPORT_FORMATS[formatKey] ?? EXPORT_FORMATS.wav24;
     const parameters = store.getParameters();
 
-    // Pre-flight size check: better to refuse than to allocate 3 GB and take the tab down.
-    const effectiveRate = sampleRate || source.sampleRate;
-    const estimatedSamples = Math.ceil(source.duration * effectiveRate) * source.numberOfChannels;
-    if (estimatedSamples > LIMITS.WARN_TOTAL_SAMPLES) {
+    // Pre-flight size check: better to say "this may not fit" than to allocate
+    // 3 GB and take the tab down.
+    const preflight = renderPreflight(source, sampleRate);
+    const estimatedSamples =
+      Math.ceil(source.duration * preflight.effectiveRate) * source.numberOfChannels;
+    if (
+      estimatedSamples > LIMITS.WARN_TOTAL_SAMPLES ||
+      preflight.classification === 'LIKELY UNSAFE'
+    ) {
       toast(
-        `This render is roughly ${formatBytes(estimatedSamples * 4)} of float audio before ` +
-          'encoding. It may exhaust the tab.',
+        `${source.numberOfChannels}-channel / ${(preflight.effectiveRate / 1000).toFixed(1)} kHz render ` +
+          `needs about ${uiFormatBytes(preflight.expectedPeakBytes)} of float audio and may exceed ` +
+          'the memory available to this browser. A lower sample rate, fewer channels or a bigger ' +
+          'machine will make it fit.',
+        { level: 'error', durationMs: 9000 },
+      );
+    } else if (preflight.classification === 'VERY HEAVY' || preflight.classification === 'HEAVY') {
+      toast(
+        `Heavy render (${preflight.classification.toLowerCase()}): about ` +
+          `${uiFormatBytes(preflight.expectedPeakBytes)} of float audio. It will be slow.`,
+        { durationMs: 7000 },
       );
     }
 
@@ -180,7 +239,10 @@ export function createExportController(opts) {
       });
 
       progress(0.9, 'encoding');
-      const name = `${baseNameOf(state.source.name)}_master_${(data.sampleRate / 1000).toFixed(1)}k.${format.ext}`;
+      const name = uniqueName(
+        buildMasterName({ base: state.source.name, sampleRate: data.sampleRate, format }),
+        outputNames,
+      );
 
       if (format.container === 'wav') {
         const bytes = estimateWavBytes(data, format.bitDepth);
@@ -188,7 +250,7 @@ export function createExportController(opts) {
         // 4 GiB RIFF ceiling only applies when it is not available.
         if (bytes > LIMITS.RIFF_MAX_BYTES && !supportsStreamingSave()) {
           throw new Error(
-            `The encoded file would be ${formatBytes(bytes)}, above the 4 GB RIFF limit, ` +
+            `The encoded file would be ${uiFormatBytes(bytes)}, above the 4 GB RIFF limit, ` +
               'and this browser cannot stream straight to disk (needs the File System ' +
               'Access API — Chromium-based browsers have it). Use a lower sample rate or ' +
               'bit depth, or try a Chromium-based browser.',
@@ -249,116 +311,352 @@ export function createExportController(opts) {
 
   /* ────────────────────────────── batch queue ────────────────────────────── */
 
-  /** @type {{file:File, name:string, buffer:AudioBuffer|null, lufs:number|null}[]} */
+  /**
+   * @typedef {object} QueueItem
+   * @property {number} id
+   * @property {File} file
+   * @property {string} name
+   * @property {AudioBuffer|null} buffer
+   * @property {'decoding'|'ready'|'rendering'|'done'|'failed'|'cancelled'} state
+   * @property {string} reason  failure explanation, empty otherwise
+   * @property {number|null} lufs
+   * @property {object|null} report  render report, when done
+   * @property {string|null} outputName  delivered filename, when done
+   */
+
+  /** @type {QueueItem[]} */
   const queue = [];
+  /** Session registry of delivered output names (collision → `…_2.wav`). */
+  const outputNames = new Set();
+  let nextItemId = 1;
+  let runState = { active: false, cancelled: false };
+
+  function setItemState(item, state, reason = '') {
+    item.state = state;
+    item.reason = state === 'failed' ? reason : '';
+    renderQueue();
+  }
 
   function renderQueue() {
     const host = $('#batchList');
     if (!host) return;
-    replaceChildren(
-      host,
-      ...queue.map((item, index) =>
-        el('div', { class: 'brow' }, [
-          // textContent, never innerHTML: `item.name` is attacker-controlled and the
-          // audited build interpolated it into innerHTML.
-          el('span', { class: 'nm', text: item.name, title: item.name }),
-          el('span', {
-            class: 'lu',
-            text: item.lufs === null ? 'analysing…' : `${item.lufs.toFixed(1)} LUFS`,
-          }),
-          el('button', {
-            class: 'btn ghost',
-            style: 'padding:2px 8px',
-            text: '✕',
-            'aria-label': `Remove ${item.name}`,
-            onclick: () => {
-              queue.splice(index, 1);
-              renderQueue();
-            },
-          }),
-        ]),
-      ),
-    );
+    if (!queue.length) {
+      replaceChildren(host, el('div', { class: 'hint', text: 'No files in the queue yet.' }));
+    } else {
+      replaceChildren(
+        host,
+        ...queue.map((item) => {
+          const statusLabel = {
+            decoding: 'decoding…',
+            ready: 'ready',
+            rendering: 'rendering…',
+            done: `done → ${item.outputName ?? ''}`,
+            failed: `failed: ${item.reason || 'unknown error'}`,
+            cancelled: item.reason || 'cancelled',
+          }[item.state];
+          const row = el('div', { class: `brow st-${item.state}` }, [
+            el('span', { class: 'nm', text: item.name, title: item.name }),
+            el('span', { class: 'st', text: statusLabel, title: statusLabel }),
+            el('span', {
+              class: 'lu',
+              text:
+                item.state === 'done' && item.lufs !== null
+                  ? `${item.lufs.toFixed(1)} LUFS`
+                  : item.lufs === null
+                    ? item.buffer
+                      ? 'analysing…'
+                      : '—'
+                    : `${item.lufs.toFixed(1)} LUFS`,
+            }),
+          ]);
+          if (item.state === 'done' && item.report) {
+            row.append(
+              el('button', {
+                class: 'btn ghost',
+                style: 'padding:2px 8px',
+                text: '⤓ report',
+                'aria-label': `Download render report for ${item.name}`,
+                onclick: () =>
+                  downloadJson(item.report, `${baseNameOf(item.name)}_render-report.json`),
+              }),
+            );
+          }
+          if (item.state === 'failed' && !runState.active) {
+            row.append(
+              el('button', {
+                class: 'btn ghost',
+                style: 'padding:2px 8px',
+                text: '↻ retry',
+                'aria-label': `Retry ${item.name}`,
+                onclick: () => retryItem(item),
+              }),
+            );
+          }
+          if (!runState.active) {
+            row.append(
+              el('button', {
+                class: 'btn ghost',
+                style: 'padding:2px 8px',
+                text: '✕',
+                'aria-label': `Remove ${item.name}`,
+                onclick: () => {
+                  const i = queue.indexOf(item);
+                  if (i >= 0) queue.splice(i, 1);
+                  renderQueue();
+                },
+              }),
+            );
+          }
+          return row;
+        }),
+      );
+    }
     const runBtn = $('#batchRunBtn');
-    if (runBtn) runBtn.disabled = queue.length === 0 || busy;
+    if (runBtn) runBtn.disabled = runState.active || !queue.some((i) => i.state === 'ready');
   }
 
-  async function addFiles(files) {
-    const ctx = getAudioContext();
+  /**
+   * Decode one file for the queue. Shared by add-files and retry.
+   * @param {QueueItem} item
+   */
+  async function decodeItem(item) {
+    const pf = preflightFile(item.file);
+    if (pf.errors.length) {
+      setItemState(item, 'failed', pf.errors[0]);
+      return;
+    }
+    setItemState(item, 'decoding');
+    let ctx;
+    try {
+      ctx = await resumeAudioContext();
+    } catch (error) {
+      setItemState(item, 'failed', String(error?.message ?? error));
+      return;
+    }
+    const result = await decodeAudioFile(ctx, item.file);
+    if (!result.ok) {
+      setItemState(item, 'failed', result.errors[0] ?? 'could not decode');
+      return;
+    }
+    item.buffer = result.buffer;
+    for (const message of result.warnings) console.info(`[signal-rot] ${item.name}: ${message}`);
+    setItemState(item, 'ready');
+    // Loudness runs off-thread; a late result must not resurface on a removed item.
+    void analyseBuffer(item.buffer, ['loudness'])
+      .then((stats) => {
+        if (queue.includes(item) && item.buffer) {
+          item.lufs = stats.loudness?.integrated ?? null;
+          renderQueue();
+        }
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Add files to the batch queue (decode up front so the user sees the real
+   * per-file state before the run button is pressed).
+   *
+   * @param {File[]} files
+   * @returns {Promise<number>} how many joined the queue in a ready state
+   */
+  async function enqueueFiles(files) {
+    if (runState.active) {
+      toast('A batch is already running — stop it before adding more files.', { level: 'error' });
+      return 0;
+    }
+    let added = 0;
     for (const file of files) {
-      if (file.size > LIMITS.MAX_FILE_BYTES) {
-        toast(`Skipped ${file.name} — too large`, { level: 'error' });
-        continue;
-      }
-      try {
-        const buffer = await ctx.decodeAudioData(await file.arrayBuffer());
-        queue.push({ file, name: file.name, buffer, lufs: null });
-        renderQueue();
-      } catch {
-        toast(`Skipped ${file.name} — could not decode`, { level: 'error' });
-      }
+      const item = {
+        id: nextItemId++,
+        file,
+        name: file.name,
+        buffer: null,
+        state: 'decoding',
+        reason: '',
+        lufs: null,
+        report: null,
+        outputName: null,
+      };
+      queue.push(item);
+      await decodeItem(item);
+      if (item.state === 'ready') added += 1;
     }
-    // Loudness analysis runs off-thread, one file at a time, so the UI stays responsive.
-    for (const item of queue) {
-      if (item.lufs !== null || !item.buffer) continue;
-      const stats = await analyseBuffer(item.buffer, ['loudness']);
-      item.lufs = stats.loudness.integrated;
-      renderQueue();
-    }
+    renderQueue();
+    return added;
   }
 
-  async function runBatch() {
-    if (busy || !queue.length) return;
+  /** Render one item with the settings captured at run time. */
+  async function renderItem(item, settings) {
+    const { format, formatKey, sampleRate, parameters, moduleBypass, presetName } = settings;
+    const source = item.buffer;
+
+    // Memory preflight, item by item: a queue of ten 192 kHz files must not
+    // take the tab down at number four.
+    const preflight = renderPreflight(source, sampleRate);
+    if (preflight.classification === 'LIKELY UNSAFE') {
+      throw new Error(
+        `${source.numberOfChannels}-channel / ${(preflight.effectiveRate / 1000).toFixed(1)} kHz render ` +
+          `would need about ${formatBytes(preflight.expectedPeakBytes)} of float audio — likely to ` +
+          'exceed the memory available in this browser. Re-queue it at a lower sample rate or ' +
+          'channel count.',
+      );
+    }
+    if (preflight.classification === 'VERY HEAVY') {
+      toast(
+        `Heavy: ${item.name} needs about ${formatBytes(preflight.expectedPeakBytes)} of float audio. ` +
+          'Continuing, but expect slowdowns.',
+        { durationMs: 6000 },
+      );
+    }
+
+    const { data, report } = await renderMaster({
+      source,
+      parameters,
+      sampleRate,
+      bitDepth: format.bitDepth,
+      moduleBypass,
+      sourceName: item.name,
+      presetName,
+      format: format.container,
+      // Batch trades the last 0.2 LU of accuracy for speed; single exports refine.
+      refine: false,
+    });
+
+    const { blob } = await encode(data, formatKey);
+    const name = uniqueName(
+      buildMasterName({ base: item.name, sampleRate: data.sampleRate, format }),
+      outputNames,
+    );
+    const result = downloadBlob(blob, name);
+    if (!result.ok) {
+      throw result.error ?? new Error('The browser blocked or cancelled the download.');
+    }
+    item.report = report;
+    item.outputName = name;
+  }
+
+  function batchSettings() {
     const state = store.getState();
     const formatKey = $('#fmtSelect').value;
     const sampleRate = Number($('#srSelect').value) || 0;
-    const format = EXPORT_FORMATS[formatKey] ?? EXPORT_FORMATS.wav24;
-    const parameters = store.getParameters();
+    return {
+      formatKey,
+      format: EXPORT_FORMATS[formatKey] ?? EXPORT_FORMATS.wav24,
+      sampleRate,
+      parameters: store.getParameters(),
+      moduleBypass: state.ui.moduleBypass,
+      presetName: state.ui.presetName,
+    };
+  }
 
+  /**
+   * Process the queue: sequential, conservative, per-file status.
+   * `settings` is captured once — the batch is rendered with the settings that
+   * were visible when the user pressed the button.
+   */
+  async function runBatch(overrideSettings) {
+    if (runState.active) return;
+    if (busy) {
+      // Same lock as the stereo export and the immersive bed render: two offline
+      // renders racing over the shared selects and the busy flag is never acceptable.
+      toast('Another render is in progress — wait for it to finish.', { level: 'error' });
+      return;
+    }
+    const pending = queue.filter((i) => i.state === 'ready' && i.buffer);
+    if (!pending.length) {
+      toast('Nothing in the queue is ready to render — check the failed rows for reasons.', {
+        level: 'error',
+      });
+      return;
+    }
+    const settings = overrideSettings ?? batchSettings();
+    runState = { active: true, cancelled: false };
     setBusy(true, 'batch');
+    const cancelBtn = $('#batchCancelBtn');
+    if (cancelBtn) cancelBtn.hidden = false;
     const bar = $('#batchProg');
-    bar?.classList.add('on');
     const text = $('#batchProgText');
+    if (bar) bar.classList.add('on');
 
-    let completed = 0;
-    for (const [index, item] of queue.entries()) {
-      if (!item.buffer) continue;
-      if (text) text.textContent = `${index + 1} / ${queue.length} — ${item.name}`;
-      if (bar) bar.querySelector('i').style.width = `${(index / queue.length) * 100}%`;
+    const total = pending.length;
+    let doneCount = 0;
+    let failedCount = 0;
+    let skippedCount = 0;
+
+    for (const item of pending) {
+      if (runState.cancelled) {
+        setItemState(item, 'cancelled', 'skipped — batch stopped');
+        skippedCount += 1;
+        continue;
+      }
+      setItemState(item, 'rendering');
+      if (text) text.textContent = `${queue.indexOf(item) + 1} of ${total} — ${item.name}`;
+      if (bar) {
+        bar.querySelector('i').style.width = `${((doneCount + skippedCount) / total) * 100}%`;
+      }
       try {
-        const { data, report } = await renderMaster({
-          source: item.buffer,
-          parameters,
-          sampleRate,
-          bitDepth: format.bitDepth,
-          moduleBypass: state.ui.moduleBypass,
-          sourceName: item.name,
-          presetName: state.ui.presetName,
-          format: format.container,
-          // Batch trades the last 0.2 LU of accuracy for speed; single exports refine.
-          refine: false,
-        });
-        const { blob } = await encode(data, formatKey);
-        const name = `${String(index + 1).padStart(2, '0')}_${baseNameOf(item.name)}_master.${format.ext}`;
-        downloadBlob(blob, name);
-        history.push({ report, at: new Date(), name });
-        completed++;
+        await renderItem(item, settings);
+        setItemState(item, 'done');
+        history.push({ report: item.report, at: new Date(), name: item.outputName });
+        doneCount += 1;
         // A short pause: browsers rate-limit consecutive programmatic downloads.
-        await new Promise((r) => setTimeout(r, 450));
+        await sleep(450);
       } catch (error) {
         console.error('[signal-rot] batch item failed:', item.name, error);
-        toast(`Batch error on ${item.name}: ${error.message ?? error}`, { level: 'error' });
+        setItemState(item, 'failed', String(error?.message ?? error));
+        failedCount += 1;
       }
     }
 
     if (bar) bar.querySelector('i').style.width = '100%';
-    if (text) text.textContent = `Complete — ${completed} of ${queue.length} exported`;
+    const summary = `Batch complete — ${doneCount} exported${
+      failedCount ? `, ${failedCount} failed` : ''
+    }${skippedCount ? `, ${skippedCount} skipped` : ''} of ${total}.`;
+    if (text) text.textContent = summary;
     if (history.length > 40) history.splice(0, history.length - 40);
     renderHistoryPanel();
+    runState = { active: false, cancelled: false };
+    if (cancelBtn) cancelBtn.hidden = true;
     setBusy(false);
     renderQueue();
-    toast(`Batch complete · ${completed} track(s)`);
-    setTimeout(() => bar?.classList.remove('on'), 900);
+    toast(summary, failedCount ? { level: 'error', durationMs: 9000 } : undefined);
+    announce(summary);
+    setTimeout(() => bar?.classList.remove('on'), 1200);
+  }
+
+  /** Stop after the current file finishes; the rest of the queue is skipped. */
+  function cancelBatch() {
+    if (!runState.active) return;
+    runState.cancelled = true;
+    toast('Batch stopping — the current file will finish, the rest are skipped.');
+  }
+
+  /** Re-process one failed item (re-decode first when the decode was the problem). */
+  async function retryItem(item) {
+    if (busy) {
+      toast('An export is in progress — wait for it to finish first.', { level: 'error' });
+      return;
+    }
+    if (runState.active) {
+      toast('A batch is running — wait for it or stop it first.', { level: 'error' });
+      return;
+    }
+    if (!item.buffer) {
+      await decodeItem(item);
+      if (item.state !== 'ready') return; // re-decode failed again; row shows the reason
+    }
+    const settings = batchSettings();
+    setItemState(item, 'rendering');
+    try {
+      await renderItem(item, settings);
+      setItemState(item, 'done');
+      history.push({ report: item.report, at: new Date(), name: item.outputName });
+      renderHistoryPanel();
+      toast(`Exported ${item.outputName}`);
+    } catch (error) {
+      setItemState(item, 'failed', String(error?.message ?? error));
+      toast(`Retry failed for ${item.name}: ${error?.message ?? error}`, { level: 'error' });
+    }
   }
 
   function init() {
@@ -388,10 +686,11 @@ export function createExportController(opts) {
       event.target.value = '';
       if (files.length) {
         await resumeAudioContext();
-        addFiles(files);
+        await enqueueFiles(files);
       }
     });
     $('#batchRunBtn')?.addEventListener('click', () => runBatch());
+    $('#batchCancelBtn')?.addEventListener('click', cancelBatch);
     renderQueue();
     renderHistoryPanel();
   }
@@ -400,7 +699,11 @@ export function createExportController(opts) {
     init,
     exportMaster,
     runBatch,
-    addFiles,
+    cancelBatch,
+    enqueueFiles,
+    retryItem,
+    isBusy: () => busy,
+    isRunning: () => runState.active,
     /**
      * Cross-controller render lock. The immersive workspace takes this so a stereo
      * export, a batch run and an immersive bed render can never interleave — the
