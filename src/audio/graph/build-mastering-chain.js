@@ -63,6 +63,7 @@ import { buildDepth, applyDepth } from './depth.js';
 import { MATCH_FREQS } from '../../app/constants.js';
 import { dbToGain } from '../dsp/math.js';
 import { dynamicsCompressorMakeupCompensation } from '../dsp/dynamics-compressor.js';
+import { planHfBudget, budgetedMatchGains } from './hf-budget.js';
 
 /**
  * @typedef {object} MasteringChain
@@ -197,6 +198,9 @@ export function monoSafeSource(src) {
  * @param {boolean} [opts.bypassAll]  audition the unprocessed source
  * @param {Record<string, boolean>} [opts.moduleBypass] per-module bypass from the flow view
  * @param {import('./stereo.js').AuditionMode} [opts.audition]
+ * @param {number} [opts.brightnessFactor] 0..1 source-brightness penalty for the HF
+ *   budget (§2.7); 0 when no measurement is available.
+ * @returns {{hfBudget: object}} the HF-budget plan that was applied (for meters/reports)
  */
 export function applyParameters(chain, p, opts = {}) {
   const all = !!opts.bypassAll;
@@ -204,15 +208,37 @@ export function applyParameters(chain, p, opts = {}) {
 
   chain.trim.gain.value = all ? 1 : dbToGain(p.drive);
 
-  // ── Match EQ ──
+  // ── HF budget: one plan for the whole treble stack, applied before the multiband ──
+  // and saturation stages see the signal (§2.7). The plan is a pure function of the
+  // parameter snapshot and the measured source brightness; the live monitor and the
+  // offline render therefore apply exactly the same curtailment. A module-bypassed tone
+  // stage contributes nothing to the stack (its controls are not in the signal).
   const matchStrength = off('match') ? 0 : p.matchStrength / 100;
+  const matchDelivered = MATCH_FREQS.map((_, i) => (p.matchGains[i] ?? 0) * matchStrength || 0);
+  const budgetP = off('tone') ? { ...p, air: 0, clarity: 0, tilt: 0, binaural: false } : p;
+  const hfBudget = planHfBudget(budgetP, {
+    brightnessFactor: opts.brightnessFactor ?? 0,
+    matchDelivered,
+  });
+  const deliveredMatch =
+    hfBudget.engaged && !off('match')
+      ? budgetedMatchGains(p, matchDelivered, hfBudget)
+      : matchDelivered;
+
+  // ── Match EQ ──
   chain.matchBands.forEach((band, i) => {
     // `|| 0` normalises negative zero (a negative correction × zero strength).
-    band.gain.value = (p.matchGains[i] ?? 0) * matchStrength || 0;
+    band.gain.value = deliveredMatch[i] || 0;
   });
 
   // ── Tone ──
-  applyTone(chain.tone, { ...p, bypass: off('tone') });
+  applyTone(chain.tone, {
+    ...p,
+    bypass: off('tone'),
+    airTotal: hfBudget.engaged && !off('tone') ? hfBudget.delivered.airTotal : undefined,
+    clarity: hfBudget.engaged ? hfBudget.delivered.clarity ?? p.clarity : p.clarity,
+    tilt: hfBudget.engaged ? hfBudget.delivered.tilt ?? p.tilt : p.tilt,
+  });
 
   // ── Multiband ──
   applyMultiband(chain.multiband, p, off('multiband'));
@@ -224,7 +250,12 @@ export function applyParameters(chain, p, opts = {}) {
   // ── Character / depth / saturation ──
   applyCharacter(chain.character, { ...p, bypass: off('character') });
   applyDepth(chain.depth, { ...p, bypass: off('depth') });
-  applySaturation(chain.saturation, { ...p, bypass: off('saturation') });
+  // The budget can scale the effective saturation drive down while a large treble
+  // surplus is engaged, so the shaper adds less harmonic content on top of a hot top.
+  const satScale = hfBudget.engaged && !off('saturation') ? hfBudget.satScale : 1;
+  applySaturation(chain.saturation, { ...p, sat: p.sat * satScale, bypass: off('saturation') });
+
+  return { hfBudget };
 }
 
 /**

@@ -261,12 +261,19 @@ export function buildSaturation(ctx) {
  * @param {ReturnType<typeof buildTone>} n
  * @param {object} p
  * @param {boolean} [p.bypass]
+ * @param {number} [p.airTotal] optional *final* air value (dB), already including the
+ *   binaural spread lift and any HF-budget curtailment. When absent, the air value is
+ *   derived from `p.air` + the spread lift exactly as before.
  */
 export function applyTone(n, p) {
   for (const band of TONE_BANDS) {
     let value = p.bypass ? 0 : (p[band.key] ?? 0);
-    // The binaural "spread" control lifts air as part of its perceptual widening.
-    if (band.key === 'air' && !p.bypass && p.binaural) value += p.spread * 1.5;
+    if (band.key === 'air' && !p.bypass) {
+      // The binaural "spread" control lifts air as part of its perceptual widening.
+      // A caller-supplied `airTotal` (HF budget) already accounts for both; otherwise
+      // the lift is applied here as it always was.
+      value = Number.isFinite(p.airTotal) ? p.airTotal : value + (p.binaural ? p.spread * 1.5 : 0);
+    }
     n.bands[band.key].gain.value = value;
   }
   const tilt = p.bypass ? 0 : p.tilt;
