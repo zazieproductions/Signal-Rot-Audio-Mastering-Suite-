@@ -21,6 +21,9 @@ export const DECODE_FALLBACK_RATE = 48000;
  * @param {ArrayBuffer} bytes
  * @param {object} [opts]
  * @param {number} [opts.liveCtxRate] rate of the live context, as last-resort fallback
+ * @param {BaseAudioContext} [opts.liveCtx] context whose `decodeAudioData` is the
+ *   last-resort fallback (when given, preferred over the shared live context — needed
+ *   by callers that already hold a context, including non-browser test doubles)
  * @returns {Promise<{buffer: AudioBuffer, requestedRate: number, decodedRate: number, sniffedRate: number|null}>}
  */
 export async function decodeAtNativeRate(bytes, opts = {}) {
@@ -44,9 +47,10 @@ export async function decodeAtNativeRate(bytes, opts = {}) {
       lastError = error;
     }
   }
-  // Last resort: the shared live context (device rate).
+  // Last resort: the caller's context (live device rate, or a test double), else the
+  // shared live context.
   try {
-    const ctx = await getAudioContext();
+    const ctx = opts.liveCtx ?? (await getAudioContext());
     const buffer = await ctx.decodeAudioData(bytes);
     return {
       buffer,

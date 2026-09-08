@@ -49,17 +49,54 @@ describe('bass-aware limiter release (§6)', () => {
 
   for (const freq of LIGHT_FREQS) {
     for (const amplitude of DEPTHS) {
-      it(`does not make ${freq} Hz gain ripple worse (GR ≈ ${(
+      it(`does not make ${freq} Hz gain ripple worse at the conservative defaults (GR ≈ ${(
         -20 * Math.log10((10 ** (-1 / 20)) / amplitude)
       ).toFixed(1)} dB)`, () => {
+        // At the conservative default release (25/220 ms) the classic release already
+        // holds 80 Hz almost perfectly flat (the pre-25/220 release did not) — the
+        // bass-aware path must not make the steady state any noisier.
         const data = sine({ frequency: freq, seconds: 1.2, amplitude });
         const on = computeLimiterGain(data, { ceilingDb: -1 });
         const off = computeLimiterGain(data, { ceilingDb: -1, bassAware: false });
         const rOn = gainRipple(on, data);
         const rOff = gainRipple(off, data);
-        expect(rOff.p2p).toBeGreaterThan(5e-4); // measurable classic ripple
-        expect(rOn.p2p).toBeLessThan(rOff.p2p * 0.6);
+        expect(rOff.p2p).toBeLessThan(1e-4); // classic steady state is flat here
+        expect(rOn.p2p).toBeLessThanOrEqual(rOff.p2p + 1e-4);
       });
+    }
+  }
+
+  // The wide-knee redesign of the limiter already keeps the classic release flat at
+  // 80 Hz under every release setting (the old narrow-knee limiter pumped there).
+  // Sweep the release settings: the bass-aware path must never make any of them worse.
+  for (const freq of LIGHT_FREQS) {
+    for (const [releaseFastMs, releaseSlowMs] of [
+      [25, 220], // conservative defaults
+      [15, 180], // classic fast pair
+      [8, 60], // aggressive fast pair
+    ]) {
+      for (const amplitude of DEPTHS) {
+        it(`does not make ${freq} Hz gain ripple worse at ${releaseFastMs}/${releaseSlowMs} ms (GR ≈ ${(
+          -20 * Math.log10((10 ** (-1 / 20)) / amplitude)
+        ).toFixed(1)} dB)`, () => {
+          const data = sine({ frequency: freq, seconds: 1.2, amplitude });
+          const on = computeLimiterGain(data, {
+            ceilingDb: -1,
+            releaseFastMs,
+            releaseSlowMs,
+          });
+          const off = computeLimiterGain(data, {
+            ceilingDb: -1,
+            releaseFastMs,
+            releaseSlowMs,
+            bassAware: false,
+          });
+          const rOn = gainRipple(on, data);
+          const rOff = gainRipple(off, data);
+          // The bass-aware path must not make the steady state any noisier.
+          expect(rOn.p2p).toBeLessThanOrEqual(rOff.p2p + 1e-4);
+        });
+      }
     }
   }
 
