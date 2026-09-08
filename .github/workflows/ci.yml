@@ -30,6 +30,13 @@ jobs:
 
       - run: npm ci
 
+      # `node-web-audio-api` (a devDependency, only loaded by the
+      # real-BiquadFilterNode regression lock in `tests/dsp/crossover-real-biquad.test.js`)
+      # dlopens `libasound.so.2` at import time. `ubuntu-latest` ships it but the
+      # package name differs across releases, so install both candidates.
+      - name: Install ALSA (node-web-audio-api native binding)
+        run: sudo apt-get update && sudo apt-get install -y libasound2 libasound2t64 || true
+
       - name: Lint
         run: npm run lint
 
