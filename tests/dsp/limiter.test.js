@@ -6,7 +6,7 @@ import {
   hannSmooth,
   verifyCeiling,
 } from '../../src/audio/render/limiter.js';
-import { analysePeaks } from '../../src/audio/analysis/true-peak.js';
+import { analysePeaks, analysePeaksVerified, truePeakChannelExact } from '../../src/audio/analysis/true-peak.js';
 import { analyseLoudness } from '../../src/audio/analysis/loudness.js';
 import { cloneAudioData } from '../../src/audio/dsp/audio-data.js';
 import { transientTrain, sine, silence, make, whiteNoise } from '../helpers/signals.js';
@@ -173,6 +173,40 @@ describe('limitTruePeak', () => {
     for (let i = 0; i < data.length; i += 211) {
       expect(data.channels[0][i]).toBe(before.channels[0][i]);
     }
+  });
+
+  it('holds an independent (FFT) ceiling on the fs/4 inter-sample worst case (issue #21)', () => {
+    const sr = 48000;
+    const n = 8192;
+    const fade = 1024;
+    const data = make(1, n, sr, () => 0);
+    for (let i = 0; i < n; i++) {
+      let w = 1;
+      if (i < fade) w = 0.5 - 0.5 * Math.cos((Math.PI * i) / fade);
+      else if (i >= n - fade) w = 0.5 - 0.5 * Math.cos((Math.PI * (n - 1 - i)) / fade);
+      data.channels[0][i] = w * Math.sin((2 * Math.PI * (i + 0.5)) / 4);
+    }
+    const ceilingDb = -1;
+    const result = limitTruePeak(data, { ceilingDb });
+    expect(result.ceilingRespected).toBe(true);
+    const independent = 20 * Math.log10(Math.max(1e-12, truePeakChannelExact(data.channels[0], 4)));
+    expect(independent).toBeLessThanOrEqual(ceilingDb + 0.05);
+    expect(analysePeaksVerified(data).truePeakDb).toBeLessThanOrEqual(ceilingDb + 0.05);
+  });
+
+  it('holds an independent ceiling on HF-rich material, not just the detection FIR', () => {
+    const sr = 48000;
+    const data = make(2, sr, sr, (i) => {
+      const t = i / sr;
+      return (
+        0.6 * Math.sin(2 * Math.PI * 9000 * t) +
+        0.5 * Math.sin(2 * Math.PI * 12000 * t + 0.7) +
+        0.35 * Math.sin(2 * Math.PI * 15000 * t + 1.3)
+      );
+    });
+    const result = limitTruePeak(data, { ceilingDb: -1 });
+    expect(result.ceilingRespected).toBe(true);
+    expect(analysePeaksVerified(data).truePeakDb).toBeLessThanOrEqual(-0.95);
   });
 
   it('handles silence without dividing by zero', () => {

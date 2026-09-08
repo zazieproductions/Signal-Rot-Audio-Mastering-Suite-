@@ -20,13 +20,13 @@ Design tokens live in `src/styles/tokens.css`. Two product modes share the same 
 
 ## Two Product Modes
 
-### MASTER (default — `M` key)
+### MASTER (default — `L` toggles Master ⇄ Spatial Lab)
 For conventional mastering. Emphasizes **source → tonal → dynamics → stereo → loudness → listen → export**.
 - Calm, reference-focused palette (warm accent).
 - Mastering status strip (integrated, true peak, LRA, crest, limiter) answers “is this deliverable?”
 - Sonic summary translates real parameters into human lines — no AI claims.
 
-### SPATIAL LAB (`L` key)
+### SPATIAL LAB (`L` toggles back)
 For immersive / experimental spatial. Emphasizes **room → speakers → depth → height → motion → energy → binaural → bed export**.
 - Technical, periphonic palette (cyan accent).
 - Speaker field is the signature: top-down plan + elevation side view, both derived from `audio/immersive/layouts.js` so the map cannot disagree with the channel map.
@@ -83,10 +83,10 @@ Seven safe macros map onto existing parameter combinations (no new DSP). Impleme
 
 Transport shows **Original / Mastered** segmented pill; the enhanced strip `ab-enhanced.js` adds:
 
-- **Original (A)**, **Mastered (B)**, **Blind A/B** toggle.
-- **Match loudness (M)** — both sides play at `target` (or at processed integrated if normalisation is off). The only honest comparison.
+- **Original (A)**, **Mastered (B)**, **Matched (C)** — the master level-matched to the source — and a **Blind A/C** toggle.
+- **Match loudness** (chip/button, no key) — legacy level-matched A/B; `C` is the dedicated matched audition and the honest comparison.
 - **Dim (−12 dB)** for late-night checks.
-- Keyboard: `A` / `B` / `C` (select), `X` (cycle, blind-safe), `M` (match), `H` (blind), `Space` (play/pause). Blind mode hides which is which and always alternates the two *different* signals; labels show “◈ Blind A/B”. All keys bind once, in `initShortcuts` — no per-module window listeners (duplicate bindings used to double-fire A/B/C/X/M).
+- Keyboard: `A` / `B` / `C` (select), `X` (cycle, blind-safe), `H` (blind), `M` (mono monitor), `S` (side monitor), `Space` (play/pause). Blind mode hides which is which and always alternates the two *different* signals (A vs C); labels show “◈ Blind 1/2”. All keys bind once, in `initShortcuts` — no per-module window listeners (duplicate bindings used to double-fire A/B/C/X/M).
 
 Active state is unmistakable: active pill gets colored border + tinted background (cyan for A, orange for B). Level-matched mastered buttons do not look “louder-better”.
 
@@ -261,7 +261,7 @@ Progress bar + `progtext`, cancel where supported, queue if relevant. Distinguis
 
 - **Desktop/laptop primary** — spatial needs space. Tablet workable; phone not a mastering target but never broken.
 - Breakpoints: `980 px` scopes stack, `760 px` header wraps, `520 px` grids collapse, `pointer: coarse` enlarges thumbs to 24 px.
-- Shortcuts (one owner, `initShortcuts`): `Space` play/pause, `A`/`B`/`C` audition select, `X` cycle audition, `M` loudness-match, `H` blind, `S` side monitor, `L` toggle Master ⇄ Spatial Lab, `⌘K`/`Ctrl+K` palette, `⌘Z`/`⇧⌘Z` undo/redo, `Esc` close palette, arrows navigate tabs (WAI-ARIA pattern), `←/→` dial yaw.
+- Shortcuts (one owner, `initShortcuts`): `Space` play/pause, `A`/`B`/`C` audition select, `X` cycle audition, `H` blind, `M` mono monitor, `S` side monitor, `L` toggle Master ⇄ Spatial Lab, `⌘K`/`Ctrl+K` palette, `⌘Z`/`⇧⌘Z` undo/redo, `Esc` close palette, arrows navigate tabs (WAI-ARIA pattern), `←/→` dial yaw.
 
 All hints appear in tooltips/menus.
 

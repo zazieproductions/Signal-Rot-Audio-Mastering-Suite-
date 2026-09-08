@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   truePeakChannel,
+  truePeakChannelExact,
   analysePeaks,
+  analysePeaksVerified,
   buildPolyphaseFilter,
   oversamplingFactorFor,
   truePeakEstimate,
@@ -152,6 +154,32 @@ describe('true-peak measurement', () => {
     const result = analysePeaks(data);
     expect(result.samplePeakDb).toBeCloseTo(0, 3);
     expect(result.truePeakDb).toBeGreaterThan(1.5);
+  });
+});
+
+describe('independent FFT interpolator (issue #21)', () => {
+  it('reads the fs/4 ±45° worst case at 0 dBTP', () => {
+    const x = fsOverFour(8192);
+    const exact = db(truePeakChannelExact(x, 4));
+    expect(exact).toBeGreaterThan(-0.05);
+    expect(exact).toBeLessThan(0.05);
+  });
+
+  it('never reads below the detection FIR', () => {
+    const x = fsOverFour();
+    expect(truePeakChannelExact(x, 4)).toBeGreaterThanOrEqual(truePeakChannel(x, SR) - 1e-6);
+  });
+
+  it('agrees with the sample peak on a faded low-frequency sine', () => {
+    const data = fadedSine({ amplitude: 0.5, frequency: 200, seconds: 0.5, channels: 1 });
+    expect(truePeakChannelExact(data.channels[0], 4)).toBeCloseTo(0.5, 3);
+  });
+
+  it('analysePeaksVerified is at least as hot as the detection meter', () => {
+    const data = sine({ amplitude: 0.9, frequency: 12000, seconds: 0.4, channels: 1 });
+    const detect = analysePeaks(data);
+    const verified = analysePeaksVerified(data);
+    expect(verified.truePeak).toBeGreaterThanOrEqual(detect.truePeak - 1e-6);
   });
 });
 

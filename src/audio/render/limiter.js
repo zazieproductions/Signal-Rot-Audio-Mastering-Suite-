@@ -46,11 +46,24 @@
 
 import { clamp, dbToGain, gainToDb, smoothstep } from '../dsp/math.js';
 import {
-  analysePeaks,
+  analysePeaksVerified,
   truePeakChannel,
   oversamplingFactorFor,
   buildPolyphaseFilter,
+  TRUE_PEAK_DETECT_TAPS,
 } from '../analysis/true-peak.js';
+
+/**
+ * Working-ceiling offset, dB. The limiter detects with a short FIR that under-reads
+ * inter-sample peaks (especially HF); rather than slamming the gain computer harder
+ * we aim this much *below* the requested ceiling and, if an independent meter still
+ * sees an over, apply a static trim (issue #21 / SON-2). 0.3 dB is a safety
+ * allowance, not a loudness grab.
+ */
+export const TRUE_PEAK_SAFETY_DB = 0.3;
+/** Independent-meter slack for `ceilingRespected`. Tighter than the old 0.05 dB
+ *  self-check: the verifier is no longer the detector. */
+export const TRUE_PEAK_VERIFY_SLACK_DB = 0.02;
 
 /**
  * The limiter is the final safety/polish stage, not the sound of the master. Its defaults
@@ -245,8 +258,8 @@ function accumulateInterpolatedPeaks(ch, env, factor) {
     }
     return;
   }
-  // buildPolyphaseFilter is memoised inside true-peak.js, so this is a map lookup.
-  const phases = buildPolyphaseFilter(factor);
+  // Detection FIR (memoised). Verification uses a different meter — see limitTruePeak.
+  const phases = buildPolyphaseFilter(factor, TRUE_PEAK_DETECT_TAPS);
   const taps = phases[0].length;
   const half = taps >> 1;
   for (let i = 0; i < n; i++) {
@@ -274,7 +287,11 @@ function accumulateInterpolatedPeaks(ch, env, factor) {
  * @returns {LimiterResult}
  */
 export function limitTruePeak(data, opts) {
-  const gain = computeLimiterGain(data, opts);
+  // Aim a little below the requested ceiling so residual detector error is absorbed
+  // by headroom, not by extra attack/release crushing (issue #21).
+  const safety = opts.safetyDb ?? TRUE_PEAK_SAFETY_DB;
+  const workingCeiling = opts.ceilingDb - Math.max(0, safety);
+  const gain = computeLimiterGain(data, { ...opts, ceilingDb: workingCeiling });
   const n = data.length;
 
   let minGain = 1;
@@ -304,25 +321,25 @@ export function limitTruePeak(data, opts) {
 
   if (opts.verify === false) return result;
 
-  // ── 5. Verification ──
-  const measured = analysePeaks(data);
+  // ── 5. Verification — independent meter, not the detector grading itself ──
+  const measured = analysePeaksVerified(data);
   result.achievedTruePeakDb = measured.truePeakDb;
 
-  // 0.05 dB of slack: the detector and the verifier use the same filter, so any residual
-  // is numerical rather than structural.
-  if (measured.truePeakDb > opts.ceilingDb + 0.05) {
+  const slack = TRUE_PEAK_VERIFY_SLACK_DB;
+  if (measured.truePeakDb > opts.ceilingDb + slack) {
+    // Static trim: a uniform make-up drop, not more limiter attack. Caps at 3 dB so a
+    // pathological miss is reported rather than silently burying the master; 1 dB was
+    // not enough for the HF-forward case SON-2 measured (+0.94 dB).
     const trimDb = opts.ceilingDb - measured.truePeakDb;
-    // Bound the corrective trim. If more than 1 dB is needed something is structurally
-    // wrong and silently attenuating the master is not the right answer — report instead.
-    const applied = Math.max(trimDb, -1);
+    const applied = Math.max(trimDb, -3);
     const g = dbToGain(applied);
     for (const ch of data.channels) {
       for (let i = 0; i < n; i++) ch[i] *= g;
     }
     result.correctionTrimDb = applied;
-    const after = analysePeaks(data);
+    const after = analysePeaksVerified(data);
     result.achievedTruePeakDb = after.truePeakDb;
-    result.ceilingRespected = after.truePeakDb <= opts.ceilingDb + 0.05;
+    result.ceilingRespected = after.truePeakDb <= opts.ceilingDb + slack;
   }
 
   return result;
@@ -336,12 +353,12 @@ export function limitTruePeak(data, opts) {
  * @param {number} ceilingDb
  */
 export function verifyCeiling(data, ceilingDb) {
-  const peaks = analysePeaks(data);
+  const peaks = analysePeaksVerified(data);
   return {
     ...peaks,
     ceilingDb,
     overBy: peaks.truePeakDb - ceilingDb,
-    respected: peaks.truePeakDb <= ceilingDb + 0.05,
+    respected: peaks.truePeakDb <= ceilingDb + TRUE_PEAK_VERIFY_SLACK_DB,
   };
 }
 

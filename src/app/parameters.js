@@ -718,6 +718,11 @@ export function validateParameters(input) {
         `"${key}" was ${value}; clamped to ${coerced} (allowed ${spec.min}…${spec.max} ${spec.unit}).`,
       );
     }
+    if (spec.type === 'enum' && !spec.values.includes(value)) {
+      warnings.push(
+        `"${key}" value ${JSON.stringify(value)} is not one of ${spec.values.join('|')}; using ${spec.defaultValue}.`,
+      );
+    }
     out[key] = coerced;
   }
   return { parameters: out, warnings };

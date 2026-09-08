@@ -113,6 +113,7 @@ describe('product experience — A/B enhanced', () => {
     bootstrap();
     expect(document.querySelector('#abAenh')).toBeTruthy();
     expect(document.querySelector('#abBenh')).toBeTruthy();
+    expect(document.querySelector('#abCenh')).toBeTruthy();
     expect(document.querySelector('#abBlindenh')).toBeTruthy();
     expect(document.querySelector('#abMatchChip')).toBeTruthy();
     // Click blind should toggle aria-pressed

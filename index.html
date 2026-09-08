@@ -28,7 +28,7 @@
             data-ws="master"
             aria-selected="true"
             role="tab"
-            title="Master — tonal balance, dynamics, loudness, export (M)"
+            title="Master — tonal balance, dynamics, loudness, export (L toggles workspaces)"
           >
             Master
           </button>
@@ -37,7 +37,7 @@
             data-ws="spatial"
             aria-selected="false"
             role="tab"
-            title="Spatial Lab — immersive layouts, speaker map, binaural (L)"
+            title="Spatial Lab — immersive layouts, speaker map, binaural (L toggles workspaces)"
           >
             Spatial Lab
           </button>
@@ -98,7 +98,7 @@
               class="btn ghost"
               id="matchLoudBtn"
               aria-pressed="false"
-              title="Level-match the A/B comparison (M)"
+              title="Level-match the A/B comparison (click; C is the matched audition)"
             >
               Match loudness
             </button>
@@ -253,19 +253,20 @@
         <section id="abEnhanced" aria-label="A/B comparison">
           <div class="ab-strip" id="abStrip">
             <span class="ab-label">Listen</span>
-            <div class="ab-seg" role="group" aria-label="A/B comparison — original vs mastered">
+            <div class="ab-seg" role="group" aria-label="A/B/C comparison — original, mastered, loudness-matched">
               <button id="abAenh" data-ab="A" aria-pressed="false" title="Original (A) — press A">○ Original</button>
               <button id="abBenh" data-ab="B" aria-pressed="true" title="Mastered (B) — press B">● Mastered</button>
-              <button id="abBlindenh" class="ab-blind" aria-pressed="false" title="Blind A/B — hide which is which (H)">Blind</button>
+              <button id="abCenh" data-ab="C" aria-pressed="false" title="Matched (C) — loudness-matched master, press C">◎ Matched</button>
+              <button id="abBlindenh" class="ab-blind" aria-pressed="false" title="Blind A/C — hide which is which (H)">Blind</button>
             </div>
             <div class="ab-actions">
-              <button class="ab-chip" id="abMatchChip" aria-pressed="false" title="Loudness-matched comparison (M)">⟺ Match</button>
+              <button class="ab-chip" id="abMatchChip" aria-pressed="false" title="Loudness-matched A/B (click; M is mono monitoring)">⟺ Match</button>
               <button class="ab-chip" id="abDimChip" aria-pressed="false" title="Dim 12 dB for late-night checks">Dim</button>
               <span class="ab-hint" id="abHint">B · Mastered</span>
             </div>
           </div>
           <div class="hint" id="abHelp" style="margin-top: 6px">
-            <b>A</b> Original · <b>B</b> Mastered · <b>M</b> Match loudness · <b>X</b> Toggle A/B · <b>Space</b> Play/pause · <b>H</b> Blind · When matching is on, both sides play at the same loudness — the only honest comparison.
+            <b>A</b> Original · <b>B</b> Mastered · <b>C</b> Matched (same loudness as the source) · <b>X</b> Cycle A/B/C · <b>H</b> Blind A/C · <b>M</b> Mono · <b>S</b> Side · <b>Space</b> Play/pause. C is the honest comparison — louder is not better.
           </div>
         </section>
 

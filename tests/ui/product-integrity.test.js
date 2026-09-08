@@ -246,16 +246,35 @@ describe('keyboard: one key, one owner, one action per press', () => {
     expect(store.getState().ui.abMode).toBe('B');
   });
 
-  it('M toggles loudness-match and does NOT hijack the workspace or the audition', async () => {
+  it('M means ONE thing (mono monitor) and does NOT also switch workspace or flip match', async () => {
     const app = await bootApp();
     const { store } = app;
-    store.setUi({ workspace: 'spatial', audition: 'side', abMode: 'B' });
+    store.setUi({ workspace: 'spatial', audition: 'stereo', abMode: 'B', matchLoudness: false });
     keyEvent('m');
-    expect(store.getState().ui.matchLoudness).toBe(true);
+    expect(store.getState().ui.audition).toBe('mono');
     keyEvent('m');
+    expect(store.getState().ui.audition).toBe('stereo');
     expect(store.getState().ui.matchLoudness).toBe(false);
     expect(store.getState().ui.workspace).toBe('spatial');
-    expect(store.getState().ui.audition).toBe('side');
+    expect(store.getState().ui.abMode).toBe('B');
+  });
+
+  it('H toggles blind exactly once per press and X never reveals the hidden slot', async () => {
+    const app = await bootApp();
+    const { store } = app;
+    const blindBtn = document.querySelector('#abBlindenh');
+    keyEvent('h');
+    expect(blindBtn.getAttribute('aria-pressed')).toBe('true');
+    keyEvent('a');
+    keyEvent('x');
+    // No mode button may show pressed while blind — that would be the answer.
+    const pressed = [...document.querySelectorAll('[data-ab][aria-pressed="true"]')];
+    expect(pressed).toEqual([]);
+    expect(document.querySelector('#abHint').textContent).not.toMatch(/Original|Mastered|Matched/);
+    keyEvent('h');
+    expect(blindBtn.getAttribute('aria-pressed')).toBe('false');
+    // Leaving blind reveals the slot that was playing rather than jumping elsewhere.
+    expect(['A', 'C']).toContain(store.getState().ui.abMode);
   });
 
   it('L toggles the workspace once per press', async () => {
@@ -268,7 +287,7 @@ describe('keyboard: one key, one owner, one action per press', () => {
     expect(store.getState().ui.workspace).toBe('master');
   });
 
-  it('blind mode alternates between two DIFFERENT hidden signals', async () => {
+  it('blind mode alternates between two DIFFERENT hidden signals (original vs matched)', async () => {
     const app = await bootApp();
     const { store } = app;
     document.querySelector('#abBlindenh').click();
@@ -277,8 +296,27 @@ describe('keyboard: one key, one owner, one action per press', () => {
     seen.add(store.getState().ui.abMode);
     keyEvent('x');
     seen.add(store.getState().ui.abMode);
-    expect([...seen].every((m) => m === 'A' || m === 'B')).toBe(true);
+    expect([...seen].every((m) => m === 'A' || m === 'C')).toBe(true);
     expect(seen.size).toBe(2);
+  });
+
+  it('transport and enhanced A/B/C buttons agree and a click changes the mode exactly once', async () => {
+    const app = await bootApp();
+    const { store } = app;
+    let writes = 0;
+    store.subscribe((_s, changed) => {
+      if (changed.has('ui')) writes += 1;
+    });
+    document.querySelector('#abC').click();
+    expect(store.getState().ui.abMode).toBe('C');
+    expect(writes).toBe(1);
+    document.querySelector('#abAenh').click();
+    expect(store.getState().ui.abMode).toBe('A');
+    expect(writes).toBe(2);
+    const pressed = [...document.querySelectorAll('[data-ab][aria-pressed="true"]')].map(
+      (b) => b.id,
+    );
+    expect(pressed.sort()).toEqual(['abA', 'abAenh']);
   });
 
   it('keyboard A/B/C do not fire while typing in the palette or a text field', async () => {

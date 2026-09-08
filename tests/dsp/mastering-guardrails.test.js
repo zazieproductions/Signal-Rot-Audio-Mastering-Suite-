@@ -16,6 +16,14 @@ describe('loudness ambition guard', () => {
     expect(scoreRefinementPass(-0.2, -1.0)).toBeLessThan(scoreRefinementPass(-1.2, -1.0));
   });
 
+  it('prefers a cleaner pass over a half-LU louder one that costs extra peak GR (SON-6)', () => {
+    // wall: −1.0 LU miss at 3 dB peak GR (the clean line)
+    // extra: −0.5 LU miss at 4.65 dB peak GR — 0.30 LU per extra dB, below MIN_LUFS_PER_PEAK_GR
+    expect(scoreRefinementPass(-1.0, -1.0, -3.0)).toBeLessThan(
+      scoreRefinementPass(-0.5, -1.0, -4.65),
+    );
+  });
+
   it('reduces ambition on pink noise at −9 LUFS instead of crushing it', () => {
     const data = pinkNoise({ amplitude: 0.1, seconds: 10, seed: 5 });
     const r = normalizeAndLimit(data, {

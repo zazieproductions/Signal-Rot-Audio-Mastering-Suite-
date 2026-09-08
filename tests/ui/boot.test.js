@@ -68,6 +68,34 @@ afterEach(() => {
 });
 
 describe('application boot', () => {
+  // First in this file so window keydown listeners have not accumulated from other boots.
+  it('owns A/B/C/X from one shortcut handler and does not steal M for match (issue #13)', async () => {
+    const { bootstrap } = await import('../../src/app/bootstrap.js');
+    const { store } = bootstrap();
+    const fire = (key) =>
+      window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+
+    store.setUi({ abMode: 'A' });
+    fire('x');
+    expect(store.getState().ui.abMode).toBe('B');
+    fire('x');
+    expect(store.getState().ui.abMode).toBe('C');
+    fire('x');
+    expect(store.getState().ui.abMode).toBe('A');
+    fire('c');
+    expect(store.getState().ui.abMode).toBe('C');
+
+    const pressed = ['abA', 'abB', 'abC', 'abAenh', 'abBenh', 'abCenh'].filter(
+      (id) => document.getElementById(id)?.getAttribute('aria-pressed') === 'true',
+    );
+    expect(pressed.sort()).toEqual(['abC', 'abCenh']);
+
+    const matchBefore = store.getState().ui.matchLoudness;
+    fire('m');
+    expect(store.getState().ui.matchLoudness).toBe(matchBefore);
+    expect(store.getState().ui.audition).toBe('mono');
+  });
+
   it('starts without throwing and without logging an error', async () => {
     const { bootstrap } = await import('../../src/app/bootstrap.js');
     const app = bootstrap();

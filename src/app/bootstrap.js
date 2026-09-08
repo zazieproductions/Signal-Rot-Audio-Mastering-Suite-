@@ -31,7 +31,7 @@ import { dynamicsCompressorMakeupCompensation } from '../audio/dsp/dynamics-comp
 import { linearQToDb } from '../audio/dsp/biquad.js';
 import { dbToGain, gainToDb, clamp } from '../audio/dsp/math.js';
 import { truePeakEstimate } from '../audio/analysis/true-peak.js';
-import { phaseRiskFromParameters } from '../audio/analysis/correlation.js';
+import { correlation, phaseRiskFromParameters } from '../audio/analysis/correlation.js';
 import { computeMatchCurve } from '../audio/analysis/spectral-match.js';
 import { randomSeed } from '../audio/dsp/prng.js';
 import { renderChain } from '../audio/render/render-master.js';
@@ -180,10 +180,11 @@ export function bootstrap() {
     // Fire-and-forget: a failed probe keeps the documented default, never silence.
     resolveDryDelay(ctx.sampleRate)
       .then((dry) => {
-        if (
-          dry.measured &&
-          Math.abs(dry.seconds - chain.multiband.dryDelay.delayTime.value) > 1e-9
-        ) {
+        if (!dry.measured) return;
+        chain.multiband.dryDelaySeconds = dry.seconds;
+        // Only push the delay into the node when the wet path is actually in circuit;
+        // otherwise it is unreported latency (issue #23).
+        if (chain.multiband.wet.gain.value > 0) {
           chain.multiband.dryDelay.delayTime.value = dry.seconds;
         }
       })
@@ -218,6 +219,7 @@ export function bootstrap() {
       truePeakDb: s.peaks?.truePeakDb,
       spectral: spectralSummary(s.fingerprint ?? null),
       channels: store.getState().source.buffer?.numberOfChannels,
+      correlation: s.correlation,
     };
   }
 
@@ -416,12 +418,15 @@ export function bootstrap() {
         async () => {
           const parameters = store.getParameters();
           // The source never changes for a loaded file: measure it once (loudness, peaks,
-          // crest factor, tonal shape) and reuse the result on every later slider move.
+          // crest factor, tonal shape, correlation) and reuse the result on every later
+          // slider move.
           if (sourceStatsCache.token !== token || !sourceStatsCache.stats) {
-            sourceStatsCache = {
-              token,
-              stats: await analyseBuffer(source, ['loudness', 'peaks', 'rms', 'fingerprint']),
-            };
+            const stats = await analyseBuffer(source, ['loudness', 'peaks', 'rms', 'fingerprint']);
+            let corr = 1;
+            if (source.numberOfChannels >= 2) {
+              corr = correlation(source.getChannelData(0), source.getChannelData(1));
+            }
+            sourceStatsCache = { token, stats: { ...stats, correlation: corr } };
           }
           const srcStats = sourceStatsCache.stats;
           const adaptation = adaptParameters(parameters, {
@@ -431,6 +436,7 @@ export function bootstrap() {
             truePeakDb: srcStats.peaks?.truePeakDb,
             spectral: spectralSummary(srcStats.fingerprint ?? null),
             channels: source.numberOfChannels,
+            correlation: srcStats.correlation,
           });
           currentAdaptation = {
             adaptations: adaptation.adaptations,
@@ -784,9 +790,16 @@ export function bootstrap() {
   initSourceHero({ store });
   initMasterStatus({ store });
   initSonicSummary({ store });
-  // Single owner of A/B/C mode, loudness-match and dim state (buttons + methods; global
-  // keys arrive through initShortcuts below, which calls into `abEnh`).
-  const abEnh = initAbEnhanced({ store });
+  // A/B/C strip is the VIEW; mode mutation is owned by bootstrap's setAbMode/cycleAbMode
+  // below (issue #13 single-owner contract). Blind mode and the dim chip live in the
+  // strip; dim state is `ui.abDim` so the monitor gain stays ONE writer (applyMonitorGain).
+  const abEnhanced = initAbEnhanced({
+    store,
+    pushParameters,
+    getLiveGraph: () => live,
+    setAbMode,
+    cycleAbMode,
+  });
   initMacroControls({ store, pushParameters });
   initPresetBrowserEnhanced({ store });
   const spatialLab = initSpatialLab({ store, getLiveGraph: () => live });
@@ -878,9 +891,12 @@ export function bootstrap() {
   /* ---- transport controls ---- */
   $('#playBtn').addEventListener('click', () => transport.toggle());
   $('#stopBtn').addEventListener('click', () => transport.stop());
-  // A/B/C buttons are owned by `abEnh` (single set of listeners, blind-mode aware); the
-  // graph/meter reaction is centralised in the store subscription below. A second set of
-  // listeners here used to fight ab-enhanced for `abMode` ownership.
+  // Transport A/B/C: the ONLY click listeners on these nodes (issue #13). The enhanced
+  // strip forwards its own buttons to setAbMode; the graph push + meter repaint react
+  // once, in the store subscription below — never per click.
+  $('#abA').addEventListener('click', () => abEnhanced.onModeClick('A'));
+  $('#abB').addEventListener('click', () => abEnhanced.onModeClick('B'));
+  $('#abC').addEventListener('click', () => abEnhanced.onModeClick('C'));
   $('#auditionSelect').addEventListener('change', (event) => {
     store.setUi({ audition: event.target.value });
   });
@@ -889,6 +905,18 @@ export function bootstrap() {
     runAnalysis({ immediate: true });
   });
   $('#clearLoopBtn').addEventListener('click', () => transport.setLoopRegion(null));
+
+  /** Single writer of `ui.abMode`. Everything downstream (graph, meters, pressed state)
+   *  reacts through the store subscription, so callers never push twice. */
+  function setAbMode(mode) {
+    store.setUi({ abMode: mode });
+  }
+
+  /** Cycle Original → Mastered → loudness-Matched, for the X key and the palette. */
+  function cycleAbMode() {
+    const cur = store.getState().ui.abMode;
+    setAbMode(cur === 'A' ? 'B' : cur === 'B' ? 'C' : 'A');
+  }
 
   /* ---- waveform interaction (pointer events: mouse, touch and pen) ---- */
   const wave = $('#wave');
@@ -1281,27 +1309,36 @@ export function bootstrap() {
         id: 'ab',
         label: 'Cycle audition: original / mastered / loudness-matched',
         hint: 'X',
-        run: () => abEnh.cycle(),
+        run: () => (abEnhanced.isBlind ? abEnhanced.flipBlind() : cycleAbMode()),
       },
-      { id: 'ab-original', label: 'Audition: original', hint: 'A', run: () => abEnh.setAb('A') },
-      { id: 'ab-mastered', label: 'Audition: mastered', hint: 'B', run: () => abEnh.setAb('B') },
+      {
+        id: 'ab-original',
+        label: 'Audition: original',
+        hint: 'A',
+        run: () => abEnhanced.onModeClick('A'),
+      },
+      {
+        id: 'ab-mastered',
+        label: 'Audition: mastered',
+        hint: 'B',
+        run: () => abEnhanced.onModeClick('B'),
+      },
       {
         id: 'ab-matched',
         label: 'Audition: loudness-matched master',
         hint: 'C',
-        run: () => abEnh.setAb('C'),
+        run: () => abEnhanced.onModeClick('C'),
       },
       {
         id: 'match',
         label: 'Level-match the A/B comparison',
-        hint: 'M',
-        run: () => abEnh.toggleMatch(),
+        run: () => abEnhanced.toggleMatch(),
       },
       {
         id: 'blind',
-        label: 'Blind A/B mode',
+        label: 'Blind A/C mode (original vs matched master)',
         hint: 'H',
-        run: () => abEnh.toggleBlind(),
+        run: () => abEnhanced.toggleBlind(),
       },
       {
         id: 'workspace',
@@ -1309,7 +1346,7 @@ export function bootstrap() {
         hint: 'L',
         run: () => toggleWorkspace(),
       },
-      { id: 'mono', label: 'Monitor: mono sum', run: () => setAudition('mono') },
+      { id: 'mono', label: 'Monitor: mono sum', hint: 'M', run: () => setAudition('mono') },
       { id: 'side', label: 'Monitor: side only', hint: 'S', run: () => setAudition('side') },
       { id: 'stereo', label: 'Monitor: stereo', run: () => setAudition('stereo') },
       {
@@ -1363,12 +1400,23 @@ export function bootstrap() {
   initShortcuts({
     palette: () => (palette.isOpen() ? palette.close() : palette.open()),
     playPause: () => transport.toggle(),
-    toggleAb: () => abEnh.cycle(),
-    auditionOriginal: () => abEnh.setAb('A'),
-    auditionMastered: () => abEnh.setAb('B'),
-    auditionMatched: () => abEnh.setAb('C'),
-    toggleBlind: () => abEnh.toggleBlind(),
-    toggleMatch: () => abEnh.toggleMatch(),
+    // Listening-mode keys route to the ONE owner of abMode (setAbMode/cycleAbMode);
+    // blind mode intercepts them so a key press can never reveal the hidden slot.
+    toggleAb: () => {
+      if (abEnhanced.isBlind) abEnhanced.flipBlind();
+      else cycleAbMode();
+    },
+    auditionA: () => {
+      if (!abEnhanced.isBlind) setAbMode('A');
+    },
+    auditionB: () => {
+      if (!abEnhanced.isBlind) setAbMode('B');
+    },
+    auditionC: () => {
+      if (!abEnhanced.isBlind) setAbMode('C');
+    },
+    toggleBlind: () => abEnhanced.toggleBlind(),
+    monoAudition: () => setAudition(store.getState().ui.audition === 'mono' ? 'stereo' : 'mono'),
     sideAudition: () => setAudition(store.getState().ui.audition === 'side' ? 'stereo' : 'side'),
     toggleWorkspace,
     undo: () => {

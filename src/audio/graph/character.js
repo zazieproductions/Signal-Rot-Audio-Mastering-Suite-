@@ -43,6 +43,13 @@ import { BUTTERWORTH_Q_DB } from '../dsp/biquad.js';
 export const NOISE_BED_SECONDS = 12;
 
 /**
+ * Nominal tape-transport delay. Needed so wow/flutter can modulate in both directions
+ * when tape > 0. When tape is 0 (or the module is bypassed) this must be 0 — a 6 ms
+ * delay with nothing modulating it is just unreported latency (issue #23 / SON-5).
+ */
+export const TAPE_TRANSPORT_DELAY_S = 0.006;
+
+/**
  * Fill a stereo `AudioBuffer` with seeded Gaussian noise (tape hiss).
  * Channels are independent, so the bed is decorrelated and sits *around* the mix.
  */
@@ -127,9 +134,10 @@ export function buildCharacter(ctx, seed) {
   const output = ctx.createGain();
 
   // ── Tape transport: a delay line whose length is modulated by two LFOs ──
-  // 6 ms of nominal delay gives the modulation room to move in both directions.
+  // Built at 0 ms; `applyCharacter` raises it to TAPE_TRANSPORT_DELAY_S only when
+  // tape > 0, so a bypassed/neutral chain does not carry 6 ms of dead delay.
   const tapeDelay = ctx.createDelay(0.05);
-  tapeDelay.delayTime.value = 0.006;
+  tapeDelay.delayTime.value = 0;
 
   // Wow: slow speed variation, ~0.4 Hz (once per rotation of a 33⅓ rpm capstan-ish rate).
   const wowLfo = ctx.createOscillator();
@@ -282,6 +290,7 @@ export function applyCharacter(n, p) {
   n.flutterDepth.gain.value = tape * 0.00018;
   n.driftDepth.gain.value = tape * 0.0006;
   n.headBump.gain.value = tape * 3.5;
+  n.tapeDelay.delayTime.value = tape > 0 ? TAPE_TRANSPORT_DELAY_S : 0;
 
   n.hfRolloff.frequency.value = 22000 - vinyl * 7000; // → 15 kHz at full vinyl
   n.crackleGain.gain.value = vinyl * 0.12;
