@@ -510,6 +510,41 @@ select:hover {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+.brow .st {
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 11px var(--mono);
+  color: var(--muted);
+}
+.brow.st-ready .st { color: var(--ok, #4caf7d); }
+.brow.st-rendering .st { color: var(--proc); }
+.brow.st-done .st { color: var(--ok, #4caf7d); }
+.brow.st-failed {
+  border-color: color-mix(in oklab, var(--hot) 55%, var(--line2));
+}
+.brow.st-failed .st { color: var(--hot); }
+.brow.st-cancelled { opacity: 0.65; }
+
+/* ---- Source notes (mono routing, fold-down, unusual rate) ---- */
+.source-notes {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in oklab, var(--proc) 35%, var(--line2));
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--proc) 8%, transparent);
+  font: 400 11px var(--mono);
+  color: var(--muted);
+}
+.source-notes-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
 /* ---- Warnings / notices ---- */
 .notice {

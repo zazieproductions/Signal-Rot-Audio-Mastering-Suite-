@@ -90,6 +90,14 @@ The About tab lists what `canPlayType()` reports for the running browser. That i
 about _playback_, not about `decodeAudioData`, and it is labelled as a hint. A decode
 failure produces a specific message naming the formats that work everywhere.
 
+The deterministic corpus suite (`tests/browser/input-corpus.spec.js`, fixtures in
+`tools/corpus/`) feeds a 48-case matrix of real bytes — every rate, bit depth, channel
+layout and corruption the browser is likely to meet — through the actual import path, and
+records per-browser whether each case **decoded, loaded, or was refused with a specific
+message**. A refusal is a pass as long as it is specific; a crash or a silent failure is
+not. Per-browser decode evidence and the full input contract live in
+[`INPUT-COMPATIBILITY.md`](INPUT-COMPATIBILITY.md).
+
 ## Known behavioural differences
 
 | Area                                | Difference                                               | Consequence                                                                       |

@@ -12,7 +12,8 @@ test.describe('export', () => {
     await page.locator('#exportBtn').click();
     const download = await downloadPromise;
 
-    expect(download.suggestedFilename()).toMatch(/^export test_master_48\.0k\.wav$/);
+    // Unified output naming (docs/INPUT-COMPATIBILITY.md): <base>_master_<quality>_<rate>k
+    expect(download.suggestedFilename()).toMatch(/^export test_master_24bit_48k\.wav$/);
     const stream = await download.createReadStream();
     const chunks = [];
     for await (const chunk of stream) chunks.push(chunk);

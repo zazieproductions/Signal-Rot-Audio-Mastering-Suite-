@@ -151,6 +151,8 @@ deliberately file-blind, which is how a co-owned tree stays honestly partitioned
       "tests/conformance",
       "tests/browser",
       "tests/helpers",
+      "tests/corpus",
+      "tools/corpus",
       "e2e",
       "ci",
       "tools/audio-regression",
@@ -160,7 +162,8 @@ deliberately file-blind, which is how a co-owned tree stays honestly partitioned
       "docs/TESTING.md",
       "docs/CONFORMANCE.md",
       "docs/AUDIO-REGRESSION.md",
-      "docs/FINDINGS-FOR-AGENT-A.md"
+      "docs/FINDINGS-FOR-AGENT-A.md",
+      "docs/INPUT-COMPATIBILITY.md"
     ],
     "ui": [
       "src/ui",

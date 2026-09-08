@@ -6,6 +6,46 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — real-world input compatibility and batch workflow
+
+- **Single import boundary** (`src/app/import-audio.js`): every file — single
+  load, reference load, batch queue — is prefetched (empty / oversized refused
+  before any decode), decoded with classified failures (corruption vs. codec vs.
+  read-access, never a bare "Something went wrong"), then audited: no samples,
+  non-finite (NaN/±Inf) samples, channel ceiling (24), duration ceiling (60 min
+  hard / 15 min warn) and an honest full-buffer memory preflight. A refusal never
+  touches the source state; a load never alters it (no re-normalisation, polarity
+  correction, channel drop/swap or re-rate).
+- **Explicit source notes**: mono input ("stereo processing will use explicit
+  dual-mono routing"), multichannel fold-down, unusual rates — shown persistently
+  under the filename instead of as a vanishing toast.
+- **Batch queue as a workflow**: per-file states (decoding / ready / rendering /
+  done / failed / cancelled) with reasons, per-item loudness and render report,
+  cancellation after the current file, retry of failed rows, per-item memory
+  preflight (a render that will not fit is refused _before_ work), session-level
+  output-name deduplication, and refusal to add files mid-run. Sequential by
+  design — the render graph is full-buffer.
+- **Dropping a collection works**: dropping several files loads the first and
+  queues the rest in Batch; non-audio files are counted and skipped.
+- **Unified output naming**: `<base>_master_<quality>_<rate>k.<ext>`
+  (e.g. `Track_master_24bit_48k.wav`), sanitised but Unicode-preserving,
+  collision-proof within a session.
+- **Deterministic legal input corpus** (`tools/corpus/`, 48 cases): every rate
+  from 8 kHz to 192 kHz, 16/24/32f, mono→32 ch, 1 sample to 61 minutes,
+  clipped/DC-offset/polarity-reversed/float>1.0 content, NaN/Inf, truncated and
+  oversized chunks, odd chunk order, Unicode metadata and hostile filenames —
+  all synthesised, hash-stable, no recordings.
+- **Test coverage**: `tests/corpus/` (generator round-trips),
+  `tests/app/import-audio.test.js`, `tests/app/import-flow.test.js` (whole-app
+  import through the real bootstrap), `tests/app/batch-controller.test.js`
+  (queue lifecycle, cancel, retry, preflight refusal) and
+  `tests/browser/input-corpus.spec.js` (real decoders × the corpus in Chromium,
+  Firefox and WebKit, with per-case decode/refusal logging and app-buffer-vs-
+  fresh-decode fidelity checks).
+- **Docs**: `docs/INPUT-COMPATIBILITY.md` (the contract + matrix + per-browser
+  behaviour), decoder-support section in `docs/BROWSER-COMPATIBILITY.md`,
+  corpus section in `docs/TESTING.md`.
+
 ### Fixed — crossover root cause (issues #19, #12, #22)
 
 - **Biquad Q units.** `BiquadFilterNode.Q` is resonance in dB for `lowpass`/`highpass`;
