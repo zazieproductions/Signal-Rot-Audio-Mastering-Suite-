@@ -104,6 +104,7 @@
             </button>
             <div class="tt" id="fileName">—</div>
             <div class="time" id="timeLabel">0:00 / 0:00</div>
+            <div id="sourceNotes" class="source-notes" hidden></div>
           </div>
         </section>
 
@@ -699,12 +700,14 @@
             <button class="btn primary" id="batchRunBtn" disabled>
               ⤓ Process &amp; export queue
             </button>
+            <button class="btn ghost" id="batchCancelBtn" hidden>Cancel after current</button>
             <div class="prog" id="batchProg"><i></i></div>
             <div class="progtext" id="batchProgText"></div>
             <div class="hint">
-              Each file is rendered with the current settings, normalised to the same target and
-              limited to the same ceiling, then downloaded. Loudness analysis runs in a Web Worker
-              so the interface stays responsive.
+              Files process one at a time — each is decoded, mastered and exported through the same
+              render path as a single export, then the next starts. Per-file status, retry and
+              cancel are below; cancelled items never keep a half written result. Loudness analysis
+              runs in a Web Worker so the interface stays responsive.
             </div>
           </div>
 
