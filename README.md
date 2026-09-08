@@ -138,7 +138,8 @@ Full detail: [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md).
 |               | MP3 320 kbit/s                          |      —       |   ✓    | Bundled `lamejs`, code-split, works offline                          |
 |               | Dither: none / TPDF / 2nd-order shaped  |      —       |   ✓    | Never applied to 32-bit float                                        |
 |               | JSON render report                      |      —       |   ✓    | Verified, not predicted                                              |
-|               | Batch queue                             |      —       |   ✓    | Off-thread loudness analysis                                         |
+|               | Batch queue                             |      —       |   ✓    | Sequential, per-file status / cancel / retry; same render path as a single export |
+| **Import**    | Hardened input boundary                 |      —       |   —    | Specific decode/refusal reasons, source notes, multi-file drop → batch queue     |
 | **Workflow**  | Undo / redo, autosaved session          |      ✓       |   —    | 60 steps                                                             |
 |               | Command palette (`⌘K` / `Ctrl+K`)       |      ✓       |   —    | Every preset, tab and action                                         |
 |               | Signal-flow view with per-module bypass |      ✓       |   ✓    |                                                                      |
