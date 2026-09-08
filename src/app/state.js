@@ -35,6 +35,26 @@ export function defaultImmersive() {
     lfeLevelDb: -3,
     frontRear: 0.5,
     binauralPreview: false,
+    // Spatial engine (§7–§13): the classic single-band up-mixer stays the default
+    // ("basic"); "spatial" is the source-aware, per-band synthesiser. Everything
+    // below is inert while the mode is `basic`, so existing sessions render exactly
+    // as before.
+    mode: 'basic',
+    spatialPreset: 'natural-room',
+    motion: 'static',
+    motionRate: 1,
+    motionDepth: 1,
+    envelopment: 0.5,
+    frontFocus: 0.5,
+    rearDepth: 0.5,
+    roomSize: 0.5,
+    heightFocus: 0.5,
+    heightSpread: 0.5,
+    yawDeg: 0,
+    audition: {
+      solo: null, // null | 'front' | 'side' | 'rear' | 'height' | 'sub' — monitoring only
+      muted: [], // groups muted — monitoring only
+    },
   };
 }
 
