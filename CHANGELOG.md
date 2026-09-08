@@ -251,6 +251,46 @@ Corrective`, `Broadcast Mono First`).
   bass-mono, and requires an explicit spread whenever binaural processing is enabled. The
   new signature presets are registered by name.
 
+### 2026-09-07 — spatial laws, bass-aware limiting, sample-rate integrity
+
+- **A structural HF-boost budget protects the saturation stage.** Air, clarity, tilt,
+  binaural spread lift and reference-match gains are summed into one cumulative
+  high-frequency budget (`planHfBudget`, `src/audio/graph/hf-budget.js`) measured against
+  the source's brightness; overlapping boosts are trimmed proportionally before the
+  saturation stage instead of stacking into a brittle, oversaturated top end. Neutral and
+  gentle settings are untouched; the render report carries the budget's `hfBudget` block.
+- **Width, balance and crossfeed are now level-bounded laws** (`src/audio/graph/spatial-laws.js`):
+  side gain beyond `width = 1` follows a soft-knee curve with a +6.8 dB ceiling, per-band
+  delivered side gains are capped (bass anchored at 1.5×), centre energy is never cut more
+  than ~3 dB even at full side bias (the old law dropped the centre 1 dB at `ms = 0.18`),
+  and Haas engagement scales the effective width back so width + spread + Haas cannot
+  stack. Every default and gentle preset lands on the identity; no preset was retuned.
+- **Crossfeed is frequency-conscious and bounded.** Both crossfeed taps run through an
+  LR4 high-pass at 120 Hz (bass never enters the tap path), and tap gain follows the
+  classic 0.45·x law only below 0.55, then a smooth knee to a 0.33 ceiling — the old law
+  reached 0.45. Mono and polarity safety are unchanged (equal, level-bounded taps).
+- **A mastering-safe clean depth character.** `depthMode = 'clean'` replaces the classic
+  two-tap comb reflections with a band-shaped wet path (HP 220 Hz / LP 6.4 kHz), two
+  in-series all-pass diffusers and four unequal, ear-alternating taps (per-ear wet ≤ 0.12)
+  with no feedback and no tail — no audible combing, slap or phase collapse. The classic
+  coloured character remains the default and both characters are documented in the
+  `Depth character` control hint.
+- **The true-peak limiter stops pumping on bass.** When a gain reduction is driven by
+  sub-150 Hz content, the release now engages its slow constant several times faster,
+  so a sustained 40–60 Hz drive holds an almost flat gain instead of modulating the
+  master at the bass rate (LF distortion + kick/bass pumping). Transient-led and
+  mid-frequency-led reduction is bit-identical to the previous release; verified at
+  40/50/60/80/100 Hz across three gain-reduction depths (`tests/dsp/limiter-bass.test.js`).
+- **Sample rates: decode native, convert once, measure after.** Loading now sniffs the
+  container header (WAV/AIFF/FLAC/MPEG — `src/audio/decode/sniff-rate.js`) and decodes at
+  the file's own rate, so 44.1 kHz sources never become 48 kHz through the live context's
+  resampler. The chain always renders at the source rate; a delivery-rate change is one
+  deliberate band-limited windowed-sinc conversion (Kaiser polyphase,
+  `src/audio/dsp/resample.js`) applied before normalisation, and the reported true peak is
+  measured on the converted samples. The render report includes a `conversion` block when
+  one happened. Full passband/stopband/alias/round-trip/impulse test coverage in
+  `tests/dsp/resample.test.js`.
+
 ### Fixed — gain structure (driven by `docs/GAIN-STRUCTURE-AUDIT.md`)
 
 - **The saturation stage was a hard clipper at 0 dBFS — even at `sat = 0`.** The

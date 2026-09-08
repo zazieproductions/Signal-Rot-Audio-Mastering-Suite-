@@ -3,13 +3,16 @@
  *
  * ── Order of operations ──────────────────────────────────────────────────────────────
  *   1. `OfflineAudioContext` render of the full mastering chain (the *same*
- *      `buildMasteringChain` the live monitor uses — one constructor, one truth).
- *   2. Transient shaping (per-sample, offline only).
- *   3. Normalisation + true-peak limiting, iterated to convergence, with a
+ *      `buildMasteringChain` the live monitor uses — one constructor, one truth). The
+ *      context always runs at the *source's* sample rate (§2.8).
+ *   2. Sample-rate conversion, only when the requested delivery rate differs from the
+ *      source rate — the single deliberate, band-limited windowed-sinc conversion.
+ *   3. Transient shaping (per-sample, offline only).
+ *   4. Normalisation + true-peak limiting, iterated to convergence, with a
  *      crest-aware gain-reduction budget so hot targets are never met by brickwalling
  *      (`docs/GAIN-STRUCTURE-AUDIT.md` §2.6).
- *   4. Dither, if the output is fixed-point.
- *   5. Verification and report.
+ *   5. Dither, if the output is fixed-point.
+ *   6. Verification and report — measured on the final, converted samples.
  *
  * ── Channel count ────────────────────────────────────────────────────────────────────
  * The audited renderer hard-coded two channels, so a mono source came back as dual mono
@@ -37,7 +40,11 @@ import { correlation, monoCompatibility } from '../analysis/correlation.js';
 import { TAPE_TRANSPORT_DELAY_S } from '../graph/character.js';
 import { spectralFingerprint } from '../analysis/spectral-match.js';
 import { adaptParameters, spectralSummary } from '../adaptive/source-aware.js';
+import { measureBrightness, brightnessFactor } from '../analysis/brightness.js';
+import { planHfBudget } from '../graph/hf-budget.js';
+import { MATCH_FREQS } from '../../app/constants.js';
 import { shapeTransients } from './transient-shaper.js';
+import { resampleData } from '../dsp/resample.js';
 import { normalizeAndLimit, CREST_AWARE_BUDGET } from './normalize.js';
 import { applyDither } from './dither.js';
 import { buildRenderReport } from './report.js';
@@ -76,10 +83,20 @@ export function requiresStereo(p) {
  * @param {boolean} [opts.bypassAll]
  * @param {number} [opts.maxSeconds] truncate for fast analysis
  * @param {number} [opts.dryDelaySeconds] override the engine-measured dry-path delay
+ * @param {number} [opts.brightnessFactor] 0..1; measured on the source when absent
  * @returns {Promise<AudioBuffer>}
+ *
+ * §2.8: the offline context always runs at `source.sampleRate`, so the browser's
+ * internal resampler is never invoked mid-pipeline. Delivery-rate changes are applied
+ * afterwards as one deliberate windowed-sinc conversion (`resampleData` in
+ * `renderMaster`), never here.
  */
 export async function renderChain(source, parameters, opts = {}) {
-  const sampleRate = opts.sampleRate || source.sampleRate;
+  // §2.8: the chain always renders at the *source's native rate* — never at a
+  // requested delivery rate — so the browser never resamples the buffer behind our
+  // back. A delivery-rate change is one deliberate, band-limited windowed-sinc
+  // conversion applied afterwards, before transient shaping and normalisation.
+  const sampleRate = source.sampleRate;
   const duration = opts.maxSeconds ? Math.min(source.duration, opts.maxSeconds) : source.duration;
   const channels = source.numberOfChannels === 1 && !requiresStereo(parameters) ? 1 : 2;
   const length = Math.max(1, Math.ceil(duration * sampleRate));
@@ -99,10 +116,16 @@ export async function renderChain(source, parameters, opts = {}) {
     textureSeed: parameters.textureSeed,
     dryDelaySeconds: dryDelay.seconds,
   });
+  let brightnessFactorValue = opts.brightnessFactor;
+  if (!Number.isFinite(brightnessFactorValue)) {
+    const measured = measureBrightness(fromAudioBuffer(source));
+    brightnessFactorValue = brightnessFactor(measured.hfRatioDb);
+  }
   applyParameters(chain, parameters, {
     bypassAll: opts.bypassAll,
     moduleBypass: opts.moduleBypass,
     audition: 'stereo',
+    brightnessFactor: brightnessFactorValue,
   });
 
   // Mono sources rendered to stereo are explicitly duplicated to dual mono first: a
@@ -153,10 +176,15 @@ export async function renderMaster(opts) {
 
   onProgress('analysing source', 0.02);
   const sourceData = fromAudioBuffer(source);
+  const sourceBrightness = measureBrightness(sourceData);
   const analysisBefore = {
     loudness: analyseLoudness(sourceData),
     peaks: analysePeaks(sourceData),
     crestFactorDb: crestFactorDb(sourceData),
+    brightness: {
+      hfRatioDb: sourceBrightness.hfRatioDb,
+      hfRatio: sourceBrightness.hfRatio,
+    },
   };
 
   // Source-aware adaptation: the same pure function the live preview uses, fed with a
@@ -177,16 +205,51 @@ export async function renderMaster(opts) {
   });
   const effective = adaptation.parameters;
 
-  onProgress('rendering chain', 0.12);
-  const renderedBuffer = await renderChain(source, effective, {
-    sampleRate,
-    moduleBypass,
-  });
-  const data = fromAudioBuffer(renderedBuffer);
-  // The dry-path delay renderChain used (memoised — this does not re-probe).
-  const dryDelay = await resolveDryDelay(sampleRate || source.sampleRate);
+  // The HF-budget plan applied to this render, for the report: computed here with the
+  // exact same inputs `applyParameters` uses (effective parameters — the ones the graph
+  // actually applies), so the report cannot drift from the graph.
+  const matchStrength = (moduleBypass?.match ? 0 : effective.matchStrength) / 100;
+  const matchDelivered = MATCH_FREQS.map(
+    (_, i) => (effective.matchGains[i] ?? 0) * matchStrength || 0,
+  );
+  const hfBudget = planHfBudget(
+    moduleBypass?.tone
+      ? { ...effective, air: 0, clarity: 0, tilt: 0, binaural: false }
+      : effective,
+    {
+      brightnessFactor: brightnessFactor(sourceBrightness.hfRatioDb),
+      matchDelivered,
+    },
+  );
 
-  onProgress('transient shaping', 0.42);
+  onProgress('rendering chain', 0.12);
+  // §2.8: the chain always renders at the source's native rate; when the requested
+  // delivery rate differs, ONE deliberate band-limited windowed-sinc conversion is
+  // applied here — before transient shaping, normalisation and limiting — so the true
+  // peak is measured and enforced on the final, converted samples.
+  const renderedBuffer = await renderChain(source, effective, {
+    moduleBypass,
+    brightnessFactor: brightnessFactor(sourceBrightness.hfRatioDb),
+  });
+  let data = fromAudioBuffer(renderedBuffer);
+  let conversion = null;
+  if (sampleRate && sampleRate !== data.sampleRate) {
+    onProgress('resampling', 0.4);
+    const converted = resampleData(data, sampleRate, {
+      onProgress: (f) => onProgress('resampling', 0.4 + f * 0.05),
+    });
+    conversion = {
+      method: 'windowed-sinc (Kaiser), band-limited, single stage',
+      from: data.sampleRate,
+      to: converted.sampleRate,
+    };
+    data = converted;
+  }
+  // The dry-path delay renderChain used (memoised — this does not re-probe). The chain
+  // ran at the source rate, so measure at the source rate.
+  const dryDelay = await resolveDryDelay(source.sampleRate);
+
+  onProgress('transient shaping', 0.48);
   const transient = shapeTransients(data, {
     attack: effective.transAttack,
     sustain: effective.transSustain,
@@ -245,6 +308,8 @@ export async function renderMaster(opts) {
       sourceClass: adaptation.sourceClass,
       adaptations: adaptation.adaptations,
     },
+    hfBudget,
+    conversion,
     source: {
       name: opts.sourceName ?? '',
       sampleRate: source.sampleRate,

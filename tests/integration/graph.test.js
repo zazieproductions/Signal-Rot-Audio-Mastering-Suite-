@@ -16,6 +16,7 @@ import { expandCatalogPreset } from '../../src/app/presets-io.js';
 import { ALL_PRESETS } from '../../src/presets/index.js';
 import { dynamicsCompressorMakeupCompensation } from '../../src/audio/dsp/dynamics-compressor.js';
 import { BUTTERWORTH_Q_DB } from '../../src/audio/dsp/biquad.js';
+import { crossfeedTapGain } from '../../src/audio/graph/spatial-laws.js';
 
 const params = (patch = {}) => ({ ...defaultParameters(), ...patch });
 
@@ -334,8 +335,9 @@ describe('parameter application', () => {
     const ctx = new FakeAudioContext();
     const chain = buildMasteringChain(ctx);
     applyParameters(chain, params({ binaural: true, crossfeed: 0 }));
-    expect(chain.stereo.crossfeedLR.gain.value).toBeCloseTo(0.35 * 0.45, 6);
-    expect(chain.stereo.crossfeedRL.gain.value).toBeCloseTo(0.35 * 0.45, 6);
+    // The forced minimum now flows through the bounded tap law (§2.9/§4).
+    expect(chain.stereo.crossfeedLR.gain.value).toBeCloseTo(crossfeedTapGain(0.35), 6);
+    expect(chain.stereo.crossfeedRL.gain.value).toBeCloseTo(crossfeedTapGain(0.35), 6);
   });
 
   it('routes exactly one monitoring path at a time', () => {
@@ -616,5 +618,75 @@ describe('binaural fold-down', () => {
   it('rejects an unknown layout', () => {
     const ctx = new FakeAudioContext();
     expect(() => buildBinauralFold(ctx, ctx.createGain(), 'nope', {})).toThrow(/unknown layout/);
+  });
+});
+
+describe('cumulative HF budget (§2.7)', () => {
+  it('is transparent for stacks below the allowance', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    const p = params({ air: 1.5, clarity: 1, matchGains: [0, 0, 0, 0, 0, 0, 0.5, 0.5] });
+    const result = applyParameters(chain, p, { brightnessFactor: 0 });
+    expect(result.hfBudget.engaged).toBe(false);
+    // The tone stage receives the user's values untouched.
+    expect(chain.tone.bands.air.gain.value).toBeCloseTo(1.5, 6);
+    expect(chain.tone.bands.clarity.gain.value).toBeCloseTo(1, 6);
+  });
+
+  it('curtails a stacked presence/air/match/tilt stack proportionally', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    const p = params({
+      air: 2,
+      clarity: 2,
+      tilt: 2,
+      matchGains: [0, 0, 0, 0, 0, 0, 0, 2],
+    });
+    const result = applyParameters(chain, p, { brightnessFactor: 0 });
+    expect(result.hfBudget.engaged).toBe(true);
+    // Delivered gains are below the user values but not zeroed.
+    expect(chain.tone.bands.air.gain.value).toBeLessThan(2);
+    expect(chain.tone.bands.air.gain.value).toBeGreaterThan(0);
+    expect(chain.tone.bands.clarity.gain.value).toBeLessThan(2);
+    expect(chain.tone.bands.air.gain.value).toBeCloseTo(result.hfBudget.delivered.airTotal, 6);
+    expect(chain.matchBands[7].gain.value).toBeLessThan(2);
+    // Tilt highshelf is the budgeted tilt, lowshelf its mirror.
+    expect(chain.tone.tiltHigh.gain.value).toBeLessThan(2);
+    expect(chain.tone.tiltLow.gain.value).toBeCloseTo(-chain.tone.tiltHigh.gain.value, 6);
+  });
+
+  it('scales saturation drive while a large surplus is engaged', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    const p = params({ air: 6, clarity: 6, tilt: 4, sat: 50 });
+    const result = applyParameters(chain, p, { brightnessFactor: 0 });
+    expect(result.hfBudget.satScale).toBeLessThan(1);
+    // applySaturation caches the curve amount on the node bag.
+    expect(chain.saturation._amount).toBeCloseTo(0.5 * result.hfBudget.satScale, 6);
+  });
+
+  it('bright sources get a tighter allowance on the same stack', () => {
+    const ctx = new FakeAudioContext();
+    const dim = buildMasteringChain(ctx);
+    const bright = buildMasteringChain(ctx);
+    const p = params({ air: 3, clarity: 3, tilt: 2 });
+    const rDim = applyParameters(dim, p, { brightnessFactor: 0 });
+    const rBright = applyParameters(bright, p, { brightnessFactor: 1 });
+    expect(rBright.hfBudget.cutDb).toBeGreaterThan(rDim.hfBudget.cutDb);
+    expect(bright.tone.bands.air.gain.value).toBeLessThan(dim.tone.bands.air.gain.value);
+  });
+
+  it('a bypassed tone contributes nothing to the stack', () => {
+    const ctx = new FakeAudioContext();
+    const chain = buildMasteringChain(ctx);
+    const p = params({ air: 6, clarity: 6, tilt: 4 });
+    const result = applyParameters(chain, p, {
+      brightnessFactor: 0,
+      moduleBypass: { tone: true },
+    });
+    // Only match parts remain; none are set, so the plan cannot engage on air alone.
+    expect(result.hfBudget.engaged).toBe(false);
+    // Bypassed tone stage is neutral.
+    expect(chain.tone.bands.air.gain.value).toBe(0);
   });
 });
