@@ -108,22 +108,6 @@
           </div>
         </section>
 
-        <!-- ── SIGNAL FLOW ───────────────────────────────────────────────────────── -->
-        <section class="card" aria-label="Signal flow">
-          <div class="hd">
-            <span>Signal flow</span>
-            <span class="sp"
-              ><span class="hint" style="margin: 0">click a stage to bypass it</span></span
-            >
-          </div>
-          <div class="flow" id="signalFlow"></div>
-          <div class="flow-legend">
-            <span class="k" style="background: var(--proc)"></span> live + export &nbsp;·&nbsp;
-            <span class="k" style="background: var(--orig)"></span> export only — the live monitor
-            does not include these stages
-          </div>
-        </section>
-
         <!-- ── WAVEFORM ──────────────────────────────────────────────────────────── -->
         <section class="card" id="waveCard" hidden aria-label="Waveform">
           <div class="hd">
@@ -136,6 +120,26 @@
             </span>
           </div>
           <canvas id="wave" aria-label="Waveform overview"></canvas>
+        </section>
+
+        <!-- ── PRESETS — immediately under drop / waveform ─────────────────────── -->
+        <section class="card" id="presetCard" aria-label="Presets">
+          <div class="hd">
+            <span>Presets</span>
+            <span class="sp">
+              <span class="hint" style="margin: 0">drop audio, then pick a profile — this is the starting point</span>
+            </span>
+          </div>
+          <div class="h-body">
+            <div id="presetGroups"></div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px">
+              <button class="btn ghost" id="resetParamsBtn">↺ Reset to flat (transparent)</button>
+              <button class="btn ghost" id="comparePresetBtn" aria-pressed="false">
+                ⇄ Hold to compare previous preset
+              </button>
+            </div>
+            <div id="presetAudit" hidden></div>
+          </div>
         </section>
 
         <!-- ── METERS ────────────────────────────────────────────────────────────── -->
@@ -415,8 +419,7 @@
         <!-- ── TABS ──────────────────────────────────────────────────────────────── -->
         <section class="card">
           <div class="tabs" role="tablist" aria-label="Processing sections">
-            <button class="tab" data-tab="presets" aria-selected="true">Presets</button>
-            <button class="tab" data-tab="loudness" aria-selected="false">Loudness</button>
+            <button class="tab" data-tab="loudness" aria-selected="true">Loudness</button>
             <button class="tab" data-tab="dynamics" aria-selected="false">Dynamics</button>
             <button class="tab" data-tab="tone" aria-selected="false">Tone</button>
             <button class="tab" data-tab="match" aria-selected="false">Match</button>
@@ -429,20 +432,8 @@
             <button class="tab" data-tab="about" aria-selected="false">About</button>
           </div>
 
-          <!-- PRESETS -->
-          <div class="tpanel on" data-tab="presets">
-            <div id="presetGroups"></div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px">
-              <button class="btn ghost" id="resetParamsBtn">↺ Reset to flat (transparent)</button>
-              <button class="btn ghost" id="comparePresetBtn" aria-pressed="false">
-                ⇄ Hold to compare previous preset
-              </button>
-            </div>
-            <div id="presetAudit" hidden></div>
-          </div>
-
           <!-- LOUDNESS -->
-          <div class="tpanel" data-tab="loudness" style="max-width: 640px">
+          <div class="tpanel on" data-tab="loudness" style="max-width: 640px">
             <div class="grouplab">Loudness normalisation and peak ceiling</div>
             <div id="adaptNotice" hidden></div>
             <div data-controls="loudness"></div>
