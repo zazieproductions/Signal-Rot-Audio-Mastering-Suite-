@@ -466,6 +466,13 @@ body:not([data-workspace]) [data-workspace-view='master'] { display: flex; }
 }
 .ab-blinder.on { opacity: 1; pointer-events: auto; }
 
+/* ---- Primary preset deck (directly under waveform) ------------------------ */
+#presetCard #presetGroups {
+  max-height: min(52vh, 640px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
 /* ---- Preset browser enhanced ---------------------------------------------- */
 .preset-toolbar {
   display: flex;

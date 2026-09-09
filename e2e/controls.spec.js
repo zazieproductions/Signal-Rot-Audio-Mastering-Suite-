@@ -7,11 +7,11 @@ test.describe('controls, tabs and presets', () => {
   });
 
   test('navigates tabs with the keyboard', async ({ page }) => {
-    const presets = page.locator('.tab[data-tab="presets"]');
-    await presets.focus();
-    await expect(presets).toHaveAttribute('aria-selected', 'true');
+    const loudness = page.locator('.tab[data-tab="loudness"]');
+    await loudness.focus();
+    await expect(loudness).toHaveAttribute('aria-selected', 'true');
     await page.keyboard.press('ArrowRight');
-    await expect(page.locator('.tab[data-tab="loudness"]')).toHaveAttribute(
+    await expect(page.locator('.tab[data-tab="dynamics"]')).toHaveAttribute(
       'aria-selected',
       'true',
     );
@@ -89,11 +89,15 @@ test.describe('controls, tabs and presets', () => {
     await expect(page.locator('#auditionSelect')).toHaveValue('mono');
   });
 
-  test('bypasses a module from the signal-flow view', async ({ page }) => {
-    const tone = page.locator('.flow-node[data-module="tone"]');
-    await expect(tone).toHaveAttribute('aria-pressed', 'false');
-    await tone.click();
-    await expect(tone).toHaveAttribute('aria-pressed', 'true');
+  test('keeps presets under the waveform without a signal-flow strip', async ({ page }) => {
+    await expect(page.locator('#signalFlow')).toHaveCount(0);
+    await expect(page.locator('#presetCard')).toBeVisible();
+    const order = await page.evaluate(() => {
+      const wave = document.querySelector('#waveCard');
+      const presets = document.querySelector('#presetCard');
+      return wave && presets && wave.nextElementSibling === presets;
+    });
+    expect(order).toBe(true);
   });
 
   test('opens the command palette and jumps to a tab', async ({ page }) => {

@@ -55,8 +55,7 @@ export function initWorkspace(opts) {
       tab.style.opacity = '';
       if (isSpatial && masterTabs.has(id)) tab.style.opacity = '0.7';
       if (!isSpatial && spatialTabs.has(id)) tab.style.opacity = '0.75';
-      tab.style.fontWeight =
-        (isSpatial && id === 'immersive') || (!isSpatial && id === 'presets') ? '800' : '';
+      tab.style.fontWeight = isSpatial && id === 'immersive' ? '800' : '';
     }
 
     if (persist) store.setUi({ [WORKSPACE_KEY]: next });

@@ -16,7 +16,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { FakeAudioContext } from '../helpers/fake-audio-context.js';
 import { installFakeCanvas } from '../helpers/fake-canvas.js';
-import { SIGNAL_FLOW } from '../../src/app/constants.js';
 import { ALL_PRESETS } from '../../src/presets/index.js';
 import { PARAMETER_LIST } from '../../src/app/parameters.js';
 
@@ -115,12 +114,15 @@ describe('application boot', () => {
     expect(missing, `parameters with no control: ${missing.join(', ')}`).toEqual([]);
   });
 
-  it('renders the signal-flow view', async () => {
+  it('places presets directly under the waveform and omits the signal-flow strip', async () => {
     const { bootstrap } = await import('../../src/app/bootstrap.js');
     bootstrap();
-    const flow = document.querySelector('#signalFlow');
-    expect(flow.children.length).toBeGreaterThan(SIGNAL_FLOW.length);
-    for (const module of SIGNAL_FLOW) expect(flow.textContent).toContain(module.label);
+    expect(document.querySelector('#signalFlow')).toBeNull();
+    const wave = document.querySelector('#waveCard');
+    const presets = document.querySelector('#presetCard');
+    expect(presets).toBeTruthy();
+    expect(wave.nextElementSibling).toBe(presets);
+    expect(document.querySelectorAll('.preset').length).toBe(ALL_PRESETS.length);
   });
 
   it('renders the whole preset catalogue', async () => {

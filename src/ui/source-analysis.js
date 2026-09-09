@@ -87,7 +87,7 @@ export function initSourceHero(opts) {
           el('div', { class: 'k', style: 'font:600 8px var(--mono); letter-spacing:0.12em; text-transform:uppercase; color:var(--faint); margin-bottom:6px', text: 'What happens next' }),
           el('div', { class: 'hint', text: 'Choose a Preset profile, then refine with perceptual macros. A/B at matched loudness before exporting.' }),
           el('div', { style: 'display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;' }, [
-            el('button', { class: 'btn tiny ghost', text: 'Presets →', onclick: () => document.querySelector('.tab[data-tab="presets"]')?.click() }),
+            el('button', { class: 'btn tiny ghost', text: 'Presets →', onclick: () => document.getElementById('presetCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }),
             el('button', { class: 'btn tiny ghost', text: 'Macros →', onclick: () => document.getElementById('macroCard')?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }),
           ]),
         ]),

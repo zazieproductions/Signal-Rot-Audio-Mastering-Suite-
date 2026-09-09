@@ -42,7 +42,7 @@ export function defaultImmersive() {
 function defaultUi() {
   return {
     theme: 'dark',
-    tab: 'presets',
+    tab: 'loudness',
     workspace: 'master',
     abMode: 'B',
     audition: 'stereo',

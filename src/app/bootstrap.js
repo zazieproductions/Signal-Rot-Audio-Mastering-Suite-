@@ -1409,8 +1409,12 @@ export function bootstrap() {
       },
       { id: 'reset', label: 'Reset all parameters', run: () => $('#resetParamsBtn').click() },
       { id: 'seed', label: 'Randomise texture seed', run: () => $('#randomiseSeedBtn').click() },
+      {
+        id: 'tab-presets',
+        label: 'Go to presets',
+        run: () => document.getElementById('presetCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      },
       ...[
-        'presets',
         'loudness',
         'dynamics',
         'tone',
@@ -1522,7 +1526,8 @@ export function bootstrap() {
   updateAnalysisUi();
   immersiveController.init();
   exportController.init();
-  tabs.select(store.getState().ui.tab || 'presets');
+  const savedTab = store.getState().ui.tab;
+  tabs.select(savedTab && savedTab !== 'presets' ? savedTab : 'loudness');
   rafHandle = requestAnimationFrame(frame);
 
   window.addEventListener('resize', () => {
