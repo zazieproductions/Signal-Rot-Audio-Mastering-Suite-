@@ -114,6 +114,7 @@ deliberately file-blind, which is how a co-owned tree stays honestly partitioned
   "domains": {
     "dsp": [
       "src/audio",
+      "src/audio/decode",
       "src/audio/dsp",
       "src/audio/analysis",
       "src/audio/graph",

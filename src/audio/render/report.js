@@ -28,6 +28,8 @@ export function buildRenderReport(input) {
     transient,
     dither,
     latency,
+    hfBudget,
+    conversion = null,
     source,
     output,
     presetName,
@@ -103,6 +105,17 @@ export function buildRenderReport(input) {
   if (analysisAfter.loudness.silent) {
     warnings.push('The rendered master contains no material above the −70 LUFS absolute gate.');
   }
+  if (hfBudget && hfBudget.engaged) {
+    const driveNote =
+      hfBudget.satScale < 1
+        ? ` and scaled saturation drive to ${Math.round(hfBudget.satScale * 100)} %`
+        : '';
+    warnings.push(
+      `Cumulative HF budget (§2.7): the treble stack totalled +${num(hfBudget.estimateDb, 1)} dB ` +
+        `(allowed ${num(hfBudget.allowedDb, 1)} dB); trimmed +${num(hfBudget.cutDb, 1)} dB ` +
+        `proportionally across [${(hfBudget.contributors ?? []).join(', ')}]${driveNote}.`,
+    );
+  }
 
   return {
     engine: { name: ENGINE_NAME, version: ENGINE_VERSION },
@@ -128,6 +141,9 @@ export function buildRenderReport(input) {
       samplePeakDbfs: num(analysisBefore.peaks.samplePeakDb),
       truePeakDbtp: num(analysisBefore.peaks.truePeakDb),
       crestFactorDb: num(analysisBefore.crestFactorDb),
+      brightnessAbove9kHzDb: num(
+        analysisBefore.brightness ? analysisBefore.brightness.hfRatioDb : NaN,
+      ),
     },
 
     analysisAfter: {
@@ -208,6 +224,23 @@ export function buildRenderReport(input) {
       applied: dither.applied,
       reason: dither.reason ?? null,
     },
+
+    // Present only when the delivery rate differed from the render rate (§2.8): the
+    // chain always renders at the source's native rate and this is the *one* deliberate
+    // conversion, applied before normalisation/limiting, so the reported true peak is
+    // measured on the final, converted samples.
+    conversion: conversion ?? null,
+
+    hfBudget: hfBudget
+      ? {
+          engaged: hfBudget.engaged,
+          stackDb: num(hfBudget.estimateDb, 1),
+          allowedDb: num(hfBudget.allowedDb, 1),
+          trimDb: num(hfBudget.cutDb, 1),
+          saturationDriveScale: hfBudget.engaged ? hfBudget.satScale : null,
+          contributors: hfBudget.contributors ?? [],
+        }
+      : null,
 
     format: {
       container: output.format,

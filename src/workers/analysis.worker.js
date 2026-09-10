@@ -20,6 +20,7 @@ import { analysePeaks } from '../audio/analysis/true-peak.js';
 import { crestFactorDb, rmsDb } from '../audio/analysis/rms.js';
 import { monoCompatibility } from '../audio/analysis/correlation.js';
 import { spectralFingerprint } from '../audio/analysis/spectral-match.js';
+import { measureBrightness } from '../audio/analysis/brightness.js';
 
 /**
  * Run the requested analyses.
@@ -60,6 +61,7 @@ function analyse(payload) {
   }
   if (tasks.includes('mono')) out.mono = monoCompatibility(data);
   if (tasks.includes('fingerprint')) out.fingerprint = spectralFingerprint(data);
+  if (tasks.includes('brightness')) out.brightness = measureBrightness(data);
 
   return out;
 }

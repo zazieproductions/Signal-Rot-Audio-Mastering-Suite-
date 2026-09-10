@@ -45,6 +45,7 @@
  */
 
 import { clamp, dbToGain, gainToDb, smoothstep } from '../dsp/math.js';
+import { designBiquad } from '../dsp/biquad.js';
 import {
   analysePeaksVerified,
   truePeakChannel,
@@ -81,6 +82,11 @@ export const TRUE_PEAK_VERIFY_SLACK_DB = 0.02;
  * @property {number} [kneeDb]         soft-knee width below the ceiling, default 1.5 dB
  * @property {number[]} [lfeChannels]  channel indices excluded from peak detection
  * @property {boolean} [verify]        run the post-render verification pass, default true
+ * @property {boolean} [bassAware]     adaptive release for bass-driven reduction
+ *   (§6), default true. When the gain reduction is sustained *and* the detection
+ *   signal is dominated by sub-150 Hz content, the release slows down quickly so a
+ *   40–100 Hz cycle cannot modulate the master gain; transient-led reduction keeps
+ *   the fast release.
  */
 
 /**
@@ -219,27 +225,125 @@ export function computeLimiterGain(data, opts) {
   // an ULP, so clamp explicitly. This costs one pass and removes a whole class of bug.
   for (let i = 0; i < n; i++) if (smoothed[i] > required[i]) smoothed[i] = required[i];
 
-  // ── 4. Program-dependent release ──
+  // ── 4. Program-dependent release, bass-aware (§6) ──
+  // When reduction is driven by sub-150 Hz content the gain curve must *not* track the
+  // 40–100 Hz cycle: a fast release there modulates the master gain at the bass rate,
+  // which is LF distortion and audible pumping on kick/bass. `bassDominance[i]` is a
+  // smoothed ratio of the low-passed envelope to the full-band envelope of the
+  // detection sum; while it is high the release transitions to the slow constant
+  // several times faster, so a sustained bass-driven reduction holds an almost flat
+  // gain. Transient-led reduction (dominance low) keeps the fast release untouched.
+  const bassAware = opts.bassAware !== false;
+  const bassDominance = bassAware
+    ? computeBassDominance(data, opts, sr, n, peakEnv)
+    : new Float32Array(n);
+
+  // Defaults 25/220 ms (conservative release) — callers may override.
   const relFast = Math.max(1, sr * ((opts.releaseFastMs ?? 25) / 1000));
   const relSlow = Math.max(1, sr * ((opts.releaseSlowMs ?? 220) / 1000));
   const blendSamples = Math.max(1, sr * 0.05);
   const out = new Float32Array(n);
   let g = 1;
   let sustained = 0;
+  // Dominance *latched at the attack*: only the content that actually drove the gain
+  // down decides how the release behaves. A transient that lands on a mid-frequency
+  // bed keeps the fast release; a gain reduction driven by a 40–60 Hz cycle latches
+  // high dominance and the release stays slow for ~100 ms of recovery.
+  let latchedD = 0;
+  let attacking = false;
+  const latchDecay = 1 - Math.exp(-1 / (sr * 0.1));
   for (let i = 0; i < n; i++) {
     const target = smoothed[i];
     if (target < g) {
       g = target; // attack is already anticipated by the look-ahead; follow immediately
       sustained = 0;
+      // Latch the *minimum* dominance across the current attack run, read at the
+      // look-ahead horizon (`i + look`): the attack begins ~3 ms of look-ahead before
+      // the offending peak arrives, so the dominance measured at the attack onset
+      // still belongs to whatever the peak will land on — latching there would blame
+      // a 3 kHz spike's gain reduction on the LF bed beneath it and slow the release
+      // after every transient. Reading at the horizon means the content that actually
+      // drove the peak decides the release; the min across the run covers the whole
+      // descent. Each new attack run (a release happened in between) re-seeds the
+      // latch, so a quiet LF passage cannot poison later bass-driven reduction.
+      const domAtPeak = bassDominance[Math.min(n - 1, i + look)];
+      if (attacking) {
+        latchedD = Math.min(latchedD, domAtPeak);
+      } else {
+        latchedD = domAtPeak;
+        attacking = true;
+      }
     } else {
+      attacking = false;
       sustained++;
-      const blend = Math.min(1, sustained / blendSamples);
+      // Bass-dominated release engages in ~a quarter of the usual blend time. The
+      // latch decays with a ~100 ms one-pole, so a single bass-driven attack cannot
+      // hold the slow release for long after the bass stops. A threshold keeps the
+      // behaviour specific: only reductions whose *driving* content is clearly
+      // sub-150 Hz (latch ≥ 0.45) change the release at all — a transient landing on
+      // a mid-frequency bed keeps the classic fast-release behaviour.
+      const pull = Math.max(0, (latchedD - 0.45) / 0.55) * 3;
+      const blend = Math.min(1, (sustained / blendSamples) * (1 + pull));
       const tau = relFast * (1 - blend) + relSlow * blend;
       g += (target - g) / tau;
       // Never let the release raise the gain above what the look-ahead demands.
       if (g > target) g = target;
+      latchedD -= latchDecay * latchedD;
     }
     out[i] = g;
+  }
+  return out;
+}
+
+/**
+ * Per-sample low-frequency dominance of the detection channels: the ratio between the
+ * sub-150 Hz band's peak magnitude and the full-band peak magnitude, both measured on
+ * the *same basis the limiter detects on* (per-sample maximum around each sample).
+ * 0 = the peaks that drive the limiter are not bass; ≈1 = they are essentially all
+ * sub-150 Hz energy.
+ *
+ * Envelope-smoothed magnitudes cannot tell a kick from a 3 kHz spike sitting on a bass
+ * bed — a 2–3 ms transient is shorter than any practical smoothing constant, so the
+ * smoothed "LF share" never dips while the transient drives the limiter. Peak-vs-peak
+ * on the detection basis has no such lag: when a wideband transient crosses the
+ * ceiling, the full-band peak at that instant dwarfs the LF peak and the ratio drops
+ * immediately; when a 40–60 Hz cycle drives the reduction, both peaks belong to the
+ * same LF waveform and the ratio stays ≈1.
+ *
+ * Single-pass, one allocation: for every detection channel a 2nd-order low-pass is
+ * applied inline and the per-sample low-band maximum is the only state kept.
+ */
+function computeBassDominance(data, opts, sr, n, fullPeakEnv) {
+  const lfe = new Set(opts.lfeChannels ?? []);
+  const list = [];
+  for (let c = 0; c < data.channels.length; c++) {
+    if (lfe.has(c)) continue;
+    list.push(data.channels[c]);
+  }
+  const out = new Float32Array(n);
+  if (!list.length) return out;
+
+  const { b0, b1, b2, a1, a2 } = designBiquad('lowpass', 150, Math.SQRT1_2, 0, sr);
+  const nc = list.length;
+  const sx1 = new Float64Array(nc);
+  const sx2 = new Float64Array(nc);
+  const sy1 = new Float64Array(nc);
+  const sy2 = new Float64Array(nc);
+
+  for (let i = 0; i < n; i++) {
+    let lfPeak = 0;
+    for (let c = 0; c < nc; c++) {
+      const x = list[c][i];
+      const y = b0 * x + b1 * sx1[c] + b2 * sx2[c] - a1 * sy1[c] - a2 * sy2[c];
+      sx2[c] = sx1[c];
+      sx1[c] = x;
+      sy2[c] = sy1[c];
+      sy1[c] = y;
+      const a = Math.abs(y);
+      if (a > lfPeak) lfPeak = a;
+    }
+    const full = fullPeakEnv[i];
+    out[i] = full > 1e-6 ? Math.min(1, lfPeak / full) : 0;
   }
   return out;
 }

@@ -26,6 +26,7 @@ import { LIMITS } from './constants.js';
 import { estimateRender } from '../runtime/render-preflight.js';
 import { formatBytes } from '../runtime/memory-budget.js';
 import { sanitizeFilename, baseNameOf } from '../audio/encode/download.js';
+import { decodeAtNativeRate } from '../audio/decode/decode-file.js';
 
 /**
  * The mastering chain runs through the browser's 2-channel graph. Inputs above
@@ -282,14 +283,36 @@ export async function decodeAudioFile(ctx, file, opts = {}) {
   }
 
   let buffer;
+  let decodeMeta = null;
   try {
-    buffer = await ctx.decodeAudioData(bytes);
+    // §2.8: decode at the file's *native* rate (sniffed from the container header) via
+    // a throwaway offline context, so a 44.1 kHz source never becomes 48 kHz through
+    // the live context's device-rate resampler. `ctx` remains the last-resort fallback.
+    const result = await decodeAtNativeRate(bytes, {
+      liveCtxRate: ctx.sampleRate,
+      liveCtx: ctx,
+    });
+    buffer = result.buffer;
+    decodeMeta = result;
   } catch (error) {
     console.warn('[signal-rot] decode failed:', file.name, error);
     return { ok: false, errors: [describeDecodeError(error, file.name)], warnings: [], notes: [] };
   }
 
   const v = validateDecodedBuffer(buffer, { name: file.name, ...opts });
+  // Rate honesty: when the browser could not decode at the container's native rate the
+  // buffer arrives resampled — say so, loudly but not fatally.
+  if (
+    decodeMeta &&
+    decodeMeta.sniffedRate &&
+    decodeMeta.decodedRate !== decodeMeta.sniffedRate
+  ) {
+    v.warnings.push(
+      `“${sanitizeFilename(file.name)}” decoded at ${formatRateKhz(decodeMeta.decodedRate)} ` +
+        `(the file header says ${formatRateKhz(decodeMeta.sniffedRate)} — browser rate limit), ` +
+        'so this session runs at the decoded rate.',
+    );
+  }
   if (v.errors.length) {
     return { ok: false, errors: v.errors, warnings: v.warnings, notes: v.notes };
   }

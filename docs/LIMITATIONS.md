@@ -269,6 +269,28 @@ The verification pass measures the finished float buffer. It does not measure:
 
 Export at your delivery rate, and leave headroom for lossy distribution.
 
+### Sample-rate handling: decode, then one deliberate conversion
+
+Loading decodes at the *file's native rate* when the container says what it is (RIFF/WAVE,
+AIFF/AIFF-C, FLAC, MPEG audio headers are sniffed — see `src/audio/decode/sniff-rate.js`).
+Containers we cannot sniff (M4A, Ogg, Opus) and rates the browser's offline context refuses
+decode at 48 kHz. The mastering chain always renders at the buffer's own rate, so the
+browser's internal resampler is never part of the export path.
+
+When the requested delivery rate differs, the render applies **one** windowed-sinc
+conversion (Kaiser-windowed polyphase, 96+ taps scaled so the filter keeps a fixed length
+in time) before normalisation, and the reported true peak is measured on the converted
+samples.
+
+Every linear resampler has two inherent limits, and this one is no exception:
+
+- Downsampling: frequencies between the destination Nyquist and roughly 1.2 × Nyquist
+  are attenuated progressively (≥ −60 dB by 1.2 × Nyquist) rather than removed outright.
+  Mastered music has negligible energy within ~1 kHz of Nyquist.
+- Upsampling: the image of content near the input Nyquist touches the output band
+  (`fsIn / 2 − f` lands in-band); no finite filter can remove it. Again negligible for
+  real masters, which the mastering chain itself rolls off above 20 kHz.
+
 ### Noise shaping is not psychoacoustic
 
 The `shaped` dither mode is a plain second-order error-feedback shaper with a

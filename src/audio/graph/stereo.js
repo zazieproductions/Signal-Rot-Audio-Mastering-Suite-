@@ -33,6 +33,12 @@
 import { WIDTH_CROSSOVER_LOW, WIDTH_CROSSOVER_HIGH } from '../../app/constants.js';
 import { clamp } from '../dsp/math.js';
 import { BUTTERWORTH_Q_DB } from '../dsp/biquad.js';
+import {
+  sideWidthGain,
+  midBalanceGain,
+  capSideBandGain,
+  crossfeedTapGain,
+} from './spatial-laws.js';
 
 /** @typedef {'stereo'|'mono'|'mid'|'side'|'left'|'right'} AuditionMode */
 
@@ -165,6 +171,17 @@ export function buildStereo(ctx) {
   haasR.connect(rightFinal);
 
   const cf = (from, to) => {
+    // Frequency-conscious tap: a pair of LR4 high-passes at 120 Hz keeps bass out of
+    // the crossfeed entirely — a bass signal delayed by 0.3 ms and mixed back into the
+    // opposite channel is the fastest way to smear the low end and waste headroom.
+    const hp1 = ctx.createBiquadFilter();
+    hp1.type = 'highpass';
+    hp1.frequency.value = 120;
+    hp1.Q.value = Math.SQRT1_2;
+    const hp2 = ctx.createBiquadFilter();
+    hp2.type = 'highpass';
+    hp2.frequency.value = 120;
+    hp2.Q.value = Math.SQRT1_2;
     const d = ctx.createDelay(0.02);
     d.delayTime.value = 0.0003; // ~0.3 ms interaural delay
     const lp = ctx.createBiquadFilter();
@@ -173,7 +190,9 @@ export function buildStereo(ctx) {
     lp.Q.value = BUTTERWORTH_Q_DB;
     const g = ctx.createGain();
     g.gain.value = 0;
-    from.connect(d);
+    from.connect(hp1);
+    hp1.connect(hp2);
+    hp2.connect(d);
     d.connect(lp);
     lp.connect(g);
     g.connect(to);
@@ -258,12 +277,16 @@ export function buildStereo(ctx) {
 export function applyStereo(n, p) {
   const bypass = !!p.bypass;
 
-  // Master width, with the binaural "spread" control widening it further.
-  const width = bypass ? 1 : p.width * (1 + (p.binaural ? p.spread : 0) * 0.6);
+  // ── Level-safe width law (§2.9) ────────────────────────────────────────────────
+  // The master side gain now goes through a bounded, soft-knee law that also folds in
+  // the binaural spread factor and scales back when a Haas delay is engaged — so
+  // width cannot grow without limit, and width + spread + Haas cannot stack into a
+  // pathological image. The centre gain follows a dB-space curve that protects the
+  // centre image (the old linear 1 − 0.6·b cut 1 dB of centre at b = 0.18).
   const balance = bypass ? 0 : p.ms; // −1 (mid-heavy) … +1 (side-heavy)
-
-  n.midGain.gain.value = balance < 0 ? 1 : 1 - balance * 0.6;
-  n.sideWidth.gain.value = width * (balance > 0 ? 1 : 1 + balance * 0.6);
+  n.midGain.gain.value = balance < 0 ? 1 : midBalanceGain(balance);
+  const side = bypass ? 1 : sideWidthGain(p);
+  n.sideWidth.gain.value = side;
 
   // Bass mono corner. 8 Hz is "effectively off" without needing to rewire the graph.
   const corner = bypass ? 0 : p.bassMono;
@@ -275,18 +298,27 @@ export function applyStereo(n, p) {
   n.sideDirect.gain.value = 1 - combBlend;
   n.sideAllpassGain.gain.value = combBlend;
 
-  n.widthLow.gain.value = bypass ? 1 : p.widthLow;
-  n.widthMid.gain.value = bypass ? 1 : p.widthMid;
-  n.widthHigh.gain.value = bypass ? 1 : p.widthHigh;
+  // Per-band widths: each band's *delivered* gain is individually capped (the low band
+  // is the bass anchor — wide low end is a mono hazard and eats limiter headroom), so
+  // the master side gain cannot push a band past its ceiling either. The band node
+  // carries (capped product / master side gain) so that master × band equals the
+  // capped delivered gain at every setting, including narrowing (side < 1).
+  const bandNodeGain = (userGain, kind) =>
+    bypass ? 1 : capSideBandGain(side * userGain, kind) / (side || 1);
+  n.widthLow.gain.value = bandNodeGain(p.widthLow, 'low');
+  n.widthMid.gain.value = bandNodeGain(p.widthMid, 'mid');
+  n.widthHigh.gain.value = bandNodeGain(p.widthHigh, 'high');
 
   const haasSeconds = bypass ? 0 : p.haas / 1000;
   n.haasR.delayTime.value = p.haasSide >= 0 ? haasSeconds : 0;
   n.haasL.delayTime.value = p.haasSide < 0 ? haasSeconds : 0;
 
-  // Binaural mode forces a minimum crossfeed — that is what the mode *is*.
+  // Crossfeed: bounded monotone tap law, plus the LR4@120 Hz high-pass built into the
+  // taps. Binaural mode forces a minimum crossfeed — that is what the mode *is*.
   const crossfeed = bypass ? 0 : p.binaural ? Math.max(p.crossfeed, 0.35) : p.crossfeed;
-  n.crossfeedLR.gain.value = crossfeed * 0.45;
-  n.crossfeedRL.gain.value = crossfeed * 0.45;
+  const tapGain = crossfeedTapGain(crossfeed);
+  n.crossfeedLR.gain.value = tapGain;
+  n.crossfeedRL.gain.value = tapGain;
 }
 
 /**
